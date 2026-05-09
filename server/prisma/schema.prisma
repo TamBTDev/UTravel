@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  UNVERIFIED
+  VERIFIED
+  LOCKED
+}
+
+// ------------------------------------------------------
+// MODELS
+// ------------------------------------------------------
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String?
+  address   String?
+  avatar    String?
+  role      Role       @default(USER)
+  status    UserStatus @default(UNVERIFIED)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  bookings  Booking[]
+  reviews   Review[]
+  otps      UserOtp[]
+
+  @@map("users")
+}
+
+model UserOtp {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  otpCode   String
+  type      String   // Ví dụ: "REGISTER", "FORGOT_PASSWORD"
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_otps")
+}
+
+model Hotel {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?  @db.Text
+  location    String
+  city        String
+  country     String
+  rating      Float    @default(0)
+  amenities   Json?    // Lưu dưới dạng mảng JSON các tiện ích
+  images      Json?    // Lưu dưới dạng mảng JSON các URL hình ảnh
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms   Room[]
+  reviews Review[]
+
+  @@map("hotels")
+}
+
+model Room {
+  id          Int      @id @default(autoincrement())
+  hotelId     Int
+  roomNumber  String
+  type        String   // Ví dụ: "single", "double", "suite"
+  price       Float
+  capacity    Int
+  description String?  @db.Text
+  amenities   Json?    // Lưu dưới dạng mảng JSON các tiện ích phòng
+  images      Json?    // Lưu dưới dạng mảng JSON các URL hình ảnh phòng
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotel    Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([hotelId, roomNumber])
+  @@map("rooms")
+}
+
+model Booking {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  roomId        Int
+  checkInDate   DateTime
+  checkOutDate  DateTime
+  adults        Int      @default(1)
+  children      Int      @default(0)
+  specialNote   String?  @db.Text
+  status        String   @default("pending") // Các trạng thái: "pending", "confirmed", "cancelled"
+  totalPrice    Float
+  paymentStatus String   @default("unpaid")  // Các trạng thái: "unpaid", "paid"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room    Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  payment Payment?
+
+  @@map("bookings")
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  bookingId Int      @unique
+  amount    Float
+  method    String   // Ví dụ: "credit_card", "bank_transfer", "momo", "vnpay"
+  status    String   @default("pending") // Các trạng thái: "pending", "completed", "failed"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  hotelId   Int
+  rating    Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
