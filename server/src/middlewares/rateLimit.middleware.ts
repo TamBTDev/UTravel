@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 
 /**
  * Rate Limiting Middleware
@@ -17,18 +17,17 @@ interface RateLimitStore {
 const store: RateLimitStore = {};
 
 export interface RateLimitOptions {
-  windowMs: number; // Thời gian cửa sổ (ms) - mặc định 15 phút
-  maxRequests: number; // Số lần gọi tối đa trong cửa sổ
+  windowMs: number; // mặc định 15 phút
+  maxRequests: number; // Số lần gọi tối đa
   message?: string; // Thông báo lỗi
 }
 
-/**
- * Tạo Rate Limit middleware
- * @param options Cấu hình
- * @returns Middleware function
- */
 export const createRateLimitMiddleware = (options: RateLimitOptions) => {
-  const { windowMs = 15 * 60 * 1000, maxRequests = 5, message = 'Too many requests, please try again later.' } = options;
+  const {
+    windowMs = 15 * 60 * 1000,
+    maxRequests = 5,
+    message = "Too many requests, please try again later.",
+  } = options;
 
   return (req: Request, res: Response, next: NextFunction) => {
     const key = `${req.ip}:${req.path}`;
@@ -76,27 +75,35 @@ export const rateLimitConfig = {
   register: createRateLimitMiddleware({
     windowMs: 15 * 60 * 1000,
     maxRequests: 5,
-    message: 'Quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau 15 phút.',
+    message: "Quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau 15 phút.",
   }),
 
   // Đăng nhập: 10 yêu cầu / 15 phút (chống Brute-force)
   login: createRateLimitMiddleware({
     windowMs: 15 * 60 * 1000,
     maxRequests: 10,
-    message: 'Quá nhiều yêu cầu đăng nhập. Tài khoản bị khóa tạm thời 15 phút.',
+    message: "Quá nhiều yêu cầu đăng nhập. Tài khoản bị khóa tạm thời 15 phút.",
   }),
 
   // Gửi OTP: 3 yêu cầu / 10 phút
   sendOtp: createRateLimitMiddleware({
     windowMs: 10 * 60 * 1000,
     maxRequests: 3,
-    message: 'Quá nhiều yêu cầu gửi OTP. Vui lòng thử lại sau 10 phút.',
+    message: "Quá nhiều yêu cầu gửi OTP. Vui lòng thử lại sau 10 phút.",
   }),
 
   // Verify OTP: 5 yêu cầu / 5 phút
   verifyOtp: createRateLimitMiddleware({
     windowMs: 5 * 60 * 1000,
     maxRequests: 5,
-    message: 'Quá nhiều yêu cầu xác thực OTP. Vui lòng thử lại sau 5 phút.',
+    message: "Quá nhiều yêu cầu xác thực OTP. Vui lòng thử lại sau 5 phút.",
+  }),
+
+  // Update Profile: 20 yêu cầu / 15 phút
+  updateProfile: createRateLimitMiddleware({
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 20,
+    message:
+      "Quá nhiều yêu cầu cập nhật profile. Vui lòng thử lại sau 15 phút.",
   }),
 };

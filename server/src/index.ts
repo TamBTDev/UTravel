@@ -1,12 +1,8 @@
-import 'dotenv/config';
-import app from './app';
-import { initializeJobs } from './jobs';
+import "dotenv/config";
+import app from "./app";
 
 const PORT = process.env.PORT || 3000;
 
-// Initialize background jobs
-initializeJobs();
-
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

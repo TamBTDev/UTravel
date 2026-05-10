@@ -1,20 +1,23 @@
-import { Router } from 'express';
+import { Router } from "express";
+import { authMiddleware, requireRole } from "@/middlewares/auth.middleware";
+import { rateLimitConfig } from "@/middlewares/rateLimit.middleware";
+import * as userController from "./user.controller";
 
 const userRouter = Router();
 
-userRouter.get('/profile', (req, res) => {
-  // TODO: Implement get profile
-  res.json({ message: 'Get user profile' });
-});
+userRouter.use(authMiddleware);
 
-userRouter.put('/profile', (req, res) => {
-  // TODO: Implement update profile
-  res.json({ message: 'Update user profile' });
-});
+userRouter.get(
+  "/profile",
+  requireRole("USER", "ADMIN"),
+  userController.getProfile,
+);
 
-userRouter.get('/bookings', (req, res) => {
-  // TODO: Implement get user bookings
-  res.json({ message: 'Get user bookings' });
-});
+userRouter.put(
+  "/profile",
+  rateLimitConfig.updateProfile,
+  requireRole("USER", "ADMIN"),
+  userController.updateProfile,
+);
 
 export default userRouter;
