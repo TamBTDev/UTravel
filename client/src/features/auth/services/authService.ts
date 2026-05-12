@@ -102,4 +102,26 @@ export const authService = {
       throw error.response?.data || error;
     }
   },
+
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    try {
+      const response = await apiClient.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  resetPassword: async (data: {
+    email: string;
+    otpCode: string;
+    newPassword: string;
+  }): Promise<{ message: string }> => {
+    try {
+      const response = await apiClient.post('/auth/reset-password', data);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
 };

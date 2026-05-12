@@ -147,10 +147,9 @@ export const Navbar = () => {
               ) : (
                 <Group gap="xs" wrap="nowrap">
                   <Button
-                    variant="default"
+                    variant="subtle"
                     size="sm"
                     onClick={() => navigate('/login')}
-                    hiddenFrom="xs"
                   >
                     Đăng nhập
                   </Button>
