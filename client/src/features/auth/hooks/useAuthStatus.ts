@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useAuthContext } from '../../../app/providers';
+import { useEffect } from "react";
+import { useAuthContext } from "@/app/providers";
 
 /**
  * Hook để check auth status và quản lý redirect

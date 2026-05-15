@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   PasswordInput,
   Button,
@@ -8,10 +8,10 @@ import {
   Title,
   ThemeIcon,
   Group,
-} from '@mantine/core';
-import { IconLock, IconAlertCircle } from '@tabler/icons-react';
-import { useAppDispatch, useAppSelector } from '../../../hooks/useAppStore';
-import { resetPasswordWithOtp, clearError } from '../../../app/store/authSlice';
+} from "@mantine/core";
+import { IconLock, IconAlertCircle } from "@tabler/icons-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { resetPasswordWithOtp, clearError } from "@/app/store/authSlice";
 
 interface Props {
   otpCode: string;
@@ -20,15 +20,18 @@ interface Props {
 export const ForgotPasswordNewStep = ({ otpCode }: Props) => {
   const dispatch = useAppDispatch();
   const { email, isLoading, error } = useAppSelector((s) => s.auth);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [formErrors, setFormErrors] = useState<{ new?: string; confirm?: string }>({});
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formErrors, setFormErrors] = useState<{
+    new?: string;
+    confirm?: string;
+  }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors: typeof formErrors = {};
-    if (newPassword.length < 6) errors.new = 'Mật khẩu phải có ít nhất 6 ký tự';
-    if (newPassword !== confirmPassword) errors.confirm = 'Mật khẩu không khớp';
+    if (newPassword.length < 6) errors.new = "Mật khẩu phải có ít nhất 6 ký tự";
+    if (newPassword !== confirmPassword) errors.confirm = "Mật khẩu không khớp";
     if (Object.keys(errors).length) {
       setFormErrors(errors);
       return;
@@ -45,8 +48,12 @@ export const ForgotPasswordNewStep = ({ otpCode }: Props) => {
           <IconLock size={20} />
         </ThemeIcon>
         <div>
-          <Title order={3} fw={600}>Mật khẩu mới</Title>
-          <Text size="sm" c="dimmed">Đặt mật khẩu mới cho tài khoản của bạn</Text>
+          <Title order={3} fw={600}>
+            Mật khẩu mới
+          </Title>
+          <Text size="sm" c="dimmed">
+            Đặt mật khẩu mới cho tài khoản của bạn
+          </Text>
         </div>
       </Group>
 
@@ -85,7 +92,7 @@ export const ForgotPasswordNewStep = ({ otpCode }: Props) => {
             fullWidth
             size="md"
             variant="gradient"
-            gradient={{ from: 'indigo', to: 'violet' }}
+            gradient={{ from: "indigo", to: "violet" }}
           >
             Đặt lại mật khẩu
           </Button>

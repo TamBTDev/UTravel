@@ -1,10 +1,10 @@
-import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { notifications } from '@mantine/notifications';
-import { useAuthContext } from '../../../app/providers';
-import { authService } from '../services';
-import { LoginInput } from '@shared/schemas/auth.schema';
+import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { notifications } from "@mantine/notifications";
+import { useAuthContext } from "@/app/providers";
+import { authService } from "../services";
+import { LoginInput } from "@shared/schemas/auth.schema";
 
 /**
  * Custom hook để xử lý login logic
@@ -28,21 +28,21 @@ export const useLogin = () => {
           avatar: user.avatar,
           role: user.role,
         },
-        token
+        token,
       );
 
       // Show success notification
       notifications.show({
-        title: 'Đăng nhập thành công',
+        title: "Đăng nhập thành công",
         message: `Chào mừng ${user.firstName}!`,
-        color: 'green',
+        color: "green",
       });
 
       // Redirect based on role
-      if (user.role === 'admin') {
-        navigate('/admin');
+      if (user.role === "admin") {
+        navigate("/admin");
       } else {
-        navigate('/');
+        navigate("/");
       }
     },
     onError: (error: any) => {
@@ -50,12 +50,12 @@ export const useLogin = () => {
         error.response?.data?.error ||
         error.response?.data?.message ||
         error.message ||
-        'Đăng nhập thất bại. Vui lòng thử lại.';
+        "Đăng nhập thất bại. Vui lòng thử lại.";
 
       notifications.show({
-        title: 'Lỗi đăng nhập',
+        title: "Lỗi đăng nhập",
         message,
-        color: 'red',
+        color: "red",
       });
     },
   });
@@ -64,7 +64,7 @@ export const useLogin = () => {
     (credentials: LoginInput) => {
       loginMutation.mutate(credentials);
     },
-    [loginMutation]
+    [loginMutation],
   );
 
   return {

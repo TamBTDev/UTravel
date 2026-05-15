@@ -13,9 +13,9 @@ import {
   Alert,
 } from "@mantine/core";
 import { IconCheck, IconArrowLeft, IconAlertCircle } from "@tabler/icons-react";
-import { AppLayout } from "../../../components/layout";
-import { useAppDispatch, useAppSelector } from "../../../hooks/useAppStore";
-import { resetForgotFlow } from "../../../app/store/authSlice";
+import { AppLayout } from "@/components/layout";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { resetForgotFlow } from "@/app/store/authSlice";
 import { ForgotPasswordEmailStep } from "../components/ForgotPasswordEmailStep";
 import { ForgotPasswordOtpStep } from "../components/ForgotPasswordOtpStep";
 import { ForgotPasswordNewStep } from "../components/ForgotPasswordNewStep";

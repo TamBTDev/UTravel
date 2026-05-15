@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { authService } from "../../features/auth/services";
+import { authService } from "@/features/auth/services";
 
 interface ForgotPasswordState {
   step: "email" | "otp" | "newPassword" | "success";

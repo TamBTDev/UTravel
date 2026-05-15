@@ -1,5 +1,5 @@
-import * as userRepository from "@/repositories/user.repository";
-import * as userOtpRepository from "@/repositories/userOtp.repository";
+import * as userRepository from "@/modules/users/user.repository";
+import * as userOtpRepository from "@/modules/users/userOtp.repository";
 import * as emailService from "@/services/email.service";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";

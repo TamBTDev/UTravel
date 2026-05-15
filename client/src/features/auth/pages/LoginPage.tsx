@@ -1,6 +1,6 @@
-import { Container, Grid, Box, Title, Text, Stack } from '@mantine/core';
-import { AppLayout } from '../../../components/layout';
-import { LoginForm, AuthBenefits } from '../components';
+import { Container, Grid, Box, Title, Text, Stack } from "@mantine/core";
+import { AppLayout } from "@/components/layout";
+import { LoginForm, AuthBenefits } from "../components";
 
 /**
  * Login Page
@@ -11,9 +11,9 @@ export const LoginPage = () => {
     <AppLayout withContainer={false}>
       <Box
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           opacity: 0.05,
-          position: 'absolute',
+          position: "absolute",
           top: 70,
           left: 0,
           right: 0,
@@ -34,16 +34,18 @@ export const LoginPage = () => {
                   fw={700}
                   mb="md"
                   style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    backgroundClip: 'text',
-                    color: 'transparent',
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    backgroundClip: "text",
+                    color: "transparent",
                   }}
                 >
                   Khám Phá Thế Giới
                 </Title>
                 <Text size="lg" c="dimmed" mb="xl">
-                  Đăng nhập để bắt đầu tìm kiếm và đặt khách sạn tuyệt vời trên toàn thế giới.
-                  Nhận thêm các ưu đãi độc quyền và quản lý đơn đặt phòng của bạn dễ dàng.
+                  Đăng nhập để bắt đầu tìm kiếm và đặt khách sạn tuyệt vời trên
+                  toàn thế giới. Nhận thêm các ưu đãi độc quyền và quản lý đơn
+                  đặt phòng của bạn dễ dàng.
                 </Text>
               </div>
 
@@ -53,7 +55,7 @@ export const LoginPage = () => {
 
           {/* Right side - Form */}
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Box h="100%" style={{ display: 'flex', alignItems: 'center' }}>
+            <Box h="100%" style={{ display: "flex", alignItems: "center" }}>
               <LoginForm />
             </Box>
           </Grid.Col>

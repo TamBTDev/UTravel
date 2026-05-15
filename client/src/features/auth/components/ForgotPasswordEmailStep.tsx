@@ -5,20 +5,13 @@ import {
   Stack,
   Text,
   Alert,
-  Paper,
   Title,
   ThemeIcon,
   Group,
 } from "@mantine/core";
 import { IconMail, IconAlertCircle, IconSend } from "@tabler/icons-react";
-import {
-  useAppDispatch,
-  useAppSelector,
-} from "../../../hooks/useAppStore";
-import {
-  sendForgotPasswordOtp,
-  clearError,
-} from "../../../app/store/authSlice";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { sendForgotPasswordOtp, clearError } from "@/app/store/authSlice";
 
 export const ForgotPasswordEmailStep = () => {
   const dispatch = useAppDispatch();

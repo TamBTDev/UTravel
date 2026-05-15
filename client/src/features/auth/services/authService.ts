@@ -1,5 +1,5 @@
-import { apiClient } from '../../../lib/axios';
-import { LoginInput, RegisterInput } from '@shared/schemas/auth.schema';
+import { apiClient } from "@/lib/axios";
+import { LoginInput, RegisterInput } from "@shared/schemas/auth.schema";
 
 export interface LoginResponse {
   success: boolean;
@@ -10,7 +10,7 @@ export interface LoginResponse {
     lastName: string;
     phone?: string;
     avatar?: string;
-    role: 'user' | 'admin';
+    role: "user" | "admin";
   };
   token: string;
 }
@@ -26,8 +26,8 @@ export const authService = {
   login: async (credentials: LoginInput): Promise<LoginResponse> => {
     try {
       const response = await apiClient.post<LoginResponse>(
-        '/auth/login',
-        credentials
+        "/auth/login",
+        credentials,
       );
       return response.data;
     } catch (error: any) {
@@ -40,7 +40,7 @@ export const authService = {
    */
   logout: async (): Promise<void> => {
     try {
-      await apiClient.post('/auth/logout');
+      await apiClient.post("/auth/logout");
     } catch (error: any) {
       throw error.response?.data || error;
     }
@@ -51,7 +51,7 @@ export const authService = {
    */
   getCurrentUser: async () => {
     try {
-      const response = await apiClient.get('/auth/me');
+      const response = await apiClient.get("/auth/me");
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -60,7 +60,7 @@ export const authService = {
 
   refreshToken: async (): Promise<{ token: string }> => {
     try {
-      const response = await apiClient.post('/auth/refresh');
+      const response = await apiClient.post("/auth/refresh");
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -70,9 +70,11 @@ export const authService = {
   /**
    * Đăng ký tài khoản mới
    */
-  register: async (data: RegisterInput): Promise<{ data: { userId: number; email: string }; message: string }> => {
+  register: async (
+    data: RegisterInput,
+  ): Promise<{ data: { userId: number; email: string }; message: string }> => {
     try {
-      const response = await apiClient.post('/auth/register', data);
+      const response = await apiClient.post("/auth/register", data);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -82,9 +84,12 @@ export const authService = {
   /**
    * Xác thực OTP
    */
-  verifyOtp: async (data: { userId: number; otpCode: string }): Promise<{ user: any; message: string }> => {
+  verifyOtp: async (data: {
+    userId: number;
+    otpCode: string;
+  }): Promise<{ user: any; message: string }> => {
     try {
-      const response = await apiClient.post('/auth/register/verify-otp', data);
+      const response = await apiClient.post("/auth/register/verify-otp", data);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -96,7 +101,9 @@ export const authService = {
    */
   resendOtp: async (userId: number): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post('/auth/register/resend-otp', { userId });
+      const response = await apiClient.post("/auth/register/resend-otp", {
+        userId,
+      });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -105,7 +112,7 @@ export const authService = {
 
   forgotPassword: async (email: string): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post('/auth/forgot-password', { email });
+      const response = await apiClient.post("/auth/forgot-password", { email });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -118,7 +125,7 @@ export const authService = {
     newPassword: string;
   }): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post('/auth/reset-password', data);
+      const response = await apiClient.post("/auth/reset-password", data);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;

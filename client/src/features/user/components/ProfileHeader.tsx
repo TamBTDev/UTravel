@@ -1,6 +1,6 @@
-import { Avatar, Group, Stack, Text, Badge, ThemeIcon, Skeleton } from '@mantine/core';
-import { IconUser, IconShieldCheck } from '@tabler/icons-react';
-import { UserProfile } from '../../../../app/store/profileSlice';
+import { Avatar, Group, Stack, Text, Badge, Skeleton } from "@mantine/core";
+import { IconUser, IconShieldCheck } from "@tabler/icons-react";
+import { UserProfile } from "@/app/store/profileSlice";
 
 interface Props {
   profile: UserProfile | null;
@@ -9,8 +9,9 @@ interface Props {
 
 export const ProfileHeader = ({ profile, isLoading }: Props) => {
   const fullName = profile
-    ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || 'Chưa cập nhật'
-    : '';
+    ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() ||
+      "Chưa cập nhật"
+    : "";
 
   if (isLoading) {
     return (
@@ -27,28 +28,27 @@ export const ProfileHeader = ({ profile, isLoading }: Props) => {
 
   return (
     <Group gap="lg" align="flex-start" wrap="wrap">
-      <Avatar
-        src={profile?.avatar}
-        size={80}
-        radius="xl"
-        color="violet"
-      >
+      <Avatar src={profile?.avatar} size={80} radius="xl" color="violet">
         <IconUser size={36} />
       </Avatar>
       <Stack gap={4}>
-        <Text fw={700} size="xl">{fullName}</Text>
-        <Text c="dimmed" size="sm">{profile?.email}</Text>
+        <Text fw={700} size="xl">
+          {fullName}
+        </Text>
+        <Text c="dimmed" size="sm">
+          {profile?.email}
+        </Text>
         <Group gap="xs" mt={4}>
           <Badge
             variant="light"
-            color={profile?.status === 'VERIFIED' ? 'teal' : 'orange'}
+            color={profile?.status === "VERIFIED" ? "teal" : "orange"}
             leftSection={
-              profile?.status === 'VERIFIED'
-                ? <IconShieldCheck size={12} />
-                : undefined
+              profile?.status === "VERIFIED" ? (
+                <IconShieldCheck size={12} />
+              ) : undefined
             }
           >
-            {profile?.status === 'VERIFIED' ? 'Đã xác thực' : 'Chưa xác thực'}
+            {profile?.status === "VERIFIED" ? "Đã xác thực" : "Chưa xác thực"}
           </Badge>
           <Badge variant="outline" color="violet">
             {profile?.role}

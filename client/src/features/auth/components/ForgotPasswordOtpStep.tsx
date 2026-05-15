@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   PinInput,
   Button,
@@ -9,10 +9,10 @@ import {
   ThemeIcon,
   Group,
   Anchor,
-} from '@mantine/core';
-import { IconShieldCheck, IconAlertCircle } from '@tabler/icons-react';
-import { useAppDispatch, useAppSelector } from '../../../hooks/useAppStore';
-import { setForgotStep, clearError } from '../../../app/store/authSlice';
+} from "@mantine/core";
+import { IconShieldCheck, IconAlertCircle } from "@tabler/icons-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { setForgotStep, clearError } from "@/app/store/authSlice";
 
 interface Props {
   onOtpConfirmed: (otp: string) => void;
@@ -21,19 +21,19 @@ interface Props {
 export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
   const dispatch = useAppDispatch();
   const { email, isLoading, error } = useAppSelector((s) => s.auth);
-  const [otp, setOtp] = useState('');
-  const [otpError, setOtpError] = useState('');
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length !== 6) {
-      setOtpError('Vui lòng nhập đủ 6 chữ số');
+      setOtpError("Vui lòng nhập đủ 6 chữ số");
       return;
     }
-    setOtpError('');
+    setOtpError("");
     dispatch(clearError());
     onOtpConfirmed(otp);
-    dispatch(setForgotStep('newPassword'));
+    dispatch(setForgotStep("newPassword"));
   };
 
   return (
@@ -43,7 +43,9 @@ export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
           <IconShieldCheck size={20} />
         </ThemeIcon>
         <div>
-          <Title order={3} fw={600}>Nhập mã OTP</Title>
+          <Title order={3} fw={600}>
+            Nhập mã OTP
+          </Title>
           <Text size="sm" c="dimmed">
             Mã đã được gửi đến <strong>{email}</strong>
           </Text>
@@ -68,7 +70,9 @@ export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
             error={!!otpError}
           />
           {otpError && (
-            <Text size="xs" c="red">{otpError}</Text>
+            <Text size="xs" c="red">
+              {otpError}
+            </Text>
           )}
 
           <Button
@@ -78,7 +82,7 @@ export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
             fullWidth
             size="md"
             variant="gradient"
-            gradient={{ from: 'teal', to: 'cyan' }}
+            gradient={{ from: "teal", to: "cyan" }}
           >
             Xác nhận OTP
           </Button>
@@ -86,10 +90,10 @@ export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
           <Anchor
             size="sm"
             onClick={() => {
-              dispatch(setForgotStep('email'));
+              dispatch(setForgotStep("email"));
               dispatch(clearError());
             }}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: "pointer" }}
           >
             ← Dùng email khác
           </Anchor>
