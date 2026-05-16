@@ -1,50 +1,49 @@
-import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { notifications } from '@mantine/notifications';
-import { authService } from '../services';
-import { RegisterInput } from '@shared/schemas/auth.schema';
+import { useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { notifications } from "@mantine/notifications";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { register, clearError } from "@/app/store/authSlice";
+import { RegisterInput } from "@shared/schemas/auth.schema";
 
 export const useRegister = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isLoading, error, tempUserId } = useAppSelector((state) => state.auth);
 
-  const registerMutation = useMutation({
-    mutationFn: (data: RegisterInput) => authService.register(data),
-    onSuccess: (response, variables) => {
-      const { message, data } = response as any;
-      
+  useEffect(() => {
+    if (tempUserId) {
       notifications.show({
-        title: 'Đăng ký thành công',
-        message: message || 'Vui lòng kiểm tra email để nhận mã OTP.',
-        color: 'green',
+        title: "Đăng ký thành công",
+        message: "Vui lòng kiểm tra email để nhận mã OTP.",
+        color: "green",
       });
 
-      // Redirect to OTP verification with email and userId
-      navigate('/verify-otp', { state: { email: data?.email || variables.email, userId: data?.userId } });
-    },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error ||
-        error.message ||
-        'Đăng ký thất bại. Vui lòng thử lại.';
+      // Chuyển sang trang xác thực OTP
+      navigate("/verify-otp", { state: { userId: tempUserId } });
+    }
+  }, [tempUserId, navigate]);
 
+  useEffect(() => {
+    if (error) {
       notifications.show({
-        title: 'Lỗi đăng ký',
-        message,
-        color: 'red',
+        title: "Lỗi đăng ký",
+        message: error,
+        color: "red",
       });
-    },
-  });
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   const handleRegister = useCallback(
     (data: RegisterInput) => {
-      registerMutation.mutate(data);
+      dispatch(register(data));
     },
-    [registerMutation]
+    [dispatch],
   );
 
   return {
     register: handleRegister,
-    ...registerMutation,
+    isLoading,
+    error,
   };
 };

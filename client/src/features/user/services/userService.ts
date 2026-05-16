@@ -1,4 +1,4 @@
-import { apiClient } from '../../../lib/axios';
+import { apiClient } from "@/lib/axios";
 
 export interface UpdateProfileInput {
   firstName?: string;
@@ -10,12 +10,12 @@ export interface UpdateProfileInput {
 
 export const userService = {
   getProfile: async () => {
-    const response = await apiClient.get('/users/profile');
+    const response = await apiClient.get("/users/profile");
     return response.data;
   },
 
   updateProfile: async (data: UpdateProfileInput) => {
-    const response = await apiClient.put('/users/profile', data);
+    const response = await apiClient.put("/users/profile", data);
     return response.data;
   },
 };

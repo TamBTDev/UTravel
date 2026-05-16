@@ -20,7 +20,7 @@ interface Props {
 
 export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
   const dispatch = useAppDispatch();
-  const { email, isLoading, error } = useAppSelector((s) => s.auth);
+  const { forgotEmail, isLoading, error } = useAppSelector((s) => s.auth);
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
 
@@ -47,7 +47,7 @@ export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
             Nhập mã OTP
           </Title>
           <Text size="sm" c="dimmed">
-            Mã đã được gửi đến <strong>{email}</strong>
+            Mã đã được gửi đến <strong>{forgotEmail}</strong>
           </Text>
         </div>
       </Group>
@@ -95,7 +95,7 @@ export const ForgotPasswordOtpStep = ({ onOtpConfirmed }: Props) => {
             }}
             style={{ cursor: "pointer" }}
           >
-            ← Dùng email khác
+            Dùng email khác
           </Anchor>
         </Stack>
       </form>

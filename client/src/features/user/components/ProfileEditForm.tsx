@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   TextInput,
   Textarea,
@@ -9,7 +9,7 @@ import {
   Text,
   Divider,
   Group,
-} from '@mantine/core';
+} from "@mantine/core";
 import {
   IconUser,
   IconPhone,
@@ -18,51 +18,47 @@ import {
   IconAlertCircle,
   IconCircleCheck,
   IconDeviceFloppy,
-} from '@tabler/icons-react';
-import { useAppDispatch, useAppSelector } from '../../../hooks/useAppStore';
-import {
-  updateProfile,
-  clearProfileMessages,
-} from '../../../app/store/profileSlice';
+} from "@tabler/icons-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { updateProfile, clearProfileMessages } from "@/app/store/profileSlice";
 
 export const ProfileEditForm = () => {
   const dispatch = useAppDispatch();
-  const { profile, isSaving, error, successMessage } = useAppSelector((s) => s.profile);
+  const { profile, isSaving, error, successMessage } = useAppSelector(
+    (s) => s.profile,
+  );
 
   const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    address: '',
-    avatar: '',
+    firstName: "",
+    lastName: "",
+    phone: "",
+    address: "",
+    avatar: "",
   });
 
-  // Sync form with profile from store
   useEffect(() => {
     if (profile) {
       setForm({
-        firstName: profile.firstName ?? '',
-        lastName: profile.lastName ?? '',
-        phone: profile.phone ?? '',
-        address: profile.address ?? '',
-        avatar: profile.avatar ?? '',
+        firstName: profile.firstName ?? "",
+        lastName: profile.lastName ?? "",
+        phone: profile.phone ?? "",
+        address: profile.address ?? "",
+        avatar: profile.avatar ?? "",
       });
     }
   }, [profile]);
 
-  const handleChange = (field: keyof typeof form) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    // Clear messages when user starts typing
-    if (error || successMessage) dispatch(clearProfileMessages());
-  };
+  const handleChange =
+    (field: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      if (error || successMessage) dispatch(clearProfileMessages());
+    };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Only send non-empty fields
     const payload = Object.fromEntries(
-      Object.entries(form).filter(([, v]) => v !== '')
+      Object.entries(form).filter(([, v]) => v !== ""),
     );
     dispatch(updateProfile(payload));
   };
@@ -71,17 +67,29 @@ export const ProfileEditForm = () => {
     <form onSubmit={handleSubmit}>
       <Stack gap="md">
         <Divider
-          label={<Text size="sm" fw={500} c="dimmed">Thông tin cá nhân</Text>}
+          label={
+            <Text size="sm" fw={500} c="dimmed">
+              Thông tin cá nhân
+            </Text>
+          }
           labelPosition="left"
         />
 
         {error && (
-          <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+          >
             {error}
           </Alert>
         )}
         {successMessage && (
-          <Alert icon={<IconCircleCheck size={16} />} color="teal" variant="light">
+          <Alert
+            icon={<IconCircleCheck size={16} />}
+            color="teal"
+            variant="light"
+          >
             {successMessage}
           </Alert>
         )}
@@ -93,7 +101,7 @@ export const ProfileEditForm = () => {
               label="Tên"
               placeholder="Nhập tên của bạn"
               value={form.firstName}
-              onChange={handleChange('firstName')}
+              onChange={handleChange("firstName")}
               leftSection={<IconUser size={16} />}
             />
           </Grid.Col>
@@ -103,7 +111,7 @@ export const ProfileEditForm = () => {
               label="Họ"
               placeholder="Nhập họ của bạn"
               value={form.lastName}
-              onChange={handleChange('lastName')}
+              onChange={handleChange("lastName")}
               leftSection={<IconUser size={16} />}
             />
           </Grid.Col>
@@ -114,7 +122,7 @@ export const ProfileEditForm = () => {
           label="Số điện thoại"
           placeholder="VD: 0912345678"
           value={form.phone}
-          onChange={handleChange('phone')}
+          onChange={handleChange("phone")}
           leftSection={<IconPhone size={16} />}
         />
 
@@ -123,7 +131,7 @@ export const ProfileEditForm = () => {
           label="Địa chỉ"
           placeholder="Nhập địa chỉ của bạn"
           value={form.address}
-          onChange={handleChange('address')}
+          onChange={handleChange("address")}
           rows={2}
           leftSection={<IconMapPin size={16} />}
         />
@@ -133,7 +141,7 @@ export const ProfileEditForm = () => {
           label="URL Ảnh đại diện"
           placeholder="https://example.com/avatar.jpg"
           value={form.avatar}
-          onChange={handleChange('avatar')}
+          onChange={handleChange("avatar")}
           leftSection={<IconLink size={16} />}
         />
 
@@ -144,7 +152,7 @@ export const ProfileEditForm = () => {
             loading={isSaving}
             leftSection={<IconDeviceFloppy size={16} />}
             variant="gradient"
-            gradient={{ from: 'violet', to: 'indigo' }}
+            gradient={{ from: "violet", to: "indigo" }}
           >
             Lưu thay đổi
           </Button>

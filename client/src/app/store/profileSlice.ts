@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import {
   userService,
   UpdateProfileInput,
-} from "../../features/user/services/userService";
+} from "@/features/user/services/userService";
 
 export interface UserProfile {
   id: number;
@@ -33,7 +33,8 @@ export const fetchProfile = createAsyncThunk(
       const res = await userService.getProfile();
       return res.data as UserProfile;
     } catch (err: any) {
-      return rejectWithValue(err.error || err.message || "Không thể tải hồ sơ");
+      const message = err.response?.data?.error || err.message || "Không thể tải hồ sơ";
+      return rejectWithValue(message);
     }
   },
 );
@@ -45,7 +46,12 @@ export const updateProfile = createAsyncThunk(
       const res = await userService.updateProfile(data);
       return res.data as UserProfile;
     } catch (err: any) {
-      return rejectWithValue(err.error || err.message || "Cập nhật thất bại");
+      const message =
+        err.response?.data?.details?.[0]?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Cập nhật thất bại";
+      return rejectWithValue(message);
     }
   },
 );

@@ -19,7 +19,11 @@ interface Props {
 
 export const ForgotPasswordNewStep = ({ otpCode }: Props) => {
   const dispatch = useAppDispatch();
-  const { email, isLoading, error } = useAppSelector((s) => s.auth);
+  const {
+    forgotEmail: email,
+    isLoading,
+    error,
+  } = useAppSelector((s) => s.auth);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [formErrors, setFormErrors] = useState<{

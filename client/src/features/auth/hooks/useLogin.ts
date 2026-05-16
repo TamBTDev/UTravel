@@ -1,74 +1,58 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
-import { useAuthContext } from "@/app/providers";
-import { authService } from "../services";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { login, clearError } from "@/app/store/authSlice";
 import { LoginInput } from "@shared/schemas/auth.schema";
+import { USER_ROLES } from "@shared/constants/roles";
 
-/**
- * Custom hook để xử lý login logic
- * Bao gồm validation, API call, state management, error handling
- */
 export const useLogin = () => {
   const navigate = useNavigate();
-  const { login } = useAuthContext();
+  const dispatch = useAppDispatch();
+  const { isLoading, error, isAuthenticated, user } = useAppSelector(
+    (state) => state.auth,
+  );
 
-  const loginMutation = useMutation({
-    mutationFn: (data: LoginInput) => authService.login(data),
-    onSuccess: (response) => {
-      const { user, token } = response;
-
-      // Update auth context
-      login(
-        {
-          id: user.id.toString(),
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-          avatar: user.avatar,
-          role: user.role,
-        },
-        token,
-      );
-
-      // Show success notification
+  // Xử lý thông báo và redirect khi isAuthenticated thay đổi
+  useEffect(() => {
+    if (isAuthenticated && user) {
       notifications.show({
         title: "Đăng nhập thành công",
         message: `Chào mừng ${user.firstName}!`,
         color: "green",
       });
 
-      // Redirect based on role
-      if (user.role === "admin") {
+      if (user.role === USER_ROLES.ADMIN) {
         navigate("/admin");
       } else {
         navigate("/");
       }
-    },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại.";
+    }
+  }, [isAuthenticated, user, navigate]);
 
+  // Xử lý thông báo lỗi
+  useEffect(() => {
+    if (error) {
       notifications.show({
         title: "Lỗi đăng nhập",
-        message,
+        message: error,
         color: "red",
       });
-    },
-  });
+      // Clear error sau khi đã hiển thị để tránh lặp lại
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   const handleLogin = useCallback(
     (credentials: LoginInput) => {
-      loginMutation.mutate(credentials);
+      dispatch(login(credentials));
     },
-    [loginMutation],
+    [dispatch],
   );
 
   return {
     login: handleLogin,
-    ...loginMutation,
+    isLoading,
+    error,
   };
 };

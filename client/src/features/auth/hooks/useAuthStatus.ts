@@ -1,18 +1,22 @@
 import { useEffect } from "react";
-import { useAuthContext } from "@/app/providers";
+import { useAppSelector } from "@/hooks/useAppStore";
+import { useNavigate } from "react-router-dom";
 
 /**
- * Hook để check auth status và quản lý redirect
+ * Hook check auth status và quản lý redirect dùng Redux
  */
 export const useAuthStatus = (redirectTo?: string) => {
-  const { user, isAuthenticated, isLoading } = useAuthContext();
+  const { user, isAuthenticated, isLoading } = useAppSelector(
+    (state) => state.auth,
+  );
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Nếu đã đăng nhập và có redirectTo, thì redirect
     if (!isLoading && isAuthenticated && redirectTo) {
-      window.location.href = redirectTo;
+      navigate(redirectTo);
     }
-  }, [isLoading, isAuthenticated, redirectTo]);
+  }, [isLoading, isAuthenticated, redirectTo, navigate]);
 
   return {
     user,

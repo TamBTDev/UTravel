@@ -17,9 +17,9 @@ import {
   IconAlertCircle,
   IconCalendar,
 } from "@tabler/icons-react";
-import { AppLayout } from "../../../components/layout";
-import { useAppDispatch, useAppSelector } from "../../../hooks/useAppStore";
-import { fetchProfile } from "../../../app/store/profileSlice";
+import { AppLayout } from "@/components/layout";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { fetchProfile } from "@/app/store/profileSlice";
 import { ProfileHeader } from "../components/ProfileHeader";
 import { ProfileEditForm } from "../components/ProfileEditForm";
 
@@ -94,12 +94,10 @@ export const ProfilePage = () => {
         )}
 
         <Stack gap="lg">
-          {/* Avatar + basic info card */}
           <Paper shadow="sm" radius="lg" p="xl" withBorder>
             <ProfileHeader profile={profile} isLoading={isLoading} />
           </Paper>
 
-          {/* Tabbed detail/edit */}
           <Paper shadow="sm" radius="lg" p="xl" withBorder>
             {isLoading ? (
               <Stack gap="md">
@@ -122,7 +120,6 @@ export const ProfilePage = () => {
                   </Tabs.Tab>
                 </Tabs.List>
 
-                {/* Info tab — read-only display */}
                 <Tabs.Panel value="info">
                   <Stack gap={0}>
                     <InfoRow label="Email" value={profile?.email} />
@@ -149,7 +146,6 @@ export const ProfilePage = () => {
                   </Stack>
                 </Tabs.Panel>
 
-                {/* Edit tab */}
                 <Tabs.Panel value="edit">
                   <ProfileEditForm />
                 </Tabs.Panel>

@@ -15,7 +15,7 @@ import {
 import { IconCheck, IconArrowLeft, IconAlertCircle } from "@tabler/icons-react";
 import { AppLayout } from "@/components/layout";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
-import { resetForgotFlow } from "@/app/store/authSlice";
+import { resetForgotFlow, setForgotStep } from "@/app/store/authSlice";
 import { ForgotPasswordEmailStep } from "../components/ForgotPasswordEmailStep";
 import { ForgotPasswordOtpStep } from "../components/ForgotPasswordOtpStep";
 import { ForgotPasswordNewStep } from "../components/ForgotPasswordNewStep";
@@ -29,7 +29,7 @@ const stepIndex: Record<string, number> = {
 
 export const ForgotPasswordPage = () => {
   const dispatch = useAppDispatch();
-  const { step } = useAppSelector((s) => s.auth);
+  const { forgotStep: step } = useAppSelector((s) => s.auth);
   const [confirmedOtp, setConfirmedOtp] = useState("");
 
   // Reset khi rời trang
@@ -100,11 +100,7 @@ export const ForgotPasswordPage = () => {
                 <ForgotPasswordOtpStep
                   onOtpConfirmed={(otp) => {
                     setConfirmedOtp(otp);
-                    import("../../../app/store/authSlice").then(
-                      ({ setForgotStep }) => {
-                        /* eslint-disable-next-line */
-                      },
-                    );
+                    dispatch(setForgotStep("newPassword"));
                   }}
                 />
               )}

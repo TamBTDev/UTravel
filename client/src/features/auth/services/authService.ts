@@ -1,5 +1,8 @@
 import { apiClient } from "@/lib/axios";
 import { LoginInput, RegisterInput } from "@shared/schemas/auth.schema";
+import { USER_ROLES } from "@shared/constants/roles";
+
+type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 export interface LoginResponse {
   success: boolean;
@@ -10,7 +13,7 @@ export interface LoginResponse {
     lastName: string;
     phone?: string;
     avatar?: string;
-    role: "user" | "admin";
+    role: UserRole;
   };
   token: string;
 }
