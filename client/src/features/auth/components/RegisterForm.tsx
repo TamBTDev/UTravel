@@ -1,33 +1,27 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Button,
-  PasswordInput,
-  TextInput,
-  Stack,
-  Text,
-} from '@mantine/core';
-import { RegisterInput, registerSchema } from '@shared/schemas/auth.schema';
-import { useRegister } from '../hooks/useRegister';
-import { AuthCard } from './AuthCard';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button, PasswordInput, TextInput, Stack, Text } from "@mantine/core";
+import { RegisterInput, registerSchema } from "@shared/schemas/auth.schema";
+import { useRegister } from "../hooks/useRegister";
+import { AuthCard } from "./AuthCard";
 
 export const RegisterForm = () => {
   const {
     register: formRegister,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      email: '',
-      password: '',
-      confirmPassword: '',
-      firstName: '',
-      lastName: '',
+      email: "",
+      password: "",
+      confirmPassword: "",
+      firstName: "",
+      lastName: "",
     },
   });
 
-  const { register: registerUser, isPending } = useRegister();
+  const { register: registerUser, isLoading } = useRegister();
 
   const onSubmit = (data: RegisterInput) => {
     registerUser(data);
@@ -36,10 +30,10 @@ export const RegisterForm = () => {
   return (
     <AuthCard>
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ margin: '0 0 8px 0', fontSize: 24, fontWeight: 600 }}>
+        <h2 style={{ margin: "0 0 8px 0", fontSize: 24, fontWeight: 600 }}>
           Đăng Ký Tài Khoản
         </h2>
-        <p style={{ margin: 0, color: '#666', fontSize: 14 }}>
+        <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
           Tạo tài khoản mới để trải nghiệm dịch vụ
         </p>
       </div>
@@ -49,54 +43,54 @@ export const RegisterForm = () => {
           <TextInput
             label="Họ"
             placeholder="Nhập họ của bạn"
-            {...formRegister('lastName')}
+            {...formRegister("lastName")}
             error={errors.lastName?.message}
-            disabled={isPending || isSubmitting}
+            disabled={isLoading}
             required
           />
 
           <TextInput
             label="Tên"
             placeholder="Nhập tên của bạn"
-            {...formRegister('firstName')}
+            {...formRegister("firstName")}
             error={errors.firstName?.message}
-            disabled={isPending || isSubmitting}
+            disabled={isLoading}
             required
           />
 
           <TextInput
             label="Email"
             placeholder="Nhập email của bạn"
-            {...formRegister('email')}
+            {...formRegister("email")}
             error={errors.email?.message}
-            disabled={isPending || isSubmitting}
+            disabled={isLoading}
             required
           />
 
           <PasswordInput
             label="Mật khẩu"
             placeholder="Nhập mật khẩu"
-            {...formRegister('password')}
+            {...formRegister("password")}
             error={errors.password?.message}
-            disabled={isPending || isSubmitting}
+            disabled={isLoading}
             required
           />
 
           <PasswordInput
             label="Xác nhận mật khẩu"
             placeholder="Nhập lại mật khẩu"
-            {...formRegister('confirmPassword')}
+            {...formRegister("confirmPassword")}
             error={errors.confirmPassword?.message}
-            disabled={isPending || isSubmitting}
+            disabled={isLoading}
             required
           />
 
           <Button
             type="submit"
             fullWidth
-            loading={isPending || isSubmitting}
+            loading={isLoading}
             style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             }}
           >
             Đăng Ký
@@ -104,13 +98,17 @@ export const RegisterForm = () => {
         </Stack>
       </form>
 
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+      <div style={{ marginTop: "20px", textAlign: "center" }}>
         <Text size="sm">
-          Đã có tài khoản?{' '}
+          Đã có tài khoản?{" "}
           <Text
             component="a"
             href="/login"
-            style={{ color: '#667eea', fontWeight: 600, textDecoration: 'none' }}
+            style={{
+              color: "#667eea",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
           >
             Đăng nhập ngay
           </Text>

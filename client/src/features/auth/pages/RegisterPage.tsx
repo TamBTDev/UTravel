@@ -1,16 +1,16 @@
-import { Container, Grid, Box, Title, Text, Stack } from '@mantine/core';
-import { AppLayout } from '../../../components/layout';
-import { AuthBenefits } from '../components';
-import { RegisterForm } from '../components/RegisterForm';
+import { Container, Grid, Box, Title, Text, Stack } from "@mantine/core";
+import { AppLayout } from "@/components/layout";
+import { AuthBenefits } from "../components";
+import { RegisterForm } from "../components/RegisterForm";
 
 export const RegisterPage = () => {
   return (
     <AppLayout withContainer={false}>
       <Box
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           opacity: 0.05,
-          position: 'absolute',
+          position: "absolute",
           top: 70,
           left: 0,
           right: 0,
@@ -31,15 +31,17 @@ export const RegisterPage = () => {
                   fw={700}
                   mb="md"
                   style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    backgroundClip: 'text',
-                    color: 'transparent',
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    backgroundClip: "text",
+                    color: "transparent",
                   }}
                 >
                   Tham Gia Cùng Chúng Tôi
                 </Title>
                 <Text size="lg" c="dimmed" mb="xl">
-                  Đăng ký tài khoản miễn phí để tận hưởng những tiện ích tuyệt vời nhất khi đặt phòng khách sạn.
+                  Đăng ký tài khoản miễn phí để tận hưởng những tiện ích tuyệt
+                  vời nhất khi đặt phòng khách sạn.
                 </Text>
               </div>
 
@@ -49,7 +51,7 @@ export const RegisterPage = () => {
 
           {/* Right side - Form */}
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Box h="100%" style={{ display: 'flex', alignItems: 'center' }}>
+            <Box h="100%" style={{ display: "flex", alignItems: "center" }}>
               <RegisterForm />
             </Box>
           </Grid.Col>

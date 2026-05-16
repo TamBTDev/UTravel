@@ -1,70 +1,66 @@
-import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { notifications } from '@mantine/notifications';
-import { authService } from '../services';
+import { useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { notifications } from "@mantine/notifications";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { verifyOtp, resendOtp, clearError } from "@/app/store/authSlice";
 
 export const useVerifyOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+
   const state = location.state as { email: string; userId: number } | undefined;
-  
-  const [email] = useState(state?.email || '');
-  const [userId] = useState(state?.userId || 0);
+  const userId = state?.userId || 0;
+  const email = state?.email || "";
 
-  const verifyMutation = useMutation({
-    mutationFn: (otpCode: string) => authService.verifyOtp({ userId, otpCode }),
-    onSuccess: (response) => {
+  useEffect(() => {
+    if (isAuthenticated) {
       notifications.show({
-        title: 'Xác thực thành công',
-        message: response.message || 'Tài khoản của bạn đã được kích hoạt. Vui lòng đăng nhập.',
-        color: 'green',
+        title: "Xác thực thành công",
+        message: "Tài khoản của bạn đã được kích hoạt.",
+        color: "green",
       });
-      navigate('/login');
-    },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error ||
-        error.message ||
-        'Mã OTP không hợp lệ hoặc đã hết hạn.';
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
+  useEffect(() => {
+    if (error) {
       notifications.show({
-        title: 'Lỗi xác thực',
-        message,
-        color: 'red',
+        title: "Lỗi",
+        message: error,
+        color: "red",
       });
-    },
-  });
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
-  const resendMutation = useMutation({
-    mutationFn: () => authService.resendOtp(userId),
-    onSuccess: (response) => {
-      notifications.show({
-        title: 'Thành công',
-        message: response.message || 'Mã OTP mới đã được gửi.',
-        color: 'green',
-      });
+  const handleVerify = useCallback(
+    (otpCode: string) => {
+      dispatch(verifyOtp({ userId, otpCode }));
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error ||
-        error.message ||
-        'Không thể gửi lại mã OTP.';
+    [dispatch, userId],
+  );
 
-      notifications.show({
-        title: 'Lỗi',
-        message,
-        color: 'red',
-      });
-    },
-  });
+  const handleResend = useCallback(() => {
+    dispatch(resendOtp(userId)).then((result) => {
+      if (resendOtp.fulfilled.match(result)) {
+        notifications.show({
+          title: "Thành công",
+          message: "Mã OTP mới đã được gửi.",
+          color: "green",
+        });
+      }
+    });
+  }, [dispatch, userId]);
 
   return {
     email,
     userId,
-    verifyOtp: verifyMutation.mutate,
-    isVerifying: verifyMutation.isPending,
-    resendOtp: resendMutation.mutate,
-    isResending: resendMutation.isPending,
+    verifyOtp: handleVerify,
+    isVerifying: isLoading,
+    resendOtp: handleResend,
+    isResending: isLoading,
   };
 };

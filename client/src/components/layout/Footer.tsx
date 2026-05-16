@@ -1,6 +1,22 @@
-import { Box, Container, Group, Stack, Text, ThemeIcon, Divider, Grid } from '@mantine/core';
-import { IconPhone, IconMail, IconMapPin, IconBrandFacebook, IconBrandTwitter, IconBrandInstagram } from '@tabler/icons-react';
-import { Link } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  Group,
+  Stack,
+  Text,
+  ThemeIcon,
+  Divider,
+  Grid,
+} from "@mantine/core";
+import {
+  IconPhone,
+  IconMail,
+  IconMapPin,
+  IconBrandFacebook,
+  IconBrandTwitter,
+  IconBrandInstagram,
+} from "@tabler/icons-react";
+import { Link } from "react-router-dom";
 
 export const AppFooter = () => {
   const currentYear = new Date().getFullYear();
@@ -9,35 +25,20 @@ export const AppFooter = () => {
     <Box
       component="footer"
       py="xl"
-      style={{ borderTop: '1px solid #e9ecef', marginTop: 'auto' }}
+      style={{ borderTop: "1px solid #e9ecef", marginTop: "auto" }}
     >
       <Container size="xl">
         <Grid gutter="xl" mb="xl">
-          {/* Company Info */}
           <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
             <Stack gap="md">
               <Group gap={8}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '0.5rem',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '1.2rem',
-                  }}
-                >
-                  ✈️
-                </div>
                 <Text fw={700} size="lg">
                   UTravel
                 </Text>
               </Group>
               <Text size="sm" c="dimmed">
-                Nền tảng đặt phòng khách sạn trực tuyến hàng đầu, giúp bạn tìm kiếm và đặt khách sạn tuyệt vời trên toàn thế giới.
+                Nền tảng đặt phòng khách sạn trực tuyến hàng đầu, giúp bạn tìm
+                kiếm và đặt khách sạn tuyệt vời trên toàn thế giới.
               </Text>
             </Stack>
           </Grid.Col>
@@ -49,22 +50,27 @@ export const AppFooter = () => {
                 Liên kết nhanh
               </Text>
               <Stack gap="xs">
-                <Link to="/" style={{ textDecoration: 'none' }}>
+                <Link to="/" style={{ textDecoration: "none" }}>
                   <Text size="sm" c="dimmed" className="hover:text-blue-600">
                     Trang chủ
                   </Text>
                 </Link>
-                <Link to="/hotels" style={{ textDecoration: 'none' }}>
+                <Link to="/hotels" style={{ textDecoration: "none" }}>
                   <Text size="sm" c="dimmed" className="hover:text-blue-600">
                     Khách sạn
                   </Text>
                 </Link>
-                <Link to="/bookings" style={{ textDecoration: 'none' }}>
+                <Link to="/bookings" style={{ textDecoration: "none" }}>
                   <Text size="sm" c="dimmed" className="hover:text-blue-600">
                     Đặt phòng của tôi
                   </Text>
                 </Link>
-                <Text size="sm" c="dimmed" className="hover:text-blue-600" component="div">
+                <Text
+                  size="sm"
+                  c="dimmed"
+                  className="hover:text-blue-600"
+                  component="div"
+                >
                   Liên hệ
                 </Text>
               </Stack>
@@ -78,16 +84,36 @@ export const AppFooter = () => {
                 Hỗ trợ
               </Text>
               <Stack gap="xs">
-                <Text size="sm" c="dimmed" className="hover:text-blue-600" component="div">
+                <Text
+                  size="sm"
+                  c="dimmed"
+                  className="hover:text-blue-600"
+                  component="div"
+                >
                   Câu hỏi thường gặp
                 </Text>
-                <Text size="sm" c="dimmed" className="hover:text-blue-600" component="div">
+                <Text
+                  size="sm"
+                  c="dimmed"
+                  className="hover:text-blue-600"
+                  component="div"
+                >
                   Điều khoản dịch vụ
                 </Text>
-                <Text size="sm" c="dimmed" className="hover:text-blue-600" component="div">
+                <Text
+                  size="sm"
+                  c="dimmed"
+                  className="hover:text-blue-600"
+                  component="div"
+                >
                   Chính sách bảo mật
                 </Text>
-                <Text size="sm" c="dimmed" className="hover:text-blue-600" component="div">
+                <Text
+                  size="sm"
+                  c="dimmed"
+                  className="hover:text-blue-600"
+                  component="div"
+                >
                   Liên hệ hỗ trợ
                 </Text>
               </Stack>

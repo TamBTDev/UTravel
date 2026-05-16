@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 import {
   Container,
   Group,
@@ -11,19 +11,22 @@ import {
   Drawer,
   Stack,
   Divider,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconLogout, IconUser, IconDashboard } from '@tabler/icons-react';
-import { useAuthContext } from '../../app/providers';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconLogout, IconUser, IconDashboard } from "@tabler/icons-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { logout } from "@/app/store/authSlice";
+import { USER_ROLES } from "@shared/constants/roles";
 
 export const Navbar = () => {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuthContext();
+  const dispatch = useAppDispatch();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [opened, { toggle, close }] = useDisclosure(false);
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    dispatch(logout());
+    navigate("/");
     close();
   };
 
@@ -32,35 +35,38 @@ export const Navbar = () => {
     close();
   };
 
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "";
+
   return (
     <>
       <Box
         component="header"
         h={70}
-        style={{ borderBottom: '1px solid #e9ecef' }}
+        style={{ borderBottom: "1px solid #e9ecef" }}
       >
         <Container size="xl" h="100%" px="md">
           <Group justify="space-between" align="center" h="100%">
             {/* Logo */}
-            <Link to="/" style={{ textDecoration: 'none' }}>
+            <Link to="/" style={{ textDecoration: "none" }}>
               <Group gap={8} wrap="nowrap">
                 <Box
                   style={{
                     width: 40,
                     height: 40,
-                    borderRadius: '0.5rem',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '1.2rem',
-                    fontWeight: 'bold',
+                    borderRadius: "0.5rem",
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                    fontSize: "1.2rem",
+                    fontWeight: "bold",
                   }}
                 >
                   ✈️
                 </Box>
-                <Text fw={700} size="lg" style={{ color: '#1a1a1a' }}>
+                <Text fw={700} size="lg" style={{ color: "#1a1a1a" }}>
                   UTravel
                 </Text>
               </Group>
@@ -68,20 +74,26 @@ export const Navbar = () => {
 
             {/* Desktop Navigation */}
             <Group gap="lg" visibleFrom="sm" component="nav">
-              <Link to="/" style={{ textDecoration: 'none', color: '#555' }}>
-                <Text size="sm" fw={500} className="hover:text-blue-600">
+              <Link to="/" style={{ textDecoration: "none", color: "#555" }}>
+                <Text size="sm" fw={500}>
                   Trang chủ
                 </Text>
               </Link>
-              <Link to="/hotels" style={{ textDecoration: 'none', color: '#555' }}>
-                <Text size="sm" fw={500} className="hover:text-blue-600">
+              <Link
+                to="/hotels"
+                style={{ textDecoration: "none", color: "#555" }}
+              >
+                <Text size="sm" fw={500}>
                   Khách sạn
                 </Text>
               </Link>
 
               {isAuthenticated && (
-                <Link to="/bookings" style={{ textDecoration: 'none', color: '#555' }}>
-                  <Text size="sm" fw={500} className="hover:text-blue-600">
+                <Link
+                  to="/bookings"
+                  style={{ textDecoration: "none", color: "#555" }}
+                >
+                  <Text size="sm" fw={500}>
                     Đặt phòng của tôi
                   </Text>
                 </Link>
@@ -97,15 +109,15 @@ export const Navbar = () => {
                       <Group gap={8} wrap="nowrap">
                         <Avatar
                           src={user.avatar}
-                          alt={user.name}
+                          alt={fullName}
                           radius="xl"
                           size="sm"
                           color="blue"
                         >
-                          {user.name.charAt(0).toUpperCase()}
+                          {user.firstName?.charAt(0).toUpperCase()}
                         </Avatar>
-                        <Text size="sm" fw={500} hiddenFrom="xs">
-                          {user.name.split(' ')[0]}
+                        <Text size="sm" fw={500} visibleFrom="xs">
+                          {user.firstName}
                         </Text>
                       </Group>
                     </Button>
@@ -120,15 +132,15 @@ export const Navbar = () => {
                     <Divider />
                     <Menu.Item
                       leftSection={<IconUser size={14} />}
-                      onClick={() => handleNavigate('/profile')}
+                      onClick={() => handleNavigate("/profile")}
                     >
                       Hồ sơ của tôi
                     </Menu.Item>
 
-                    {user.role === 'admin' && (
+                    {user.role === USER_ROLES.ADMIN && (
                       <Menu.Item
                         leftSection={<IconDashboard size={14} />}
-                        onClick={() => handleNavigate('/admin')}
+                        onClick={() => handleNavigate("/admin")}
                       >
                         Bảng điều khiển
                       </Menu.Item>
@@ -147,18 +159,18 @@ export const Navbar = () => {
               ) : (
                 <Group gap="xs" wrap="nowrap">
                   <Button
-                    variant="default"
+                    variant="subtle"
                     size="sm"
-                    onClick={() => navigate('/login')}
-                    hiddenFrom="xs"
+                    onClick={() => navigate("/login")}
                   >
                     Đăng nhập
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => navigate('/register')}
+                    onClick={() => navigate("/register")}
                     style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background:
+                        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                     }}
                   >
                     Đăng ký
@@ -167,7 +179,12 @@ export const Navbar = () => {
               )}
 
               {/* Mobile Burger */}
-              <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+              <Burger
+                opened={opened}
+                onClick={toggle}
+                hiddenFrom="sm"
+                size="sm"
+              />
             </Group>
           </Group>
         </Container>
@@ -176,12 +193,12 @@ export const Navbar = () => {
       {/* Mobile Navigation Drawer */}
       <Drawer opened={opened} onClose={close} title="Menu" padding="md">
         <Stack gap="md">
-          <Link to="/" style={{ textDecoration: 'none' }}>
+          <Link to="/" style={{ textDecoration: "none" }}>
             <Text fw={500} onClick={close}>
               Trang chủ
             </Text>
           </Link>
-          <Link to="/hotels" style={{ textDecoration: 'none' }}>
+          <Link to="/hotels" style={{ textDecoration: "none" }}>
             <Text fw={500} onClick={close}>
               Khách sạn
             </Text>
@@ -189,19 +206,19 @@ export const Navbar = () => {
 
           {isAuthenticated && (
             <>
-              <Link to="/bookings" style={{ textDecoration: 'none' }}>
+              <Link to="/bookings" style={{ textDecoration: "none" }}>
                 <Text fw={500} onClick={close}>
                   Đặt phòng của tôi
                 </Text>
               </Link>
               <Divider />
-              <Link to="/profile" style={{ textDecoration: 'none' }}>
+              <Link to="/profile" style={{ textDecoration: "none" }}>
                 <Text fw={500} onClick={close}>
                   Hồ sơ
                 </Text>
               </Link>
-              {user?.role === 'admin' && (
-                <Link to="/admin" style={{ textDecoration: 'none' }}>
+              {user?.role === USER_ROLES.ADMIN && (
+                <Link to="/admin" style={{ textDecoration: "none" }}>
                   <Text fw={500} onClick={close}>
                     Bảng điều khiển
                   </Text>
@@ -225,16 +242,17 @@ export const Navbar = () => {
               <Button
                 fullWidth
                 variant="default"
-                onClick={() => handleNavigate('/login')}
+                onClick={() => handleNavigate("/login")}
               >
                 Đăng nhập
               </Button>
               <Button
                 fullWidth
                 style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 }}
-                onClick={() => handleNavigate('/register')}
+                onClick={() => handleNavigate("/register")}
               >
                 Đăng ký
               </Button>

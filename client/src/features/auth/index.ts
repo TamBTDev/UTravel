@@ -1,19 +1,19 @@
 // Components
-export { LoginForm } from './LoginForm';
+export { LoginForm } from "./components";
 export {
   LoginHeader,
   SocialLoginButtons,
   AuthCard,
   AuthSignupLink,
   AuthBenefits,
-} from './components';
+} from "./components";
 
 // Hooks
-export { useLogin, useAuthStatus } from './hooks';
+export { useLogin, useAuthStatus } from "./hooks";
 
 // Pages
-export { LoginPage } from './pages';
+export { LoginPage } from "./pages";
 
 // Services
-export { authService } from './services';
-export type { LoginResponse } from './services';
+export { authService } from "./services";
+export type { LoginResponse } from "./services";
