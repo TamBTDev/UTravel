@@ -27,6 +27,12 @@ const resetPasswordSchema = z.object({
 
 export const register = async (req: Request, res: Response) => {
   try {
+    console.log("[REGISTER_CONTROLLER] Received registration request:", {
+      email: req.body.email,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+    });
+
     // Validation
     const data = registerSchema.parse(req.body);
 
@@ -38,6 +44,11 @@ export const register = async (req: Request, res: Response) => {
       data.lastName,
     );
 
+    console.log("[REGISTER_CONTROLLER] Registration successful:", {
+      userId: result.userId,
+      email: result.email,
+    });
+
     res.status(201).json({
       success: true,
       message: result.message,
@@ -47,7 +58,14 @@ export const register = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    console.error("[REGISTER_CONTROLLER] Registration error:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
+
     if (error instanceof z.ZodError) {
+      console.error("[REGISTER_CONTROLLER] Validation errors:", error.errors);
       return res.status(400).json({
         success: false,
         error: "Dữ liệu không hợp lệ",
@@ -57,13 +75,18 @@ export const register = async (req: Request, res: Response) => {
 
     res.status(400).json({
       success: false,
-      error: error.message,
+      error: error.message || "Lỗi đăng ký",
     });
   }
 };
 
 export const verifyRegisterOtp = async (req: Request, res: Response) => {
   try {
+    console.log("[VERIFY_OTP_CONTROLLER] Received OTP verification request:", {
+      userId: req.body.userId,
+      otpCode: req.body.otpCode,
+    });
+
     // Validation
     const data = verifyOtpSchema.parse(req.body);
 
@@ -73,13 +96,22 @@ export const verifyRegisterOtp = async (req: Request, res: Response) => {
       data.otpCode,
     );
 
+    console.log("[VERIFY_OTP_CONTROLLER] OTP verification successful for user ID:", data.userId);
+
     res.json({
       success: true,
       message: result.message,
       user: result.user,
     });
   } catch (error: any) {
+    console.error("[VERIFY_OTP_CONTROLLER] OTP verification error:", {
+      userId: req.body.userId,
+      message: error.message,
+      stack: error.stack,
+    });
+
     if (error instanceof z.ZodError) {
+      console.error("[VERIFY_OTP_CONTROLLER] Validation errors:", error.errors);
       return res.status(400).json({
         success: false,
         error: "Dữ liệu không hợp lệ",
@@ -121,11 +153,15 @@ export const resendRegisterOtp = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
+    console.log("[LOGIN_CONTROLLER] Received login request for email:", req.body.email);
+
     // Validation
     const data = loginSchema.parse(req.body);
 
     // Call service
     const result = await authService.login(data.email, data.password);
+
+    console.log("[LOGIN_CONTROLLER] Login successful for user ID:", result.user.id);
 
     // Yêu cầu: trả về URL (user -> /user/profile, admin -> /admin/profile)
     const isUserAdmin = result.user.role === "ADMIN";
@@ -137,7 +173,14 @@ export const login = async (req: Request, res: Response) => {
       redirectUrl: isUserAdmin ? "/admin/profile" : "/user/profile",
     });
   } catch (error: any) {
+    console.error("[LOGIN_CONTROLLER] Login error:", {
+      email: req.body.email,
+      message: error.message,
+      stack: error.stack,
+    });
+
     if (error instanceof z.ZodError) {
+      console.error("[LOGIN_CONTROLLER] Validation errors:", error.errors);
       return res.status(400).json({
         success: false,
         error: "Dữ liệu không hợp lệ",

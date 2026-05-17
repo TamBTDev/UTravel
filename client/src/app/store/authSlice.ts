@@ -189,6 +189,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
+        state.tempUserId = null; // Clear tempUserId after successful verification
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.isLoading = false;

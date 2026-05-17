@@ -18,33 +18,56 @@ export const useLogin = () => {
     if (isAuthenticated && user) {
       notifications.show({
         title: "Đăng nhập thành công",
-        message: `Chào mừng ${user.firstName}!`,
+        message: `Chào mừng ${user.firstName || user.email}!`,
         color: "green",
+        autoClose: 3000,
       });
 
-      if (user.role === USER_ROLES.ADMIN) {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      // Redirect based on role
+      setTimeout(() => {
+        if (user.role === USER_ROLES.ADMIN) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }, 500);
     }
   }, [isAuthenticated, user, navigate]);
 
   // Xử lý thông báo lỗi
   useEffect(() => {
     if (error) {
+      let errorMessage = error;
+      
+      // Provide user-friendly error messages
+      if (error.includes("không tồn tại")) {
+        errorMessage = "Email hoặc mật khẩu không đúng";
+      } else if (error.includes("chưa được kích hoạt")) {
+        errorMessage = "Tài khoản chưa được kích hoạt. Vui lòng xác thực email.";
+      } else if (error.includes("bị khóa")) {
+        errorMessage = "Tài khoản bị khóa. Liên hệ quản trị viên.";
+      }
+
       notifications.show({
         title: "Lỗi đăng nhập",
-        message: error,
+        message: errorMessage,
         color: "red",
+        autoClose: 5000,
       });
-      // Clear error sau khi đã hiển thị để tránh lặp lại
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
   const handleLogin = useCallback(
     (credentials: LoginInput) => {
+      if (!credentials.email || !credentials.password) {
+        notifications.show({
+          title: "Thiếu thông tin",
+          message: "Vui lòng nhập email và mật khẩu",
+          color: "red",
+        });
+        return;
+      }
       dispatch(login(credentials));
     },
     [dispatch],

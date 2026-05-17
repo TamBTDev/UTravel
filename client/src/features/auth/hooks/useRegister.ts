@@ -12,14 +12,16 @@ export const useRegister = () => {
 
   useEffect(() => {
     if (tempUserId) {
+      const email = sessionStorage.getItem("registerEmail");
       notifications.show({
         title: "Đăng ký thành công",
-        message: "Vui lòng kiểm tra email để nhận mã OTP.",
+        message: `Mã OTP đã được gửi đến email ${email || 'của bạn'}. Kiểm tra email để lấy mã.`,
         color: "green",
+        autoClose: 5000,
       });
 
       // Chuyển sang trang xác thực OTP
-      navigate("/verify-otp", { state: { userId: tempUserId } });
+      navigate("/verify-otp", { state: { userId: tempUserId, email } });
     }
   }, [tempUserId, navigate]);
 
@@ -29,6 +31,7 @@ export const useRegister = () => {
         title: "Lỗi đăng ký",
         message: error,
         color: "red",
+        autoClose: 5000,
       });
       dispatch(clearError());
     }
@@ -36,6 +39,8 @@ export const useRegister = () => {
 
   const handleRegister = useCallback(
     (data: RegisterInput) => {
+      // Save email for OTP verification
+      sessionStorage.setItem("registerEmail", data.email);
       dispatch(register(data));
     },
     [dispatch],

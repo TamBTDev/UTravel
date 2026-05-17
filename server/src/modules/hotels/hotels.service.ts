@@ -3,17 +3,17 @@ import { PrismaClient, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export interface GetHotelsFilter {
-  search?: string;
-  city?: string;
+  search?: string | null;
+  city?: string | null;
   minPrice?: number;
   maxPrice?: number;
   rating?: number;
   capacity?: number;
-  checkIn?: string;
-  checkOut?: string;
-  sortBy?: string;
-  page?: number;
-  limit?: number;
+  checkIn?: string | null;
+  checkOut?: string | null;
+  sortBy?: string | null;
+  page: number;
+  limit: number;
 }
 
 export const hotelsService = {
@@ -195,5 +195,66 @@ export const hotelsService = {
     );
 
     return destinations;
+  },
+
+  /**
+   * PERSON B: Lấy chi tiết khách sạn cùng danh sách phòng và reviews
+   */
+  getHotelDetail: async (hotelId: string) => {
+    const id = Number(hotelId);
+    const hotel = await prisma.hotel.findUnique({
+      where: { id },
+      include: {
+        rooms: true,
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+              },
+            },
+          },
+          take: 10,
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    if (!hotel) {
+      throw new Error("Hotel not found");
+    }
+
+    return hotel;
+  },
+
+  /**
+   * PERSON B: Lấy danh sách khách sạn tương tự (cùng thành phố)
+   */
+  getRelatedHotels: async (hotelId: string, limit: number = 4) => {
+    const id = Number(hotelId);
+    // Get the base hotel to know its city
+    const hotel = await prisma.hotel.findUnique({
+      where: { id },
+      select: { city: true, rating: true, id: true },
+    });
+
+    if (!hotel) {
+      throw new Error("Hotel not found");
+    }
+
+    // Get hotels in the same city, excluding this one
+    const relatedHotels = await prisma.hotel.findMany({
+      where: {
+        city: hotel.city,
+        NOT: { id: hotel.id },
+      },
+      take: limit,
+      orderBy: { rating: "desc" },
+    });
+
+    return relatedHotels;
   },
 };
