@@ -9,6 +9,7 @@ import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { store } from "./app/store";
 import { Home } from "./pages/Home";
+import { Hotels } from "./pages/Hotels";
 import { LoginPage } from "./features/auth/pages/LoginPage";
 import { RegisterPage } from "./features/auth/pages/RegisterPage";
 import { VerifyOtpPage } from "./features/auth/pages/VerifyOtpPage";
@@ -20,6 +21,7 @@ import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { USER_ROLES } from "@shared/constants/roles";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
+import "@mantine/dates/styles.css";
 import "./App.css";
 
 function App() {
@@ -31,6 +33,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/hotels" element={<Hotels />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-otp" element={<VerifyOtpPage />} />
