@@ -4,38 +4,55 @@ import bcrypt from "bcrypt";
 async function main() {
   console.log("Seeding database...");
 
-  // Clear existing data
+  // Only delete hotels, rooms, bookings, reviews, payments - NOT users!
+  // This preserves user registrations
+  console.log("Clearing hotel data...");
   await prisma.payment.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.review.deleteMany();
   await prisma.room.deleteMany();
   await prisma.hotel.deleteMany();
-  await prisma.user.deleteMany();
+  // NOTE: Commented out to preserve user registrations
+  // await prisma.user.deleteMany();
 
-  // Create sample users
-  const user1 = await prisma.user.create({
-    data: {
-      email: "test@gmail.com",
-      password: await bcrypt.hash("123456", 10),
-      firstName: "John",
-      lastName: "Doe",
-      phone: "0123456789",
-      status: "VERIFIED",
-    },
+  // Create sample users only if they don't exist
+  const existingUser1 = await prisma.user.findUnique({
+    where: { email: "test@gmail.com" },
   });
 
-  const user2 = await prisma.user.create({
-    data: {
-      email: "jane@example.com",
-      password: await bcrypt.hash("password123", 10),
-      firstName: "Jane",
-      lastName: "Smith",
-      phone: "0987654321",
-      status: "VERIFIED",
-    },
+  if (!existingUser1) {
+    await prisma.user.create({
+      data: {
+        email: "test@gmail.com",
+        password: await bcrypt.hash("123456", 10),
+        firstName: "John",
+        lastName: "Doe",
+        phone: "0123456789",
+        status: "VERIFIED",
+      },
+    });
+    console.log("Created test user 1");
+  }
+
+  const existingUser2 = await prisma.user.findUnique({
+    where: { email: "jane@example.com" },
   });
 
-  console.log("Created 2 users");
+  if (!existingUser2) {
+    await prisma.user.create({
+      data: {
+        email: "jane@example.com",
+        password: await bcrypt.hash("password123", 10),
+        firstName: "Jane",
+        lastName: "Smith",
+        phone: "0987654321",
+        status: "VERIFIED",
+      },
+    });
+    console.log("Created test user 2");
+  }
+
+  console.log("Creating sample hotels and rooms...");
 
   const cities = [
     "Hà Nội",
@@ -110,57 +127,92 @@ async function main() {
     where: { hotelId: hotels[0].id },
   });
 
-  // Create sample bookings
-  const booking1 = await prisma.booking.create({
-    data: {
-      userId: user1.id,
-      roomId: firstRoom!.id,
-      checkInDate: new Date("2026-06-01"),
-      checkOutDate: new Date("2026-06-05"),
-      totalPrice: 400,
-      status: "confirmed",
-      paymentStatus: "paid",
-    },
+  // Get a sample user for booking
+  const sampleUser = await prisma.user.findFirst({
+    where: { email: "test@gmail.com" },
   });
 
-  console.log("Created 1 booking");
+  // Create sample bookings only if sample user exists
+  if (sampleUser && firstRoom) {
+    const existingBooking = await prisma.booking.findFirst({
+      where: { userId: sampleUser.id },
+    });
 
-  // Create sample payment
-  await prisma.payment.create({
-    data: {
-      bookingId: booking1.id,
-      amount: 400,
-      method: "credit_card",
-      status: "completed",
-    },
+    if (!existingBooking) {
+      const booking1 = await prisma.booking.create({
+        data: {
+          userId: sampleUser.id,
+          roomId: firstRoom.id,
+          checkInDate: new Date("2026-06-01"),
+          checkOutDate: new Date("2026-06-05"),
+          totalPrice: 400,
+          status: "confirmed",
+          paymentStatus: "paid",
+        },
+      });
+
+      console.log("Created 1 booking");
+
+      // Create sample payment
+      await prisma.payment.create({
+        data: {
+          bookingId: booking1.id,
+          amount: 400,
+          method: "credit_card",
+          status: "completed",
+        },
+      });
+
+      console.log("Created 1 booking and 1 payment");
+    }
+  }
+
+  // Create sample reviews only if users exist
+  const testUser = await prisma.user.findFirst({
+    where: { email: "test@gmail.com" },
   });
 
-  console.log("Created 1 payment");
-
-  // Create sample reviews
-  await prisma.review.create({
-    data: {
-      userId: user1.id,
-      hotelId: hotels[0].id,
-      rating: 5,
-      comment: "Excellent service and beautiful hotel!",
-    },
+  const janeUser = await prisma.user.findFirst({
+    where: { email: "jane@example.com" },
   });
 
-  await prisma.review.create({
-    data: {
-      userId: user2.id,
-      hotelId: hotels[1].id,
-      rating: 4,
-      comment: "Great location and friendly staff",
-    },
-  });
+  if (testUser && hotels.length > 0) {
+    const existingReview = await prisma.review.findFirst({
+      where: { userId: testUser.id },
+    });
 
-  console.log("Created 2 reviews");
+    if (!existingReview) {
+      await prisma.review.create({
+        data: {
+          userId: testUser.id,
+          hotelId: hotels[0].id,
+          rating: 5,
+          comment: "Excellent service and beautiful hotel!",
+        },
+      });
+    }
+  }
+
+  if (janeUser && hotels.length > 1) {
+    const existingReview = await prisma.review.findFirst({
+      where: { userId: janeUser.id, hotelId: hotels[1].id },
+    });
+
+    if (!existingReview) {
+      await prisma.review.create({
+        data: {
+          userId: janeUser.id,
+          hotelId: hotels[1].id,
+          rating: 4,
+          comment: "Great location and friendly staff",
+        },
+      });
+    }
+  }
 
   console.log("Seeding completed successfully!");
   console.log(
-    "Users data for login can be seen in \'server/src/seed/seed.ts\'",
+    "Users data for login can be seen in 'server/src/seed/seed.ts'",
   );
 }
 

@@ -10,6 +10,7 @@ import { Notifications } from "@mantine/notifications";
 import { store } from "./app/store";
 import { Home } from "./pages/Home";
 import { Hotels } from "./pages/Hotels";
+import { HotelDetailPage } from "./pages/HotelDetail";
 import { LoginPage } from "./features/auth/pages/LoginPage";
 import { RegisterPage } from "./features/auth/pages/RegisterPage";
 import { VerifyOtpPage } from "./features/auth/pages/VerifyOtpPage";
@@ -17,6 +18,8 @@ import { ForgotPasswordPage } from "./features/auth/pages/ForgotPasswordPage";
 import { ProfilePage } from "./features/user/pages/ProfilePage";
 import { Bookings } from "./pages/Bookings";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { Booking } from "./pages/Booking";
+import { PaymentPage } from "./pages/Payment";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { USER_ROLES } from "@shared/constants/roles";
 import "@mantine/core/styles.css";
@@ -34,6 +37,7 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/hotels" element={<Hotels />} />
+            <Route path="/hotels/:id" element={<HotelDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-otp" element={<VerifyOtpPage />} />
@@ -45,6 +49,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/booking"
+              element={
+                <ProtectedRoute>
+                  <Booking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment"
+              element={
+                <ProtectedRoute>
+                  <PaymentPage />
                 </ProtectedRoute>
               }
             />

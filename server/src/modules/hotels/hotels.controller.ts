@@ -1,20 +1,37 @@
 import { Request, Response } from "express";
 import { hotelsService } from "./hotels.service";
 
+// Helper: Convert query params safely
+const getStringParam = (val: any): string | null => {
+  if (Array.isArray(val)) return val[0] || null;
+  return val || null;
+};
+
+const getNumberParam = (val: any): number | undefined => {
+  if (Array.isArray(val)) return Number(val[0]) || undefined;
+  return val ? Number(val) : undefined;
+};
+
+// Helper: Convert route params safely (usually single string but can be array in rare cases)
+const getIdParam = (val: any): string => {
+  if (Array.isArray(val)) return val[0];
+  return val;
+};
+
 export const getHotels = async (req: Request, res: Response) => {
   try {
     const filters = {
-      search: req.query.search as string,
-      city: req.query.city as string,
-      minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
-      maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
-      rating: req.query.rating ? Number(req.query.rating) : undefined,
-      capacity: req.query.capacity ? Number(req.query.capacity) : undefined,
-      checkIn: req.query.checkIn as string,
-      checkOut: req.query.checkOut as string,
-      sortBy: req.query.sortBy as string,
-      page: req.query.page ? Number(req.query.page) : 1,
-      limit: req.query.limit ? Number(req.query.limit) : 10,
+      search: getStringParam(req.query.search),
+      city: getStringParam(req.query.city),
+      minPrice: getNumberParam(req.query.minPrice),
+      maxPrice: getNumberParam(req.query.maxPrice),
+      rating: getNumberParam(req.query.rating),
+      capacity: getNumberParam(req.query.capacity),
+      checkIn: getStringParam(req.query.checkIn),
+      checkOut: getStringParam(req.query.checkOut),
+      sortBy: getStringParam(req.query.sortBy),
+      page: getNumberParam(req.query.page) || 1,
+      limit: getNumberParam(req.query.limit) || 10,
     };
 
     const result = await hotelsService.getHotels(filters);
@@ -33,7 +50,7 @@ export const getHotels = async (req: Request, res: Response) => {
 
 export const getFeaturedHotels = async (req: Request, res: Response) => {
   try {
-    const limit = req.query.limit ? Number(req.query.limit) : 6;
+    const limit = getNumberParam(req.query.limit) || 6;
     const hotels = await hotelsService.getFeaturedHotels(limit);
 
     res.json({
@@ -50,7 +67,7 @@ export const getFeaturedHotels = async (req: Request, res: Response) => {
 
 export const getDestinations = async (req: Request, res: Response) => {
   try {
-    const limit = req.query.limit ? Number(req.query.limit) : 4;
+    const limit = getNumberParam(req.query.limit) || 4;
     const destinations = await hotelsService.getDestinations(limit);
 
     res.json({
@@ -61,6 +78,49 @@ export const getDestinations = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: error.message || "Lỗi máy chủ khi lấy danh sách điểm đến",
+    });
+  }
+};
+
+/**
+ * PERSON B: Lấy chi tiết khách sạn với danh sách phòng và reviews
+ */
+export const getHotelDetail = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+
+    const hotel = await hotelsService.getHotelDetail(id);
+
+    res.json({
+      success: true,
+      data: hotel,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      error: error.message || "Khách sạn không tìm thấy",
+    });
+  }
+};
+
+/**
+ * PERSON B: Lấy danh sách khách sạn tương tự (cùng thành phố)
+ */
+export const getRelatedHotels = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+    const limit = getNumberParam(req.query.limit) || 4;
+
+    const relatedHotels = await hotelsService.getRelatedHotels(id, limit);
+
+    res.json({
+      success: true,
+      data: relatedHotels,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      error: error.message || "Không thể lấy danh sách khách sạn tương tự",
     });
   }
 };

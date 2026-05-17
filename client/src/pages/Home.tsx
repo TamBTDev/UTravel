@@ -198,7 +198,12 @@ export const Home = () => {
                           ? `Từ $${hotel.rooms[0].price}`
                           : "Đang cập nhật"}
                       </Text>
-                      <Button size="sm" variant="light" color="violet">
+                      <Button
+                        size="sm"
+                        variant="light"
+                        color="violet"
+                        onClick={() => navigate(`/hotels/${hotel.id}`)}
+                      >
                         Chi tiết
                       </Button>
                     </Group>

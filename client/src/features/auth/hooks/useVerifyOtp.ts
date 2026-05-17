@@ -12,15 +12,18 @@ export const useVerifyOtp = () => {
 
   const state = location.state as { email: string; userId: number } | undefined;
   const userId = state?.userId || 0;
-  const email = state?.email || "";
+  const email = state?.email || sessionStorage.getItem("registerEmail") || "";
 
   useEffect(() => {
     if (isAuthenticated) {
       notifications.show({
         title: "Xác thực thành công",
-        message: "Tài khoản của bạn đã được kích hoạt.",
+        message: "Tài khoản của bạn đã được kích hoạt. Vui lòng đăng nhập.",
         color: "green",
+        autoClose: 5000,
       });
+      // Clear session storage
+      sessionStorage.removeItem("registerEmail");
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
@@ -28,9 +31,10 @@ export const useVerifyOtp = () => {
   useEffect(() => {
     if (error) {
       notifications.show({
-        title: "Lỗi",
+        title: "Lỗi xác thực",
         message: error,
         color: "red",
+        autoClose: 5000,
       });
       dispatch(clearError());
     }
@@ -38,18 +42,36 @@ export const useVerifyOtp = () => {
 
   const handleVerify = useCallback(
     (otpCode: string) => {
+      if (!userId) {
+        notifications.show({
+          title: "Lỗi",
+          message: "ID người dùng không hợp lệ",
+          color: "red",
+        });
+        return;
+      }
       dispatch(verifyOtp({ userId, otpCode }));
     },
     [dispatch, userId],
   );
 
   const handleResend = useCallback(() => {
+    if (!userId) {
+      notifications.show({
+        title: "Lỗi",
+        message: "ID người dùng không hợp lệ",
+        color: "red",
+      });
+      return;
+    }
+    
     dispatch(resendOtp(userId)).then((result) => {
       if (resendOtp.fulfilled.match(result)) {
         notifications.show({
           title: "Thành công",
-          message: "Mã OTP mới đã được gửi.",
+          message: "Mã OTP mới đã được gửi. Kiểm tra email của bạn.",
           color: "green",
+          autoClose: 5000,
         });
       }
     });

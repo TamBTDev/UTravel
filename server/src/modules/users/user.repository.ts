@@ -21,9 +21,23 @@ export const findById = async (id: number) => {
 };
 
 export const findByEmail = async (email: string) => {
-  return prisma.user.findUnique({
-    where: { email },
-  });
+  try {
+    console.log("[USER_REPO] Looking up user by email:", email);
+    
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+    
+    console.log("[USER_REPO] Email lookup result:", user ? "FOUND (ID: " + user.id + ")" : "NOT FOUND");
+    return user;
+  } catch (error: any) {
+    console.error("[USER_REPO] Error finding user by email:", {
+      email,
+      message: error.message,
+      stack: error.stack,
+    });
+    throw error;
+  }
 };
 
 export const findAll = async (skip: number, take: number) => {
@@ -54,9 +68,25 @@ export const create = async (data: {
   lastName?: string;
   phone?: string;
 }): Promise<User> => {
-  return prisma.user.create({
-    data,
-  });
+  try {
+    console.log("[USER_REPO] Creating user with email:", data.email);
+    
+    const user = await prisma.user.create({
+      data,
+    });
+    
+    console.log("[USER_REPO] User created successfully with ID:", user.id, "Status:", user.status);
+    return user;
+  } catch (error: any) {
+    console.error("[USER_REPO] Error creating user:", {
+      email: data.email,
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack,
+    });
+    throw error;
+  }
 };
 
 export const update = async (id: number, data: Prisma.UserUpdateInput) => {

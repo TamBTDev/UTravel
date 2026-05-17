@@ -18,39 +18,70 @@ export const register = async (
   firstName: string,
   lastName: string,
 ) => {
-  const existingUser = await userRepository.findByEmail(email);
-  if (existingUser) {
-    throw new Error("Email đã được sử dụng");
+  try {
+    console.log("[REGISTER] Starting registration for email:", email);
+
+    // Check if user already exists
+    const existingUser = await userRepository.findByEmail(email);
+    console.log("[REGISTER] Checking existing user:", existingUser ? "FOUND" : "NOT FOUND");
+    
+    if (existingUser) {
+      console.log("[REGISTER] User already exists with email:", email);
+      throw new Error("Email đã được sử dụng");
+    }
+
+    // Hash password
+    console.log("[REGISTER] Hashing password...");
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("[REGISTER] Password hashed successfully");
+
+    // Create user in database
+    console.log("[REGISTER] Creating user in database...");
+    const user = await userRepository.create({
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+    });
+    console.log("[REGISTER] User created successfully with ID:", user.id);
+
+    // Generate OTP
+    const otp = generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+    console.log("[REGISTER] Generated OTP:", otp, "Expires at:", expiresAt);
+
+    // Save OTP to database
+    console.log("[REGISTER] Saving OTP to database...");
+    const savedOtp = await userOtpRepository.create({
+      userId: user.id,
+      otpCode: otp,
+      type: "REGISTER",
+      expiresAt,
+    });
+    console.log("[REGISTER] OTP saved successfully with ID:", savedOtp.id);
+
+    // Send email with OTP
+    console.log("[REGISTER] Sending OTP email to:", email);
+    await emailService.sendRegisterOtp(email, otp, 10);
+    console.log("[REGISTER] Email sent successfully");
+
+    console.log("[REGISTER] Registration completed successfully for user ID:", user.id);
+
+    return {
+      success: true,
+      message:
+        "Tài khoản được tạo thành công. Vui lòng kiểm tra email để nhận mã OTP.",
+      userId: user.id,
+      email: user.email,
+    };
+  } catch (error) {
+    console.error("[REGISTER] Error occurred:", {
+      message: error instanceof Error ? error.message : String(error),
+      email,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = await userRepository.create({
-    email,
-    password: hashedPassword,
-    firstName,
-    lastName,
-  });
-
-  const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
-
-  await userOtpRepository.create({
-    userId: user.id,
-    otpCode: otp,
-    type: "REGISTER",
-    expiresAt,
-  });
-
-  await emailService.sendRegisterOtp(email, otp, 10);
-
-  return {
-    success: true,
-    message:
-      "Tài khoản được tạo thành công. Vui lòng kiểm tra email để nhận mã OTP.",
-    userId: user.id,
-    email: user.email,
-  };
 };
 
 export const verifyRegisterOtp = async (userId: number, otpCode: string) => {
@@ -116,44 +147,68 @@ export const resendRegisterOtp = async (userId: number) => {
 };
 
 export const login = async (email: string, password: string) => {
-  const user = await userRepository.findByEmail(email);
-  if (!user) {
-    throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
-  }
+  try {
+    console.log("[LOGIN] Attempting login for email:", email);
 
-  if (user.status === "UNVERIFIED") {
-    throw new Error(
-      "Tài khoản chưa được kích hoạt. Vui lòng xác thực email trước.",
+    const user = await userRepository.findByEmail(email);
+    console.log("[LOGIN] User lookup result:", user ? "FOUND" : "NOT FOUND");
+    
+    if (!user) {
+      console.log("[LOGIN] User not found for email:", email);
+      throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
+    }
+
+    if (user.status === "UNVERIFIED") {
+      console.log("[LOGIN] User not verified yet:", email);
+      throw new Error(
+        "Tài khoản chưa được kích hoạt. Vui lòng xác thực email trước.",
+      );
+    }
+
+    if (user.status === "LOCKED") {
+      console.log("[LOGIN] User account locked:", email);
+      throw new Error("Tài khoản bị khóa. Vui lòng liên hệ quản trị viên.");
+    }
+
+    console.log("[LOGIN] Verifying password for user:", email);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      console.log("[LOGIN] Password verification failed for user:", email);
+      throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
+    }
+
+    console.log("[LOGIN] Password verified successfully for user:", email);
+    console.log("[LOGIN] Generating JWT token...");
+    
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      env.JWT_SECRET,
+      { expiresIn: "7d" },
     );
+
+    console.log("[LOGIN] Login successful for user ID:", user.id);
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  } catch (error) {
+    console.error("[LOGIN] Error occurred:", {
+      message: error instanceof Error ? error.message : String(error),
+      email,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
   }
-
-  if (user.status === "LOCKED") {
-    throw new Error("Tài khoản bị khóa. Vui lòng liên hệ quản trị viên.");
-  }
-
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
-  }
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    env.JWT_SECRET,
-    { expiresIn: "7d" },
-  );
-
-  return {
-    success: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      avatar: user.avatar,
-    },
-    token,
-  };
 };
 
 export const sendResetPasswordOtp = async (email: string) => {

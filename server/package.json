@@ -4,12 +4,12 @@
   "description": "Hotel booking API server",
   "main": "dist/index.js",
   "scripts": {
-    "predev": "npm run seed",
     "dev": "tsx watch -r tsconfig-paths/register src/index.ts",
     "prestart": "npm run seed",
     "build": "tsc && tsc-alias",
     "start": "node dist/server/src/index.js",
     "seed": "tsx -r tsconfig-paths/register src/seed/seed.ts",
+    "seed:reset": "npm run seed",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
