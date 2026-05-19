@@ -22,6 +22,7 @@ import { USER_ROLES } from "@shared/constants/roles";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dates/styles.css";
+import "@mantine/carousel/styles.css";
 import "./App.css";
 
 function App() {

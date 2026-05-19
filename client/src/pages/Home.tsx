@@ -12,6 +12,7 @@ import {
   Loader,
   Badge,
 } from "@mantine/core";
+import { Carousel } from "@mantine/carousel";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "../components/layout";
 import { QuickSearch } from "../features/hotel/components/QuickSearch";
@@ -37,7 +38,7 @@ export const Home = () => {
     dispatch(fetchDestinations(4));
 
     if (isAuthenticated) {
-      dispatch(fetchFeaturedHotels(4));
+      dispatch(fetchFeaturedHotels(10));
     }
   }, [dispatch, isAuthenticated]);
 
@@ -141,12 +142,21 @@ export const Home = () => {
               <Loader color="violet" />
             </Center>
           ) : (
-            <Grid>
+            <Carousel
+              withIndicators
+              slideSize={{
+                base: "100%",
+                sm: "50%",
+                md: "33.333333%",
+                lg: "25%",
+              }}
+              slideGap="md"
+              // align="start"
+              // slidesToScroll={1}
+              mb="xl"
+            >
               {featuredHotels.map((hotel) => (
-                <Grid.Col
-                  key={hotel.id}
-                  span={{ base: 12, sm: 6, md: 4, lg: 3 }}
-                >
+                <Carousel.Slide key={hotel.id}>
                   <Card
                     shadow="sm"
                     padding="lg"
@@ -203,15 +213,9 @@ export const Home = () => {
                       </Button>
                     </Group>
                   </Card>
-                </Grid.Col>
+                </Carousel.Slide>
               ))}
-
-              {featuredHotels.length === 0 && !isFeaturedLoading && (
-                <Text c="dimmed" style={{ textAlign: "center", width: "100%" }}>
-                  Hiện chưa có khách sạn nào.
-                </Text>
-              )}
-            </Grid>
+            </Carousel>
           )}
         </Container>
       ) : (
