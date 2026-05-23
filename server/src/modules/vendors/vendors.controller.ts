@@ -92,3 +92,42 @@ export const updateVendorProfile = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Lỗi khi cập nhật thông tin đối tác', error: error.message });
   }
 };
+
+const getIdParam = (val: any): number => {
+  if (Array.isArray(val)) return Number(val[0]);
+  return Number(val);
+};
+
+export const getVendorBookings = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const bookings = await vendorsService.getVendorBookings(userId);
+    res.status(200).json({ success: true, data: bookings });
+  } catch (error: any) {
+    console.error('Error fetching vendor bookings:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách đơn hàng', error: error.message });
+  }
+};
+
+export const updateVendorBookingStatus = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const bookingId = getIdParam(req.params.id);
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp trạng thái mới' });
+    }
+
+    const updated = await vendorsService.updateVendorBookingStatus(userId, bookingId, status);
+    res.status(200).json({ success: true, message: 'Cập nhật trạng thái đơn hàng thành công', data: updated });
+  } catch (error: any) {
+    console.error('Error updating vendor booking status:', error);
+    if (error.message === 'Không tìm thấy hồ sơ đối tác' || 
+        error.message === 'Không tìm thấy đơn hàng' ||
+        error.message === 'Không có quyền cập nhật đơn hàng này') {
+      return res.status(403).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Lỗi khi cập nhật đơn hàng', error: error.message });
+  }
+};

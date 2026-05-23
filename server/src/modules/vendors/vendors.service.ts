@@ -108,4 +108,52 @@ export const vendorsService = {
       },
     });
   },
+
+  // === QUẢN LÝ ĐƠN HÀNG (VENDOR) ===
+  getVendorBookings: async (userId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    return await prisma.booking.findMany({
+      where: {
+        room: {
+          hotel: {
+            vendorId: vendor.id,
+          },
+        },
+      },
+      include: {
+        room: { 
+          select: { 
+            roomNumber: true, 
+            type: true, 
+            hotel: { select: { name: true } } 
+          } 
+        },
+        user: { select: { firstName: true, lastName: true, email: true, phone: true } },
+        payment: { select: { method: true, status: true, amount: true } }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  updateVendorBookingStatus: async (userId: number, bookingId: number, status: string) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { room: { include: { hotel: true } } }
+    });
+
+    if (!booking) throw new Error("Không tìm thấy đơn hàng");
+    if (booking.room.hotel.vendorId !== vendor.id) {
+      throw new Error("Không có quyền cập nhật đơn hàng này");
+    }
+
+    return await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: status as any },
+    });
+  },
 };
