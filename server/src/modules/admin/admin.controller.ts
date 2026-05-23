@@ -102,3 +102,39 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Lỗi cập nhật người dùng", error: error.message });
   }
 };
+
+export const getAllAdminHotels = async (req: Request, res: Response) => {
+  try {
+    const { search, approvalStatus, isActive } = req.query;
+    let isActiveBool: boolean | undefined = undefined;
+    if (isActive === 'true') isActiveBool = true;
+    if (isActive === 'false') isActiveBool = false;
+
+    const hotels = await adminService.getAllAdminHotels(
+      search as string,
+      approvalStatus as string,
+      isActiveBool
+    );
+    res.status(200).json({ success: true, data: hotels });
+  } catch (error: any) {
+    console.error("Error fetching all hotels:", error);
+    res.status(500).json({ message: "Lỗi lấy danh sách khách sạn", error: error.message });
+  }
+};
+
+export const toggleHotelActive = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+    const { isActive } = req.body;
+
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ message: "Trạng thái isActive không hợp lệ" });
+    }
+
+    const updated = await adminService.toggleHotelActive(id, isActive);
+    res.status(200).json({ success: true, message: "Cập nhật trạng thái khách sạn thành công", data: updated });
+  } catch (error: any) {
+    console.error("Error toggling hotel status:", error);
+    res.status(500).json({ message: "Lỗi cập nhật trạng thái khách sạn", error: error.message });
+  }
+};

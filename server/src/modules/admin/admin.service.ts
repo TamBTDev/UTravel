@@ -98,4 +98,32 @@ export const adminService = {
       data: { status: status as any },
     });
   },
+
+  // === QUẢN LÝ SẢN PHẨM (ADMIN) ===
+  getAllAdminHotels: async (search?: string, approvalStatus?: string, isActive?: boolean) => {
+    return await prisma.hotel.findMany({
+      where: {
+        ...(approvalStatus && { approvalStatus: approvalStatus as any }),
+        ...(isActive !== undefined && { isActive }),
+        ...(search && {
+          OR: [
+            { name: { contains: search } },
+            { city: { contains: search } },
+          ]
+        })
+      },
+      include: {
+        vendor: { select: { shopName: true } },
+        _count: { select: { rooms: true, reviews: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  },
+
+  toggleHotelActive: async (hotelId: number, isActive: boolean) => {
+    return await prisma.hotel.update({
+      where: { id: hotelId },
+      data: { isActive }
+    });
+  },
 };

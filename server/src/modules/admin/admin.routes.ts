@@ -8,7 +8,9 @@ import {
   updateHotelStatus,
   getAdminFinanceReport,
   getAllUsers,
-  updateUserStatus
+  updateUserStatus,
+  getAllAdminHotels,
+  toggleHotelActive
 } from "./admin.controller";
 
 const router = Router();
@@ -42,5 +44,12 @@ router.get("/users", getAllUsers);
 
 // Khóa hoặc mở khóa tài khoản người dùng
 router.patch("/users/:id/status", updateUserStatus);
+
+// --- Quản lý Sản phẩm (Hotels) toàn sàn ---
+// Lấy danh sách toàn bộ khách sạn trên sàn (hỗ trợ lọc theo isActive)
+router.get("/hotels", getAllAdminHotels);
+
+// Bật/tắt trạng thái hoạt động của khách sạn (Khóa khách sạn)
+router.patch("/hotels/:id/active", toggleHotelActive);
 
 export default router;
