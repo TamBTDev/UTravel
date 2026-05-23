@@ -189,4 +189,44 @@ export const vendorsService = {
       transactions,
     };
   },
+
+  // === QUẢN LÝ BÌNH LUẬN (VENDOR) ===
+  getVendorReviews: async (userId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    return await prisma.review.findMany({
+      where: {
+        hotel: { vendorId: vendor.id },
+      },
+      include: {
+        hotel: { select: { name: true } },
+        user: { select: { firstName: true, lastName: true, avatar: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  replyToReview: async (userId: number, reviewId: number, reply: string) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { hotel: true },
+    });
+
+    if (!review) throw new Error("Không tìm thấy bình luận");
+    if (review.hotel.vendorId !== vendor.id) {
+      throw new Error("Không có quyền trả lời bình luận này");
+    }
+
+    return await prisma.review.update({
+      where: { id: reviewId },
+      data: {
+        vendorReply: reply,
+        vendorReplyAt: new Date(),
+      },
+    });
+  },
 };

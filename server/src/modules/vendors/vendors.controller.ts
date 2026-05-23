@@ -145,3 +145,37 @@ export const getVendorRevenueReport = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Lỗi lấy báo cáo doanh thu', error: error.message });
   }
 };
+
+export const getVendorReviews = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const reviews = await vendorsService.getVendorReviews(userId);
+    res.status(200).json({ success: true, data: reviews });
+  } catch (error: any) {
+    console.error('Error fetching vendor reviews:', error);
+    res.status(500).json({ message: 'Lỗi lấy danh sách bình luận', error: error.message });
+  }
+};
+
+export const replyToReview = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const reviewId = getIdParam(req.params.id);
+    const { reply } = req.body;
+
+    if (!reply || reply.trim() === '') {
+      return res.status(400).json({ message: 'Vui lòng nhập nội dung phản hồi' });
+    }
+
+    const updated = await vendorsService.replyToReview(userId, reviewId, reply);
+    res.status(200).json({ success: true, message: 'Phản hồi bình luận thành công', data: updated });
+  } catch (error: any) {
+    console.error('Error replying to review:', error);
+    if (error.message === 'Không tìm thấy hồ sơ đối tác' || 
+        error.message === 'Không tìm thấy bình luận' ||
+        error.message === 'Không có quyền trả lời bình luận này') {
+      return res.status(403).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Lỗi khi phản hồi bình luận', error: error.message });
+  }
+};
