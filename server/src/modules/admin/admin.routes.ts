@@ -10,7 +10,8 @@ import {
   getAllUsers,
   updateUserStatus,
   getAllAdminHotels,
-  toggleHotelActive
+  toggleHotelActive,
+  getAdminDashboardStats
 } from "./admin.controller";
 
 const router = Router();
@@ -51,5 +52,9 @@ router.get("/hotels", getAllAdminHotels);
 
 // Bật/tắt trạng thái hoạt động của khách sạn (Khóa khách sạn)
 router.patch("/hotels/:id/active", toggleHotelActive);
+
+// --- Dashboard Tổng quan ---
+// Lấy thống kê chung cho trang chủ Admin
+router.get("/dashboard", getAdminDashboardStats);
 
 export default router;

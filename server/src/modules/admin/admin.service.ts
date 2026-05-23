@@ -126,4 +126,26 @@ export const adminService = {
       data: { isActive }
     });
   },
+
+  // === DASHBOARD (ADMIN) ===
+  getAdminDashboardStats: async () => {
+    const [totalUsers, totalVendors, totalHotels, totalBookings, commissionTransactions] = await Promise.all([
+      prisma.user.count(),
+      prisma.vendorProfile.count({ where: { status: VENDOR_STATUS.APPROVED } }),
+      prisma.hotel.count({ where: { approvalStatus: APPROVAL_STATUS.APPROVED } }),
+      prisma.booking.count(),
+      prisma.walletTransaction.aggregate({
+        where: { type: "COMMISSION_FEE" },
+        _sum: { amount: true }
+      })
+    ]);
+
+    return {
+      totalUsers,
+      totalVendors,
+      totalHotels,
+      totalBookings,
+      totalRevenue: commissionTransactions._sum.amount || 0,
+    };
+  },
 };

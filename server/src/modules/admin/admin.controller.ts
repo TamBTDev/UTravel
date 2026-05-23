@@ -138,3 +138,13 @@ export const toggleHotelActive = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Lỗi cập nhật trạng thái khách sạn", error: error.message });
   }
 };
+
+export const getAdminDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const stats = await adminService.getAdminDashboardStats();
+    res.status(200).json({ success: true, data: stats });
+  } catch (error: any) {
+    console.error("Error fetching admin dashboard stats:", error);
+    res.status(500).json({ message: "Lỗi lấy thống kê tổng quan", error: error.message });
+  }
+};
