@@ -6,6 +6,7 @@ import {
   updateVendorStatus,
   getPendingHotels,
   updateHotelStatus,
+  getAdminFinanceReport
 } from "./admin.controller";
 
 const router = Router();
@@ -28,5 +29,9 @@ router.get("/hotels/pending", getPendingHotels);
 
 // Phê duyệt hoặc từ chối Khách sạn
 router.patch("/hotels/:id/status", updateHotelStatus);
+
+// --- Quản lý Tài chính (Finance) ---
+// Lấy báo cáo doanh thu từ phí hoa hồng của sàn
+router.get("/finance-report", getAdminFinanceReport);
 
 export default router;

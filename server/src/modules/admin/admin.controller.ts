@@ -60,3 +60,13 @@ export const updateHotelStatus = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Lỗi cập nhật khách sạn", error: error.message });
   }
 };
+
+export const getAdminFinanceReport = async (req: Request, res: Response) => {
+  try {
+    const report = await adminService.getAdminFinanceReport();
+    res.status(200).json({ success: true, data: report });
+  } catch (error: any) {
+    console.error("Error fetching admin finance report:", error);
+    res.status(500).json({ message: "Lỗi lấy báo cáo tài chính sàn", error: error.message });
+  }
+};

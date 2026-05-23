@@ -40,4 +40,24 @@ export const adminService = {
       },
     });
   },
+
+  // === TÀI CHÍNH SÀN (ADMIN) ===
+  getAdminFinanceReport: async () => {
+    // Tìm tất cả giao dịch là phí hoa hồng (COMMISSION_FEE)
+    const commissionTransactions = await prisma.walletTransaction.findMany({
+      where: { type: "COMMISSION_FEE" },
+      include: {
+        wallet: { select: { vendor: { select: { shopName: true } } } },
+        booking: { select: { id: true, finalPrice: true } }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const totalCommission = commissionTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      totalCommission,
+      transactions: commissionTransactions,
+    };
+  },
 };

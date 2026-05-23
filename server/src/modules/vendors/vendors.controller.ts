@@ -131,3 +131,17 @@ export const updateVendorBookingStatus = async (req: Request, res: Response) => 
     res.status(500).json({ message: 'Lỗi khi cập nhật đơn hàng', error: error.message });
   }
 };
+
+export const getVendorRevenueReport = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const report = await vendorsService.getVendorRevenueReport(userId);
+    res.status(200).json({ success: true, data: report });
+  } catch (error: any) {
+    console.error('Error fetching vendor revenue report:', error);
+    if (error.message === 'Không tìm thấy ví của đối tác') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Lỗi lấy báo cáo doanh thu', error: error.message });
+  }
+};
