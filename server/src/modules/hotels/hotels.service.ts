@@ -1,6 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { BOOKING_STATUS } from "../../../../shared/constants/roles";
-
 const prisma = new PrismaClient();
 
 export interface GetHotelsFilter {
@@ -75,7 +74,11 @@ export const hotelsService = {
           AND: [
             { checkInDate: { lt: checkOutDate } },
             { checkOutDate: { gt: checkInDate } },
-            { status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] } },
+            {
+              status: {
+                in: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.PENDING],
+              },
+            },
           ],
         },
       };
