@@ -10,6 +10,7 @@ import bookingsRoutes from "./modules/bookings/bookings.routes.js";
 import paymentsRoutes from "./modules/payments/payments.routes.js";
 import roomsRoutes from "./modules/rooms/rooms.routes.js";
 import vendorsRoutes from "./modules/vendors/vendors.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
 
 const app: Application = express();
 
@@ -30,6 +31,7 @@ app.use("/api/bookings", bookingsRoutes);
 app.use("/api/payments", paymentsRoutes);
 app.use("/api/rooms", roomsRoutes);
 app.use("/api/vendors", vendorsRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(errorHandler);
 
