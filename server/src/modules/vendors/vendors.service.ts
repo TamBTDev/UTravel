@@ -156,4 +156,37 @@ export const vendorsService = {
       data: { status: status as any },
     });
   },
+
+  // === BÁO CÁO DOANH THU (VENDOR) ===
+  getVendorRevenueReport: async (userId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({
+      where: { userId },
+      include: { wallet: true },
+    });
+
+    if (!vendor || !vendor.wallet) {
+      throw new Error("Không tìm thấy ví của đối tác");
+    }
+
+    const transactions = await prisma.walletTransaction.findMany({
+      where: { walletId: vendor.wallet.id },
+      include: {
+        booking: {
+          select: { id: true, checkInDate: true, checkOutDate: true, room: { include: { hotel: { select: { name: true } } } } }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Tính tổng doanh thu từ BOOKING_INCOME
+    const totalRevenue = transactions
+      .filter((t) => t.type === "BOOKING_INCOME")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      walletBalance: vendor.wallet.balance,
+      totalRevenue,
+      transactions,
+    };
+  },
 };
