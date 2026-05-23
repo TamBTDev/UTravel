@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
 import prisma from '../../config/database';
+import { PAYMENT_METHOD, PAYMENT_STATUS, BOOKING_STATUS } from '../../../../shared/constants/roles';
 
-// Helper: Safely extract ID from params
-const getIdParam = (val: any): string => {
-  if (Array.isArray(val)) return val[0];
-  return val;
+const getIdParam = (val: any): number => {
+  if (Array.isArray(val)) return Number(val[0]);
+  return Number(val);
 };
 
-// ============ TASK 2.7: Create Payment ============
 export const createPayment = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -17,13 +16,11 @@ export const createPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Missing required fields: bookingId, method' });
     }
 
-    // Validate payment method
-    const validMethods = ['credit_card', 'bank_transfer', 'momo', 'vnpay'];
+    const validMethods = Object.values(PAYMENT_METHOD);
     if (!validMethods.includes(method)) {
-      return res.status(400).json({ message: 'Invalid payment method' });
+      return res.status(400).json({ message: `Invalid payment method. Must be one of: ${validMethods.join(', ')}` });
     }
 
-    // Find booking and verify ownership
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
     });
@@ -36,28 +33,26 @@ export const createPayment = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Unauthorized: This booking does not belong to you' });
     }
 
-    // Check if payment already exists
     const existingPayment = await prisma.payment.findFirst({
       where: { bookingId },
     });
 
-    if (existingPayment && existingPayment.status === 'paid') {
+    if (existingPayment && existingPayment.status === PAYMENT_STATUS.COMPLETED) {
       return res.status(400).json({ message: 'Payment already completed for this booking' });
     }
 
-    // Create or update payment
     const payment = await prisma.payment.upsert({
       where: { bookingId },
       create: {
         bookingId,
-        amount: booking.totalPrice,
+        amount: booking.finalPrice,
         method,
-        status: 'pending',
+        status: PAYMENT_STATUS.PENDING,
         transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       },
       update: {
         method,
-        status: 'pending',
+        status: PAYMENT_STATUS.PENDING,
       },
     });
 
@@ -68,7 +63,6 @@ export const createPayment = async (req: Request, res: Response) => {
   }
 };
 
-// ============ Optional: Get Payment Status ============
 export const getPaymentStatus = async (req: Request, res: Response) => {
   try {
     const id = getIdParam(req.params.id);
@@ -83,7 +77,6 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Payment not found' });
     }
 
-    // Check ownership
     if (payment.booking.userId !== userId && (req as any).userRole !== 'ADMIN') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
@@ -95,20 +88,18 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
   }
 };
 
-// ============ Optional: Update Payment Status (For Admin or Webhook) ============
 export const updatePaymentStatus = async (req: Request, res: Response) => {
   try {
     const id = getIdParam(req.params.id);
     const { status } = req.body;
 
-    // This should ideally only be callable by admin or via webhook
     if ((req as any).userRole !== 'ADMIN') {
       return res.status(403).json({ message: 'Unauthorized: Only admin can update payment status' });
     }
 
-    const validStatuses = ['pending', 'paid', 'failed', 'refunded'];
+    const validStatuses = Object.values(PAYMENT_STATUS);
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid payment status' });
+      return res.status(400).json({ message: `Invalid payment status. Must be one of: ${validStatuses.join(', ')}` });
     }
 
     const payment = await prisma.payment.update({
@@ -117,11 +108,13 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
       include: { booking: true },
     });
 
-    // If payment is successful, update booking status to confirmed
-    if (status === 'paid') {
+    if (status === PAYMENT_STATUS.COMPLETED) {
       await prisma.booking.update({
         where: { id: payment.bookingId },
-        data: { paymentStatus: 'paid', status: 'confirmed' },
+        data: {
+          paymentStatus: PAYMENT_STATUS.COMPLETED,
+          status: BOOKING_STATUS.CONFIRMED,
+        },
       });
     }
 

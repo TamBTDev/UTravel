@@ -1,19 +1,17 @@
 import { Request, Response } from 'express';
 import prisma from '../../config/database';
+import { BOOKING_STATUS } from '../../../../shared/constants/roles';
 
-// Helper: Safely extract ID from params
-const getIdParam = (val: any): string => {
-  if (Array.isArray(val)) return val[0];
-  return val;
+const getIdParam = (val: any): number => {
+  if (Array.isArray(val)) return Number(val[0]);
+  return Number(val);
 };
 
-// Helper: Safely extract query string
 const getQueryString = (val: any): string | null => {
   if (Array.isArray(val)) return val[0] || null;
   return val || null;
 };
 
-// ============ TASK 2.3: Check Room Availability ============
 export const checkAvailability = async (req: Request, res: Response) => {
   try {
     const roomId = getIdParam(req.params.roomId);
@@ -33,7 +31,6 @@ export const checkAvailability = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    // Check if there are any conflicting bookings
     const checkInDateTime = new Date(checkInDate);
     const checkOutDateTime = new Date(checkOutDate);
 
@@ -41,12 +38,10 @@ export const checkAvailability = async (req: Request, res: Response) => {
       const bookingStart = new Date(booking.checkInDate);
       const bookingEnd = new Date(booking.checkOutDate);
 
-      // Check if booking status is not cancelled
-      if (booking.status === 'cancelled') {
+      if (booking.status === BOOKING_STATUS.CANCELLED) {
         return false;
       }
 
-      // Check for date overlap
       return bookingStart < checkOutDateTime && bookingEnd > checkInDateTime;
     });
 
@@ -66,7 +61,6 @@ export const checkAvailability = async (req: Request, res: Response) => {
   }
 };
 
-// ============ Optional: Get Room Details ============
 export const getRoomDetail = async (req: Request, res: Response) => {
   try {
     const roomId = getIdParam(req.params.roomId);
@@ -76,7 +70,7 @@ export const getRoomDetail = async (req: Request, res: Response) => {
       include: {
         hotel: true,
         bookings: {
-          where: { status: { not: 'cancelled' } },
+          where: { status: { not: BOOKING_STATUS.CANCELLED } },
         },
       },
     });

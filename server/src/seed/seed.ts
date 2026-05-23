@@ -1,21 +1,17 @@
 import prisma from "@/config/database";
 import bcrypt from "bcrypt";
+import { USER_STATUS, BOOKING_STATUS, PAYMENT_STATUS, PAYMENT_METHOD } from "../../../shared/constants/roles";
 
 async function main() {
   console.log("Seeding database...");
 
-  // Only delete hotels, rooms, bookings, reviews, payments - NOT users!
-  // This preserves user registrations
   console.log("Clearing hotel data...");
   await prisma.payment.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.review.deleteMany();
   await prisma.room.deleteMany();
   await prisma.hotel.deleteMany();
-  // NOTE: Commented out to preserve user registrations
-  // await prisma.user.deleteMany();
 
-  // Create sample users only if they don't exist
   const existingUser1 = await prisma.user.findUnique({
     where: { email: "test@gmail.com" },
   });
@@ -28,7 +24,7 @@ async function main() {
         firstName: "John",
         lastName: "Doe",
         phone: "0123456789",
-        status: "VERIFIED",
+        status: USER_STATUS.VERIFIED,
       },
     });
     console.log("Created test user 1");
@@ -46,7 +42,7 @@ async function main() {
         firstName: "Jane",
         lastName: "Smith",
         phone: "0987654321",
-        status: "VERIFIED",
+        status: USER_STATUS.VERIFIED,
       },
     });
     console.log("Created test user 2");
@@ -89,7 +85,7 @@ async function main() {
         country: ["Hà Nội", "Đà Nẵng", "Hồ Chí Minh", "Đà Lạt"].includes(city)
           ? "Vietnam"
           : "USA",
-        rating: 3 + (i % 3), // 3, 4, hoac 5 sao
+        rating: 3 + (i % 3),
         images: JSON.stringify([images[i % images.length]]),
         amenities: JSON.stringify(amenitiesList[i % amenitiesList.length]),
       },
@@ -102,9 +98,8 @@ async function main() {
         roomNumber: "101",
         type: "single",
         price: 50 + i * 10,
-        capacity: 1 + (i % 2), // 1 hoac 2 nguoi
-        description:
-          "Phòng tiêu chuẩn thoải mái, phù hợp cho cá nhân hoặc cặp đôi.",
+        capacity: 1 + (i % 2),
+        description: "Phòng tiêu chuẩn thoải mái, phù hợp cho cá nhân hoặc cặp đôi.",
         amenities: JSON.stringify(["AC", "TV", "WiFi"]),
       },
     });
@@ -115,7 +110,7 @@ async function main() {
         roomNumber: "102",
         type: "double",
         price: 100 + i * 15,
-        capacity: 2 + (i % 3), // 2, 3 hoac 4 nguoi
+        capacity: 2 + (i % 3),
         description: "Phòng cao cấp rộng rãi có view tuyệt đẹp.",
         amenities: JSON.stringify(["AC", "TV", "WiFi", "Mini Bar", "View đẹp"]),
       },
@@ -127,12 +122,10 @@ async function main() {
     where: { hotelId: hotels[0].id },
   });
 
-  // Get a sample user for booking
   const sampleUser = await prisma.user.findFirst({
     where: { email: "test@gmail.com" },
   });
 
-  // Create sample bookings only if sample user exists
   if (sampleUser && firstRoom) {
     const existingBooking = await prisma.booking.findFirst({
       where: { userId: sampleUser.id },
@@ -146,20 +139,21 @@ async function main() {
           checkInDate: new Date("2026-06-01"),
           checkOutDate: new Date("2026-06-05"),
           totalPrice: 400,
-          status: "confirmed",
-          paymentStatus: "paid",
+          discountAmount: 0,
+          finalPrice: 400,
+          status: BOOKING_STATUS.CONFIRMED,
+          paymentStatus: PAYMENT_STATUS.COMPLETED,
         },
       });
 
       console.log("Created 1 booking");
 
-      // Create sample payment
       await prisma.payment.create({
         data: {
           bookingId: booking1.id,
           amount: 400,
-          method: "credit_card",
-          status: "completed",
+          method: PAYMENT_METHOD.CREDIT_CARD,
+          status: PAYMENT_STATUS.COMPLETED,
         },
       });
 
@@ -167,7 +161,6 @@ async function main() {
     }
   }
 
-  // Create sample reviews only if users exist
   const testUser = await prisma.user.findFirst({
     where: { email: "test@gmail.com" },
   });
@@ -211,9 +204,6 @@ async function main() {
   }
 
   console.log("Seeding completed successfully!");
-  console.log(
-    "Users data for login can be seen in 'server/src/seed/seed.ts'",
-  );
 }
 
 main()
