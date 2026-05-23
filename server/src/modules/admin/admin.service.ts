@@ -60,4 +60,70 @@ export const adminService = {
       transactions: commissionTransactions,
     };
   },
+
+  // === QUẢN LÝ NGƯỜI DÙNG (ADMIN) ===
+  getAllUsers: async (search?: string, role?: string, status?: string) => {
+    return await prisma.user.findMany({
+      where: {
+        ...(role && { role: role as any }),
+        ...(status && { status: status as any }),
+        ...(search && {
+          OR: [
+            { email: { contains: search } },
+            { firstName: { contains: search } },
+            { lastName: { contains: search } },
+          ],
+        }),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        _count: {
+          select: { bookings: true, reviews: true }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  updateUserStatus: async (userId: number, status: string) => {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { status: status as any },
+    });
+  },
+
+  // === QUẢN LÝ SẢN PHẨM (ADMIN) ===
+  getAllAdminHotels: async (search?: string, approvalStatus?: string, isActive?: boolean) => {
+    return await prisma.hotel.findMany({
+      where: {
+        ...(approvalStatus && { approvalStatus: approvalStatus as any }),
+        ...(isActive !== undefined && { isActive }),
+        ...(search && {
+          OR: [
+            { name: { contains: search } },
+            { city: { contains: search } },
+          ]
+        })
+      },
+      include: {
+        vendor: { select: { shopName: true } },
+        _count: { select: { rooms: true, reviews: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  },
+
+  toggleHotelActive: async (hotelId: number, isActive: boolean) => {
+    return await prisma.hotel.update({
+      where: { id: hotelId },
+      data: { isActive }
+    });
+  },
 };

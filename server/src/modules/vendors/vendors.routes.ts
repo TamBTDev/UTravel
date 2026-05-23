@@ -7,7 +7,9 @@ import {
   updateVendorProfile,
   getVendorBookings,
   updateVendorBookingStatus,
-  getVendorRevenueReport
+  getVendorRevenueReport,
+  getVendorReviews,
+  replyToReview
 } from './vendors.controller';
 
 const router = Router();
@@ -34,5 +36,12 @@ router.patch('/bookings/:id/status', requireRole(USER_ROLES.VENDOR), updateVendo
 // === BÁO CÁO DOANH THU ===
 // GET /api/vendors/revenue-report - Lấy báo cáo doanh thu và giao dịch ví
 router.get('/revenue-report', requireRole(USER_ROLES.VENDOR), getVendorRevenueReport);
+
+// === QUẢN LÝ BÌNH LUẬN ===
+// GET /api/vendors/reviews - Lấy danh sách bình luận của khách sạn
+router.get('/reviews', requireRole(USER_ROLES.VENDOR), getVendorReviews);
+
+// PATCH /api/vendors/reviews/:id/reply - Chủ shop phản hồi bình luận
+router.patch('/reviews/:id/reply', requireRole(USER_ROLES.VENDOR), replyToReview);
 
 export default router;
