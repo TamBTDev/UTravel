@@ -6,6 +6,10 @@ import { errorHandler } from "./middlewares/error.middleware";
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/users/users.routes.js";
 import hotelsRoutes from "./modules/hotels/hotels.routes.js";
+import bookingsRoutes from "./modules/bookings/bookings.routes.js";
+import paymentsRoutes from "./modules/payments/payments.routes.js";
+import roomsRoutes from "./modules/rooms/rooms.routes.js";
+import vendorsRoutes from "./modules/vendors/vendors.routes.js";
 
 const app: Application = express();
 
@@ -22,6 +26,10 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/hotels", hotelsRoutes);
+app.use("/api/bookings", bookingsRoutes);
+app.use("/api/payments", paymentsRoutes);
+app.use("/api/rooms", roomsRoutes);
+app.use("/api/vendors", vendorsRoutes);
 
 app.use(errorHandler);
 

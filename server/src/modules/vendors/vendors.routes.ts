@@ -1,0 +1,24 @@
+import { Router } from 'express';
+import { authMiddleware, requireRole } from '../../middlewares/auth.middleware';
+import { USER_ROLES } from '../../../../shared/constants/roles';
+import { 
+  registerVendor, 
+  getVendorProfile, 
+  updateVendorProfile 
+} from './vendors.controller';
+
+const router = Router();
+
+// Tất cả route đều yêu cầu đăng nhập
+router.use(authMiddleware);
+
+// POST /api/vendors/register - Đăng ký trở thành Vendor (USER role cũng gọi được)
+router.post('/register', registerVendor);
+
+// GET /api/vendors/profile - Lấy thông tin Vendor của chính mình (chỉ VENDOR mới gọi được)
+router.get('/profile', requireRole(USER_ROLES.VENDOR), getVendorProfile);
+
+// PATCH /api/vendors/profile - Cập nhật thông tin ngân hàng/mô tả
+router.patch('/profile', requireRole(USER_ROLES.VENDOR), updateVendorProfile);
+
+export default router;
