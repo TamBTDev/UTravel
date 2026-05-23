@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { adminService } from "./admin.service";
-import { VENDOR_STATUS, APPROVAL_STATUS } from "../../../../shared/constants/roles";
+import { VENDOR_STATUS, APPROVAL_STATUS, USER_STATUS } from "../../../../shared/constants/roles";
 
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
@@ -68,5 +68,37 @@ export const getAdminFinanceReport = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error fetching admin finance report:", error);
     res.status(500).json({ message: "Lỗi lấy báo cáo tài chính sàn", error: error.message });
+  }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const { search, role, status } = req.query;
+    const users = await adminService.getAllUsers(
+      search as string,
+      role as string,
+      status as string
+    );
+    res.status(200).json({ success: true, data: users });
+  } catch (error: any) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ message: "Lỗi lấy danh sách người dùng", error: error.message });
+  }
+};
+
+export const updateUserStatus = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+    const { status } = req.body;
+
+    if (!status || ![USER_STATUS.VERIFIED, USER_STATUS.LOCKED, USER_STATUS.UNVERIFIED].includes(status as any)) {
+      return res.status(400).json({ message: "Trạng thái người dùng không hợp lệ" });
+    }
+
+    const updated = await adminService.updateUserStatus(id, status);
+    res.status(200).json({ success: true, message: "Cập nhật trạng thái người dùng thành công", data: updated });
+  } catch (error: any) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({ message: "Lỗi cập nhật người dùng", error: error.message });
   }
 };
