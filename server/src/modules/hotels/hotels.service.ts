@@ -12,6 +12,7 @@ export interface GetHotelsFilter {
   checkIn?: string | null;
   checkOut?: string | null;
   sortBy?: string | null;
+  amenities?: string[];
   page: number;
   limit: number;
 }
@@ -31,6 +32,7 @@ export const hotelsService = {
       checkIn,
       checkOut,
       sortBy,
+      amenities,
       page = 1,
       limit = 10,
     } = filters;
@@ -48,6 +50,12 @@ export const hotelsService = {
 
     if (rating) {
       where.rating = { gte: rating };
+    }
+
+    if (amenities && amenities.length > 0) {
+      where.AND = amenities.map(amenity => ({
+        amenities: { string_contains: amenity }
+      }));
     }
 
     const roomConditions: Prisma.RoomWhereInput = {};

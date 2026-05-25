@@ -1,6 +1,12 @@
 import prisma from "@/config/database";
 import bcrypt from "bcrypt";
-import { USER_STATUS, BOOKING_STATUS, PAYMENT_STATUS, PAYMENT_METHOD } from "../../../shared/constants/roles";
+import {
+  USER_STATUS,
+  BOOKING_STATUS,
+  PAYMENT_STATUS,
+  PAYMENT_METHOD,
+  USER_ROLES,
+} from "../../../shared/constants/roles";
 
 async function main() {
   console.log("Seeding database...");
@@ -11,6 +17,26 @@ async function main() {
   await prisma.review.deleteMany();
   await prisma.room.deleteMany();
   await prisma.hotel.deleteMany();
+
+  // Create admin account
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "admin@gmail.com" },
+  });
+
+  if (!existingAdmin) {
+    await prisma.user.create({
+      data: {
+        email: "admin@gmail.com",
+        password: await bcrypt.hash("123456", 10),
+        firstName: "System",
+        lastName: "Admin",
+        phone: "0999999999",
+        role: USER_ROLES.ADMIN,
+        status: USER_STATUS.VERIFIED,
+      },
+    });
+    console.log("Created admin user");
+  }
 
   const existingUser1 = await prisma.user.findUnique({
     where: { email: "test@gmail.com" },
@@ -99,7 +125,8 @@ async function main() {
         type: "single",
         price: 50 + i * 10,
         capacity: 1 + (i % 2),
-        description: "Phòng tiêu chuẩn thoải mái, phù hợp cho cá nhân hoặc cặp đôi.",
+        description:
+          "Phòng tiêu chuẩn thoải mái, phù hợp cho cá nhân hoặc cặp đôi.",
         amenities: JSON.stringify(["AC", "TV", "WiFi"]),
       },
     });

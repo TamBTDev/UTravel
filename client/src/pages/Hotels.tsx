@@ -18,13 +18,14 @@ import {
   Stack,
   Divider,
   Select,
+  Checkbox,
 } from "@mantine/core";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "../components/layout";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppStore";
 import { fetchHotels } from "../app/store/hotelSlice";
-import { IconSearch, IconMapPin } from "@tabler/icons-react";
-import { QuickSearch } from "../features/hotel/components/QuickSearch";
+import { SearchBar } from "../features/hotel/components/common/SearchBar";
+import { IconMapPin, IconSearch } from "@tabler/icons-react";
 
 export const Hotels = () => {
   const dispatch = useAppDispatch();
@@ -42,6 +43,9 @@ export const Hotels = () => {
     Number(searchParams.get("maxPrice")) || 500,
   ]);
   const [rating, setRating] = useState(Number(searchParams.get("rating")) || 0);
+  const [amenities, setAmenities] = useState<string[]>(
+    searchParams.getAll("amenities") || [],
+  );
   const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "newest");
 
   useEffect(() => {
@@ -64,6 +68,7 @@ export const Hotels = () => {
         checkIn: searchParams.get("checkIn") || undefined,
         checkOut: searchParams.get("checkOut") || undefined,
         sortBy: searchParams.get("sortBy") || undefined,
+        amenities: searchParams.getAll("amenities"),
         page: Number(searchParams.get("page")) || 1,
         limit: 10,
       }),
@@ -77,12 +82,14 @@ export const Hotels = () => {
     params.delete("minPrice");
     params.delete("maxPrice");
     params.delete("rating");
+    params.delete("amenities");
 
     if (search) params.append("search", search);
     if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
     if (priceRange[1] < 500)
       params.append("maxPrice", priceRange[1].toString());
     if (rating > 0) params.append("rating", rating.toString());
+    amenities.forEach((a) => params.append("amenities", a));
 
     setSearchParams(params);
   };
@@ -94,12 +101,10 @@ export const Hotels = () => {
 
   return (
     <AppLayout>
-      <div
-        style={{ background: "#f8f9fa", padding: "2rem 0", minHeight: "100vh" }}
-      >
+      <div className="bg-surface py-10 min-h-screen">
         <Container size="xl">
-          <div style={{ marginBottom: "2rem" }}>
-            <QuickSearch />
+          <div className="mb-10">
+            <SearchBar className="!shadow-none border border-hairline" />
           </div>
 
           <Grid>
@@ -121,7 +126,7 @@ export const Hotels = () => {
 
                   <div style={{ marginTop: "0.5rem" }}>
                     <Text size="sm" fw={500} mb="xs">
-                      Khoảng giá 1 đêm ($)
+                      Khoảng giá 1 đêm
                     </Text>
                     <RangeSlider
                       min={0}
@@ -129,13 +134,18 @@ export const Hotels = () => {
                       step={10}
                       value={priceRange}
                       onChange={setPriceRange}
+                      label={(value) =>
+                        new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(value * 25000)
+                      }
                       marks={[
-                        { value: 0, label: "$0" },
-                        { value: 250, label: "$250" },
-                        { value: 500, label: "$500+" },
+                        { value: 0, label: "0₫" },
+                        { value: 500, label: "12tr+" },
                       ]}
                       mb="xl"
-                      color="violet"
+                      color="var(--color-primary)"
                     />
                   </div>
 
@@ -147,15 +157,44 @@ export const Hotels = () => {
                       value={rating}
                       onChange={setRating}
                       size="md"
-                      color="pink"
+                      color="var(--color-tertiary-dim)"
                     />
                   </div>
 
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <Text size="sm" fw={500} mb="xs">
+                      Tiện ích
+                    </Text>
+                    <Stack gap="xs">
+                      {["WiFi", "Pool", "Spa", "Gym", "Restaurant"].map(
+                        (amenity) => (
+                          <Checkbox
+                            key={amenity}
+                            label={amenity}
+                            value={amenity}
+                            checked={amenities.includes(amenity)}
+                            onChange={(e) => {
+                              if (e.currentTarget.checked) {
+                                setAmenities([...amenities, amenity]);
+                              } else {
+                                setAmenities(
+                                  amenities.filter((a) => a !== amenity),
+                                );
+                              }
+                            }}
+                            color="var(--color-primary)"
+                          />
+                        ),
+                      )}
+                    </Stack>
+                  </div>
+
                   <Button
-                    color="violet"
+                    color="var(--color-primary)"
                     onClick={handleApplyFilters}
                     fullWidth
                     mt="md"
+                    className="hover:bg-primary-hover transition-colors"
                   >
                     Áp dụng bộ lọc
                   </Button>
@@ -166,35 +205,76 @@ export const Hotels = () => {
             <Grid.Col span={{ base: 12, md: 9 }}>
               <Group justify="space-between" mb="md">
                 <Title order={3}>Tìm thấy {total} khách sạn phù hợp</Title>
-                <Select
-                  placeholder="Sắp xếp theo"
-                  data={[
-                    { value: "newest", label: "Mới nhất" },
-                    { value: "price_asc", label: "Giá thấp đến cao" },
-                    { value: "price_desc", label: "Giá cao đến thấp" },
-                    { value: "rating_desc", label: "Đánh giá cao nhất" },
-                    { value: "popular", label: "Phổ biến nhất" },
-                  ]}
-                  value={sortBy}
-                  onChange={(val) => {
-                    const newValue = val || "newest";
-                    setSortBy(newValue);
-                    const params = new URLSearchParams(searchParams);
-                    if (newValue !== "newest") {
-                      params.set("sortBy", newValue);
-                    } else {
-                      params.delete("sortBy");
-                    }
-                    params.set("page", "1");
-                    setSearchParams(params);
-                  }}
-                  style={{ width: 220 }}
-                />
+                <Group gap="xs">
+                  <Text fw={600} size="sm" c="dimmed">
+                    Sắp xếp:
+                  </Text>
+                  <Select
+                    placeholder="Sắp xếp theo"
+                    data={[
+                      { value: "newest", label: "Mới nhất" },
+                      { value: "price_asc", label: "Giá thấp đến cao" },
+                      { value: "price_desc", label: "Giá cao đến thấp" },
+                      { value: "rating_desc", label: "Đánh giá cao nhất" },
+                      { value: "popular", label: "Phổ biến nhất" },
+                    ]}
+                    value={sortBy}
+                    onChange={(val) => {
+                      const newValue = val || "newest";
+                      setSortBy(newValue);
+                      const params = new URLSearchParams(searchParams);
+                      if (newValue !== "newest") {
+                        params.set("sortBy", newValue);
+                      } else {
+                        params.delete("sortBy");
+                      }
+                      params.set("page", "1");
+                      setSearchParams(params);
+                    }}
+                    style={{ width: 200 }}
+                    styles={{
+                      input: {
+                        color: "var(--color-primary)",
+                        fontWeight: 600,
+                      },
+                    }}
+                  />
+                </Group>
               </Group>
+
+              <Card
+                radius="md"
+                mb="xl"
+                padding="lg"
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)",
+                }}
+              >
+                <Group justify="space-between">
+                  <div>
+                    <Text size="lg" fw={700} c="white">
+                      Khuyến mãi độc quyền!
+                    </Text>
+                    <Text size="sm" c="white" opacity={0.9}>
+                      Đăng nhập để nhận thêm ưu đãi giảm giá lên tới 20% cho
+                      thành viên UTravel.
+                    </Text>
+                  </div>
+                  <Button
+                    variant="white"
+                    color="var(--color-primary)"
+                    radius="md"
+                    onClick={() => navigate("/login")}
+                  >
+                    Đăng nhập ngay
+                  </Button>
+                </Group>
+              </Card>
 
               {isLoading ? (
                 <Center py="xl">
-                  <Loader color="violet" size="lg" />
+                  <Loader color="var(--color-primary)" size="lg" />
                 </Center>
               ) : hotels.length === 0 ? (
                 <Card
@@ -209,7 +289,7 @@ export const Hotels = () => {
                   </Text>
                   <Button
                     variant="light"
-                    color="violet"
+                    color="var(--color-primary)"
                     mt="md"
                     onClick={() => {
                       setSearch("");
@@ -270,7 +350,7 @@ export const Hotels = () => {
                                   fractions={2}
                                   readOnly
                                   size="sm"
-                                  color="pink"
+                                  color="var(--color-tertiary-dim)"
                                 />
                                 <Text size="sm" c="dimmed">
                                   <IconMapPin
@@ -301,36 +381,53 @@ export const Hotels = () => {
                             <Divider mb="sm" />
                             <Group justify="space-between" align="flex-end">
                               <Group gap="xs">
-                                {/* Hiển thị 3 tiện ích đầu tiên */}
-                                {hotel.amenities &&
-                                  Array.isArray(hotel.amenities) &&
-                                  hotel.amenities
-                                    .slice(0, 3)
-                                    .map((amenity, idx) => (
-                                      <Badge
-                                        key={idx}
-                                        variant="dot"
-                                        color="teal"
-                                        size="sm"
-                                      >
-                                        {amenity}
-                                      </Badge>
-                                    ))}
+                                {(() => {
+                                  try {
+                                    const parsedAmenities =
+                                      typeof hotel.amenities === "string"
+                                        ? JSON.parse(hotel.amenities)
+                                        : hotel.amenities;
+
+                                    if (!Array.isArray(parsedAmenities))
+                                      return null;
+
+                                    return parsedAmenities
+                                      .slice(0, 3)
+                                      .map((amenity: string, idx: number) => (
+                                        <Badge
+                                          key={idx}
+                                          variant="light"
+                                          color="var(--color-primary)"
+                                          size="sm"
+                                        >
+                                          {amenity}
+                                        </Badge>
+                                      ));
+                                  } catch (e) {
+                                    return null;
+                                  }
+                                })()}
                               </Group>
 
                               <div style={{ textAlign: "right" }}>
                                 <Text size="xs" c="dimmed">
                                   Giá mỗi đêm từ
                                 </Text>
-                                <Text size="xl" fw={700} c="violet">
-                                  $
+                                <Text
+                                  size="xl"
+                                  fw={700}
+                                  c="var(--color-primary)"
+                                >
                                   {hotel.rooms && hotel.rooms.length > 0
-                                    ? hotel.rooms[0].price
+                                    ? new Intl.NumberFormat("vi-VN", {
+                                        style: "currency",
+                                        currency: "VND",
+                                      }).format(hotel.rooms[0].price * 25000)
                                     : "--"}
                                 </Text>
                                 <Button
                                   size="sm"
-                                  color="violet"
+                                  color="var(--color-primary)"
                                   mt={4}
                                   onClick={() =>
                                     navigate(`/hotels/${hotel.id}`)
@@ -355,7 +452,7 @@ export const Hotels = () => {
                     total={totalPages}
                     value={currentPage}
                     onChange={handlePageChange}
-                    color="violet"
+                    color="var(--color-primary)"
                   />
                 </Center>
               )}
