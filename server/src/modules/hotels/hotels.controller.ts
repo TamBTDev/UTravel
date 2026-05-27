@@ -30,6 +30,11 @@ export const getHotels = async (req: Request, res: Response) => {
       checkIn: getStringParam(req.query.checkIn),
       checkOut: getStringParam(req.query.checkOut),
       sortBy: getStringParam(req.query.sortBy),
+      amenities: req.query.amenities 
+        ? (Array.isArray(req.query.amenities) 
+            ? req.query.amenities.map(String) 
+            : [String(req.query.amenities)]) 
+        : undefined,
       page: getNumberParam(req.query.page) || 1,
       limit: getNumberParam(req.query.limit) || 10,
     };

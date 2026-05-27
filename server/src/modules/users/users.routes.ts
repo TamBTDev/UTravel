@@ -7,16 +7,11 @@ const userRouter = Router();
 
 userRouter.use(authMiddleware);
 
-userRouter.get(
-  "/profile",
-  requireRole("USER", "ADMIN"),
-  userController.getProfile,
-);
+userRouter.get("/profile", userController.getProfile);
 
 userRouter.put(
   "/profile",
   rateLimitConfig.updateProfile,
-  requireRole("USER", "ADMIN"),
   userController.updateProfile,
 );
 

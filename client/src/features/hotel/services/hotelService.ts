@@ -28,6 +28,7 @@ export interface GetHotelsParams {
   checkIn?: string;
   checkOut?: string;
   sortBy?: string;
+  amenities?: string[];
   page?: number;
   limit?: number;
 }

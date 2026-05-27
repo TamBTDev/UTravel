@@ -122,6 +122,18 @@ export const authService = {
     }
   },
 
+  verifyForgotPasswordOtp: async (data: {
+    email: string;
+    otpCode: string;
+  }): Promise<{ message: string }> => {
+    try {
+      const response = await apiClient.post("/auth/forgot-password/verify-otp", data);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
   resetPassword: async (data: {
     email: string;
     otpCode: string;

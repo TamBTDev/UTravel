@@ -220,6 +220,37 @@ export const forgotPassword = async (req: Request, res: Response) => {
   }
 };
 
+const verifyForgotOtpSchema = z.object({
+  email: z.string().email("Email không hợp lệ"),
+  otpCode: z.string().length(6, "Mã OTP phải có 6 chữ số"),
+});
+
+export const verifyForgotOtp = async (req: Request, res: Response) => {
+  try {
+    const data = verifyForgotOtpSchema.parse(req.body);
+    const result = await authService.verifyForgotPasswordOtp(
+      data.email,
+      data.otpCode,
+    );
+    res.json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: "Dữ liệu không hợp lệ",
+        details: error.errors,
+      });
+    }
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     // Validation

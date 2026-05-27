@@ -1,15 +1,6 @@
 import { useState } from "react";
-import {
-  PasswordInput,
-  Button,
-  Stack,
-  Text,
-  Alert,
-  Title,
-  ThemeIcon,
-  Group,
-} from "@mantine/core";
-import { IconLock, IconAlertCircle } from "@tabler/icons-react";
+import { PasswordInput, Alert } from "@mantine/core";
+import { IconAlertCircle, IconLock, IconArrowRight } from "@tabler/icons-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { resetPasswordWithOtp, clearError } from "@/app/store/authSlice";
 
@@ -46,62 +37,97 @@ export const ForgotPasswordNewStep = ({ otpCode }: Props) => {
   };
 
   return (
-    <Stack gap="lg">
-      <Group gap="sm">
-        <ThemeIcon size="lg" radius="md" variant="light" color="indigo">
-          <IconLock size={20} />
-        </ThemeIcon>
-        <div>
-          <Title order={3} fw={600}>
-            Mật khẩu mới
-          </Title>
-          <Text size="sm" c="dimmed">
-            Đặt mật khẩu mới cho tài khoản của bạn
-          </Text>
-        </div>
-      </Group>
+    <div className="flex flex-col items-center w-full">
+      {/* Icon Indicator */}
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        <IconLock size={32} className="text-primary" />
+      </div>
+
+      {/* Headers */}
+      <h1 className="text-headline text-on-surface mb-2 text-center font-bold">
+        Mật khẩu mới
+      </h1>
+      <p className="text-body text-on-surface-variant text-center mb-8 max-w-[320px]">
+        Đặt lại mật khẩu mới bảo mật cho tài khoản của bạn.
+      </p>
 
       {error && (
-        <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          color="red"
+          variant="light"
+          className="w-full mb-6 rounded-lg"
+        >
           {error}
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <Stack gap="md">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="mb-4">
+          <label
+            className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5 ml-1"
+            htmlFor="new-password"
+          >
+            Mật khẩu mới
+          </label>
           <PasswordInput
             id="new-password-input"
-            label="Mật khẩu mới"
             placeholder="Nhập mật khẩu mới"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              if (formErrors.new) setFormErrors((prev) => ({ ...prev, new: undefined }));
+              if (error) dispatch(clearError());
+            }}
             error={formErrors.new}
-            leftSection={<IconLock size={16} />}
             size="md"
+            classNames={{
+              input: "h-[50px] bg-surface-container-lowest focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-lg",
+            }}
           />
+        </div>
+
+        <div className="mb-6">
+          <label
+            className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5 ml-1"
+            htmlFor="confirm-password"
+          >
+            Xác nhận mật khẩu
+          </label>
           <PasswordInput
             id="confirm-password-input"
-            label="Xác nhận mật khẩu"
-            placeholder="Nhập lại mật khẩu"
+            placeholder="Nhập lại mật khẩu mới"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (formErrors.confirm) setFormErrors((prev) => ({ ...prev, confirm: undefined }));
+              if (error) dispatch(clearError());
+            }}
             error={formErrors.confirm}
-            leftSection={<IconLock size={16} />}
             size="md"
+            classNames={{
+              input: "h-[50px] bg-surface-container-lowest focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-lg",
+            }}
           />
-          <Button
-            id="reset-password-btn"
-            type="submit"
-            loading={isLoading}
-            fullWidth
-            size="md"
-            variant="gradient"
-            gradient={{ from: "indigo", to: "violet" }}
-          >
-            Đặt lại mật khẩu
-          </Button>
-        </Stack>
+        </div>
+
+        <button
+          id="reset-password-btn"
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-primary hover:bg-primary-hover text-white font-bold rounded-lg py-3.5 px-4 transition-colors shadow-sm flex items-center justify-center gap-1.5 h-[52px]"
+        >
+          {isLoading ? (
+            <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+          ) : (
+            <>
+              <span>Đặt lại mật khẩu</span>
+              <IconArrowRight size={20} />
+            </>
+          )}
+        </button>
       </form>
-    </Stack>
+    </div>
   );
 };

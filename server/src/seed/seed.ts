@@ -1,6 +1,12 @@
 import prisma from "@/config/database";
 import bcrypt from "bcrypt";
-import { USER_STATUS, BOOKING_STATUS, PAYMENT_STATUS, PAYMENT_METHOD } from "../../../shared/constants/roles";
+import {
+  USER_STATUS,
+  BOOKING_STATUS,
+  PAYMENT_STATUS,
+  PAYMENT_METHOD,
+  USER_ROLES,
+} from "../../../shared/constants/roles";
 
 async function main() {
   console.log("Seeding database...");
@@ -11,6 +17,26 @@ async function main() {
   await prisma.review.deleteMany();
   await prisma.room.deleteMany();
   await prisma.hotel.deleteMany();
+
+  // Create admin account
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "admin@gmail.com" },
+  });
+
+  if (!existingAdmin) {
+    await prisma.user.create({
+      data: {
+        email: "admin@gmail.com",
+        password: await bcrypt.hash("123456", 10),
+        firstName: "System",
+        lastName: "Admin",
+        phone: "0999999999",
+        role: USER_ROLES.ADMIN,
+        status: USER_STATUS.VERIFIED,
+      },
+    });
+    console.log("Created admin user");
+  }
 
   const existingUser1 = await prisma.user.findUnique({
     where: { email: "test@gmail.com" },
@@ -48,6 +74,47 @@ async function main() {
     console.log("Created test user 2");
   }
 
+  const existingVendor = await prisma.user.findUnique({
+    where: { email: "vendor@gmail.com" },
+  });
+
+  if (!existingVendor) {
+    const vendorUser = await prisma.user.create({
+      data: {
+        email: "vendor@gmail.com",
+        password: await bcrypt.hash("123456", 10),
+        firstName: "Nhà cung cấp",
+        lastName: "UTravel",
+        phone: "0888888888",
+        role: USER_ROLES.VENDOR,
+        status: USER_STATUS.VERIFIED,
+      },
+    });
+
+    const vendorProfile = await prisma.vendorProfile.create({
+      data: {
+        userId: vendorUser.id,
+        shopName: "UTravel Resort & Spa",
+        description: "Hệ thống Resort và Khách sạn nghỉ dưỡng cao cấp trên toàn quốc.",
+        businessLicense: "0102030405",
+        bankName: "Techcombank",
+        bankOwner: "NGUYEN VAN VENDOR",
+        bankAccount: "1903123456789",
+        status: "APPROVED",
+        commissionRate: 10.0,
+      },
+    });
+
+    await prisma.wallet.create({
+      data: {
+        vendorId: vendorProfile.id,
+        balance: 50000000.0,
+      },
+    });
+
+    console.log("Created vendor user, profile and wallet");
+  }
+
   console.log("Creating sample hotels and rooms...");
 
   const cities = [
@@ -73,6 +140,10 @@ async function main() {
     "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
   ];
 
+  const vendorDb = await prisma.vendorProfile.findFirst({
+    where: { shopName: "UTravel Resort & Spa" },
+  });
+
   const hotels = [];
   for (let i = 1; i <= 15; i++) {
     const city = cities[i % cities.length];
@@ -88,6 +159,8 @@ async function main() {
         rating: 3 + (i % 3),
         images: JSON.stringify([images[i % images.length]]),
         amenities: JSON.stringify(amenitiesList[i % amenitiesList.length]),
+        vendorId: vendorDb?.id || null,
+        approvalStatus: "APPROVED",
       },
     });
     hotels.push(hotel);
@@ -99,7 +172,8 @@ async function main() {
         type: "single",
         price: 50 + i * 10,
         capacity: 1 + (i % 2),
-        description: "Phòng tiêu chuẩn thoải mái, phù hợp cho cá nhân hoặc cặp đôi.",
+        description:
+          "Phòng tiêu chuẩn thoải mái, phù hợp cho cá nhân hoặc cặp đôi.",
         amenities: JSON.stringify(["AC", "TV", "WiFi"]),
       },
     });

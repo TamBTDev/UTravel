@@ -1,25 +1,15 @@
-import { Link, useNavigate } from "react-router-dom";
-import {
-  Container,
-  Group,
-  Button,
-  Menu,
-  Avatar,
-  Text,
-  Box,
-  Burger,
-  Drawer,
-  Stack,
-  Divider,
-} from "@mantine/core";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, Avatar, Burger, Drawer, Divider } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconLogout, IconUser, IconDashboard } from "@tabler/icons-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { logout } from "@/app/store/authSlice";
 import { USER_ROLES } from "@shared/constants/roles";
+import logo from "@/assets/logo.svg";
 
 export const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [opened, { toggle, close }] = useDisclosure(false);
@@ -36,229 +26,226 @@ export const Navbar = () => {
   };
 
   const fullName = user ? `${user.firstName} ${user.lastName}` : "";
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
-      <Box
-        component="header"
-        h={70}
-        style={{ borderBottom: "1px solid #e9ecef" }}
-      >
-        <Container size="xl" h="100%" px="md">
-          <Group justify="space-between" align="center" h="100%">
-            {/* Logo */}
-            <Link to="/" style={{ textDecoration: "none" }}>
-              <Group gap={8} wrap="nowrap">
-                <Box
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "0.5rem",
-                    background:
-                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
-                  }}
-                >
-                  ✈️
-                </Box>
-                <Text fw={700} size="lg" style={{ color: "#1a1a1a" }}>
-                  UTravel
-                </Text>
-              </Group>
-            </Link>
+      <header className="h-[72px] bg-white border-b border-hairline sticky top-0 z-50">
+        <div className="page-container h-full flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-4 group">
+            <img
+              alt="UTravel Logo"
+              className="h-10 w-10 rounded-md transition-transform group-hover:scale-105"
+              src={logo}
+            />
+            <span className="text-headline font-extrabold text-primary tracking-tight">
+              UTravel
+            </span>
+          </Link>
 
-            {/* Desktop Navigation */}
-            <Group gap="lg" visibleFrom="sm" component="nav">
-              <Link to="/" style={{ textDecoration: "none", color: "#555" }}>
-                <Text size="sm" fw={500}>
-                  Trang chủ
-                </Text>
-              </Link>
-              <Link
-                to="/hotels"
-                style={{ textDecoration: "none", color: "#555" }}
-              >
-                <Text size="sm" fw={500}>
-                  Khách sạn
-                </Text>
-              </Link>
-
-              {isAuthenticated && (
-                <Link
-                  to="/bookings"
-                  style={{ textDecoration: "none", color: "#555" }}
-                >
-                  <Text size="sm" fw={500}>
-                    Đặt phòng của tôi
-                  </Text>
-                </Link>
-              )}
-            </Group>
-
-            {/* User Menu / Auth Buttons */}
-            <Group gap="md" wrap="nowrap">
-              {isAuthenticated && user ? (
-                <Menu shadow="md" position="bottom-end">
-                  <Menu.Target>
-                    <Button variant="subtle" p={0}>
-                      <Group gap={8} wrap="nowrap">
-                        <Avatar
-                          src={user.avatar}
-                          alt={fullName}
-                          radius="xl"
-                          size="sm"
-                          color="blue"
-                        >
-                          {user.firstName?.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Text size="sm" fw={500} visibleFrom="xs">
-                          {user.firstName}
-                        </Text>
-                      </Group>
-                    </Button>
-                  </Menu.Target>
-
-                  <Menu.Dropdown>
-                    <Menu.Item disabled>
-                      <Text size="xs" c="dimmed">
-                        {user.email}
-                      </Text>
-                    </Menu.Item>
-                    <Divider />
-                    <Menu.Item
-                      leftSection={<IconUser size={14} />}
-                      onClick={() => handleNavigate("/profile")}
-                    >
-                      Hồ sơ của tôi
-                    </Menu.Item>
-
-                    {user.role === USER_ROLES.ADMIN && (
-                      <Menu.Item
-                        leftSection={<IconDashboard size={14} />}
-                        onClick={() => handleNavigate("/admin")}
-                      >
-                        Bảng điều khiển
-                      </Menu.Item>
-                    )}
-
-                    <Divider />
-                    <Menu.Item
-                      leftSection={<IconLogout size={14} />}
-                      color="red"
-                      onClick={handleLogout}
-                    >
-                      Đăng xuất
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              ) : (
-                <Group gap="xs" wrap="nowrap">
-                  <Button
-                    variant="subtle"
-                    size="sm"
-                    onClick={() => navigate("/login")}
-                  >
-                    Đăng nhập
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => navigate("/register")}
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    }}
-                  >
-                    Đăng ký
-                  </Button>
-                </Group>
-              )}
-
-              {/* Mobile Burger */}
-              <Burger
-                opened={opened}
-                onClick={toggle}
-                hiddenFrom="sm"
-                size="sm"
-              />
-            </Group>
-          </Group>
-        </Container>
-      </Box>
-
-      {/* Mobile Navigation Drawer */}
-      <Drawer opened={opened} onClose={close} title="Menu" padding="md">
-        <Stack gap="md">
-          <Link to="/" style={{ textDecoration: "none" }}>
-            <Text fw={500} onClick={close}>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              to="/"
+              className={`transition-colors cursor-pointer ${
+                isActive("/")
+                  ? "text-primary text-body-bold border-b-2 border-primary pb-1"
+                  : "text-on-surface-variant font-semibold hover:text-primary pb-1 border-b-2 border-transparent"
+              }`}
+            >
               Trang chủ
-            </Text>
-          </Link>
-          <Link to="/hotels" style={{ textDecoration: "none" }}>
-            <Text fw={500} onClick={close}>
+            </Link>
+            <Link
+              to="/hotels"
+              className={`transition-colors cursor-pointer ${
+                isActive("/hotels")
+                  ? "text-primary text-body-bold border-b-2 border-primary pb-1"
+                  : "text-on-surface-variant font-semibold hover:text-primary pb-1 border-b-2 border-transparent"
+              }`}
+            >
               Khách sạn
-            </Text>
+            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/bookings"
+                className={`transition-colors cursor-pointer ${
+                  isActive("/bookings")
+                    ? "text-primary text-body-bold border-b-2 border-primary pb-1"
+                    : "text-on-surface-variant font-semibold hover:text-primary pb-1 border-b-2 border-transparent"
+                }`}
+              >
+                Đặt phòng
+              </Link>
+            )}
+          </nav>
+
+          {/* User Actions */}
+          <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated && user ? (
+              <Menu shadow="md" position="bottom-end" radius="md">
+                <Menu.Target>
+                  <button className="flex items-center gap-2 hover:bg-surface-low px-2 py-1.5 rounded-lg transition-colors">
+                    <Avatar
+                      src={user.avatar}
+                      alt={fullName}
+                      radius="xl"
+                      size="sm"
+                      color="blue"
+                    >
+                      {user.firstName?.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <span className="text-body-bold text-on-surface">
+                      {user.firstName}
+                    </span>
+                  </button>
+                </Menu.Target>
+
+                <Menu.Dropdown className="border-hairline shadow-lg">
+                  <Menu.Item disabled>
+                    <span className="text-label-caps text-on-surface-variant">
+                      {user.email}
+                    </span>
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={
+                      <IconUser size={16} className="text-outline" />
+                    }
+                    onClick={() => handleNavigate("/profile")}
+                    className="text-body text-on-surface hover:text-primary"
+                  >
+                    Hồ sơ của tôi
+                  </Menu.Item>
+
+                  {user.role === USER_ROLES.ADMIN && (
+                    <Menu.Item
+                      leftSection={
+                        <IconDashboard size={16} className="text-outline" />
+                      }
+                      onClick={() => handleNavigate("/admin")}
+                      className="text-body text-on-surface hover:text-primary"
+                    >
+                      Bảng điều khiển
+                    </Menu.Item>
+                  )}
+
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconLogout size={16} />}
+                    color="red"
+                    onClick={handleLogout}
+                    className="text-body"
+                  >
+                    Đăng xuất
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            ) : (
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => navigate("/login")}
+                  className="px-4 py-2 text-body-bold text-primary hover:text-primary-hover hover:bg-surface-low rounded-lg transition-colors"
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  onClick={() => navigate("/register")}
+                  className="px-6 py-2 text-body-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors shadow-sm"
+                >
+                  Đăng ký
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Burger */}
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            hiddenFrom="md"
+            size="sm"
+            color="#475467"
+          />
+        </div>
+      </header>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        opened={opened}
+        onClose={close}
+        padding="md"
+        position="right"
+        title={<span className="text-headline text-midnight">Menu</span>}
+      >
+        <div className="flex flex-col gap-4 mt-4">
+          <Link
+            to="/"
+            className={`text-title p-2 rounded-md ${isActive("/") ? "bg-primary/10 text-primary" : "text-on-surface"}`}
+            onClick={close}
+          >
+            Trang chủ
+          </Link>
+          <Link
+            to="/hotels"
+            className={`text-title p-2 rounded-md ${isActive("/hotels") ? "bg-primary/10 text-primary" : "text-on-surface"}`}
+            onClick={close}
+          >
+            Khách sạn
           </Link>
 
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <>
-              <Link to="/bookings" style={{ textDecoration: "none" }}>
-                <Text fw={500} onClick={close}>
-                  Đặt phòng của tôi
-                </Text>
+              <Link
+                to="/bookings"
+                className={`text-title p-2 rounded-md ${isActive("/bookings") ? "bg-primary/10 text-primary" : "text-on-surface"}`}
+                onClick={close}
+              >
+                Đặt phòng
               </Link>
-              <Divider />
-              <Link to="/profile" style={{ textDecoration: "none" }}>
-                <Text fw={500} onClick={close}>
-                  Hồ sơ
-                </Text>
+              <Divider my="sm" color="#eaecf0" />
+              <Link
+                to="/profile"
+                className="text-title text-on-surface p-2"
+                onClick={close}
+              >
+                Hồ sơ
               </Link>
               {user?.role === USER_ROLES.ADMIN && (
-                <Link to="/admin" style={{ textDecoration: "none" }}>
-                  <Text fw={500} onClick={close}>
-                    Bảng điều khiển
-                  </Text>
+                <Link
+                  to="/admin"
+                  className="text-title text-on-surface p-2"
+                  onClick={close}
+                >
+                  Bảng điều khiển
                 </Link>
               )}
-              <Button
-                fullWidth
-                color="red"
-                variant="light"
+              <button
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-error/10 text-error p-3 rounded-lg text-title hover:bg-error/20 transition-colors"
                 onClick={handleLogout}
-                leftSection={<IconLogout size={16} />}
               >
+                <IconLogout size={18} />
                 Đăng xuất
-              </Button>
+              </button>
             </>
-          )}
-
-          {!isAuthenticated && (
+          ) : (
             <>
-              <Divider />
-              <Button
-                fullWidth
-                variant="default"
+              <Divider my="sm" color="#eaecf0" />
+              <button
+                className="w-full p-3 text-title text-on-surface bg-surface-low rounded-lg hover:bg-surface-high transition-colors"
                 onClick={() => handleNavigate("/login")}
               >
                 Đăng nhập
-              </Button>
-              <Button
-                fullWidth
-                style={{
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                }}
+              </button>
+              <button
+                className="w-full p-3 text-title text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
                 onClick={() => handleNavigate("/register")}
               >
                 Đăng ký
-              </Button>
+              </button>
             </>
           )}
-        </Stack>
+        </div>
       </Drawer>
     </>
   );
