@@ -12,6 +12,8 @@ import { VendorSidebar } from "../components/VendorSidebar";
 import { KpiCard } from "../components/KpiCard";
 import { RevenueChart } from "../components/RevenueChart";
 import { RecentBookings } from "../components/RecentBookings";
+import { VendorBookingsView } from "../components/VendorBookingsView";
+import { VendorRevenueView } from "../components/VendorRevenueView";
 
 export const VendorDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -91,14 +93,16 @@ export const VendorDashboardPage = () => {
                 Chào mừng quay trở lại, {user?.firstName || "Đối tác"}. Dưới đây là tình hình hoạt động của các chỗ nghỉ hôm nay.
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <button className="bg-white border border-outline-variant hover:bg-surface-container-low text-on-surface font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2 text-sm">
-                <IconDownload size={16} /> Xuất báo cáo
-              </button>
-            </div>
+            {activeTab === "dashboard" && (
+              <div className="flex items-center gap-3">
+                <button className="bg-white border border-outline-variant hover:bg-surface-container-low text-on-surface font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2 text-sm">
+                  <IconDownload size={16} /> Xuất báo cáo
+                </button>
+              </div>
+            )}
           </header>
 
-          {activeTab === "dashboard" ? (
+          {activeTab === "dashboard" && (
             <>
               {/* KPI Bento Grid */}
               <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,11 +140,17 @@ export const VendorDashboardPage = () => {
                 </div>
                 {/* Recent Bookings List */}
                 <div>
-                  <RecentBookings />
+                  <RecentBookings onViewAll={() => setActiveTab("bookings")} />
                 </div>
               </section>
             </>
-          ) : (
+          )}
+
+          {activeTab === "bookings" && <VendorBookingsView />}
+
+          {activeTab === "earnings" && <VendorRevenueView />}
+
+          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && (
             <div className="bg-white p-12 rounded-xl border border-hairline text-center flex flex-col items-center justify-center min-h-[300px]">
               <h3 className="text-lg font-bold text-on-surface mb-2">
                 Tính năng "{getTabTitle(activeTab)}" đang được phát triển
@@ -155,3 +165,4 @@ export const VendorDashboardPage = () => {
     </div>
   );
 };
+
