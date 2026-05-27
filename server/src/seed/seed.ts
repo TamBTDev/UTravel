@@ -74,6 +74,47 @@ async function main() {
     console.log("Created test user 2");
   }
 
+  const existingVendor = await prisma.user.findUnique({
+    where: { email: "vendor@gmail.com" },
+  });
+
+  if (!existingVendor) {
+    const vendorUser = await prisma.user.create({
+      data: {
+        email: "vendor@gmail.com",
+        password: await bcrypt.hash("123456", 10),
+        firstName: "Nhà cung cấp",
+        lastName: "UTravel",
+        phone: "0888888888",
+        role: USER_ROLES.VENDOR,
+        status: USER_STATUS.VERIFIED,
+      },
+    });
+
+    const vendorProfile = await prisma.vendorProfile.create({
+      data: {
+        userId: vendorUser.id,
+        shopName: "UTravel Resort & Spa",
+        description: "Hệ thống Resort và Khách sạn nghỉ dưỡng cao cấp trên toàn quốc.",
+        businessLicense: "0102030405",
+        bankName: "Techcombank",
+        bankOwner: "NGUYEN VAN VENDOR",
+        bankAccount: "1903123456789",
+        status: "APPROVED",
+        commissionRate: 10.0,
+      },
+    });
+
+    await prisma.wallet.create({
+      data: {
+        vendorId: vendorProfile.id,
+        balance: 50000000.0,
+      },
+    });
+
+    console.log("Created vendor user, profile and wallet");
+  }
+
   console.log("Creating sample hotels and rooms...");
 
   const cities = [
@@ -99,6 +140,10 @@ async function main() {
     "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
   ];
 
+  const vendorDb = await prisma.vendorProfile.findFirst({
+    where: { shopName: "UTravel Resort & Spa" },
+  });
+
   const hotels = [];
   for (let i = 1; i <= 15; i++) {
     const city = cities[i % cities.length];
@@ -114,6 +159,8 @@ async function main() {
         rating: 3 + (i % 3),
         images: JSON.stringify([images[i % images.length]]),
         amenities: JSON.stringify(amenitiesList[i % amenitiesList.length]),
+        vendorId: vendorDb?.id || null,
+        approvalStatus: "APPROVED",
       },
     });
     hotels.push(hotel);

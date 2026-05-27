@@ -1,159 +1,77 @@
-import { useEffect } from "react";
-import {
-  Container,
-  Paper,
-  Stack,
-  Skeleton,
-  Alert,
-  Tabs,
-  Text,
-  ThemeIcon,
-  Group,
-  Title,
-} from "@mantine/core";
-import {
-  IconUser,
-  IconSettings,
-  IconAlertCircle,
-  IconCalendar,
-} from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { Loader } from "@mantine/core";
 import { AppLayout } from "@/components/layout";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { fetchProfile } from "@/app/store/profileSlice";
-import { ProfileHeader } from "../components/ProfileHeader";
+import { ProfileSidebar } from "../components/ProfileSidebar";
 import { ProfileEditForm } from "../components/ProfileEditForm";
-
-const InfoRow = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) => (
-  <Group
-    justify="space-between"
-    py="xs"
-    style={{ borderBottom: "1px solid var(--mantine-color-gray-2)" }}
-  >
-    <Text size="sm" c="dimmed" fw={500}>
-      {label}
-    </Text>
-    <Text size="sm" fw={400}>
-      {value || "Chưa cập nhật"}
-    </Text>
-  </Group>
-);
+import { RegisterVendorForm } from "../components/RegisterVendorForm";
 
 export const ProfilePage = () => {
   const dispatch = useAppDispatch();
-  const { profile, isLoading, error } = useAppSelector((s) => s.profile);
+  const { isLoading } = useAppSelector((s) => s.profile);
+  const [activeTab, setActiveTab] = useState("personal");
 
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
 
+  const getPageHeader = () => {
+    switch (activeTab) {
+      case "personal":
+        return {
+          title: "Thông tin cá nhân",
+          desc: "Cập nhật thông tin chi tiết và cách chúng tôi có thể liên hệ với bạn.",
+        };
+      case "register-vendor":
+        return {
+          title: "Đăng ký / Quản lý đối tác",
+          desc: "Đăng ký bán hàng hoặc quản lý thông tin cửa hàng, tài khoản ngân hàng liên kết.",
+        };
+      default:
+        return {
+          title: "Tài khoản",
+          desc: "Quản lý thiết lập tài khoản và các tùy chọn cá nhân hóa.",
+        };
+    }
+  };
+
+  const headerInfo = getPageHeader();
+
   return (
     <AppLayout withContainer={false}>
-      <div
-        style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          opacity: 0.06,
-          position: "absolute",
-          top: 70,
-          left: 0,
-          right: 0,
-          height: 260,
-          zIndex: -1,
-        }}
-      />
+      <div className="flex flex-1 w-full max-w-[1200px] mx-auto px-8 py-8 gap-8">
+        {/* Cột trái: Sidebar điều hướng */}
+        <ProfileSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <Container size="md" py="xl">
-        <Group gap="sm" mb="lg">
-          <ThemeIcon
-            size="xl"
-            radius="md"
-            variant="gradient"
-            gradient={{ from: "violet", to: "indigo" }}
-          >
-            <IconUser size={22} />
-          </ThemeIcon>
-          <div>
-            <Title order={2} fw={700}>
-              Hồ sơ của tôi
-            </Title>
-            <Text size="sm" c="dimmed">
-              Quản lý thông tin tài khoản cá nhân
-            </Text>
+        {/* Cột phải: Khung nội dung chính */}
+        <main className="flex-1 max-w-[800px]">
+          <div className="mb-8">
+            <h1 className="text-display text-on-surface mb-2">{headerInfo.title}</h1>
+            <p className="text-body text-on-surface-variant">
+              {headerInfo.desc}
+            </p>
           </div>
-        </Group>
 
-        {error && !profile && (
-          <Alert icon={<IconAlertCircle size={16} />} color="red" mb="md">
-            {error}
-          </Alert>
-        )}
-
-        <Stack gap="lg">
-          <Paper shadow="sm" radius="lg" p="xl" withBorder>
-            <ProfileHeader profile={profile} isLoading={isLoading} />
-          </Paper>
-
-          <Paper shadow="sm" radius="lg" p="xl" withBorder>
-            {isLoading ? (
-              <Stack gap="md">
-                <Skeleton height={16} width={100} />
-                <Skeleton height={40} />
-                <Skeleton height={40} />
-                <Skeleton height={40} />
-              </Stack>
-            ) : (
-              <Tabs defaultValue="info" color="violet">
-                <Tabs.List mb="lg">
-                  <Tabs.Tab value="info" leftSection={<IconUser size={14} />}>
-                    Thông tin
-                  </Tabs.Tab>
-                  <Tabs.Tab
-                    value="edit"
-                    leftSection={<IconSettings size={14} />}
-                  >
-                    Chỉnh sửa
-                  </Tabs.Tab>
-                </Tabs.List>
-
-                <Tabs.Panel value="info">
-                  <Stack gap={0}>
-                    <InfoRow label="Email" value={profile?.email} />
-                    <InfoRow label="Tên" value={profile?.firstName} />
-                    <InfoRow label="Họ" value={profile?.lastName} />
-                    <InfoRow label="Điện thoại" value={profile?.phone} />
-                    <InfoRow label="Địa chỉ" value={profile?.address} />
-                    <Group justify="space-between" py="xs">
-                      <Text size="sm" c="dimmed" fw={500}>
-                        <IconCalendar
-                          size={14}
-                          style={{ marginRight: 4, verticalAlign: "middle" }}
-                        />
-                        Thành viên từ
-                      </Text>
-                      <Text size="sm">
-                        {profile?.createdAt
-                          ? new Date(profile.createdAt).toLocaleDateString(
-                              "vi-VN",
-                            )
-                          : "—"}
-                      </Text>
-                    </Group>
-                  </Stack>
-                </Tabs.Panel>
-
-                <Tabs.Panel value="edit">
-                  <ProfileEditForm />
-                </Tabs.Panel>
-              </Tabs>
-            )}
-          </Paper>
-        </Stack>
-      </Container>
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <Loader color="var(--color-primary)" size="lg" />
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-hairline p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+              {activeTab === "personal" ? (
+                <ProfileEditForm />
+              ) : activeTab === "register-vendor" ? (
+                <RegisterVendorForm />
+              ) : (
+                <div className="py-16 text-center text-on-surface-variant font-medium">
+                  Tính năng đang được phát triển...
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
     </AppLayout>
   );
 };

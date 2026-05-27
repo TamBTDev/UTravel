@@ -22,6 +22,7 @@ import { Booking } from "./pages/Booking";
 import { PaymentPage } from "./pages/Payment";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { USER_ROLES } from "@shared/constants/roles";
+import { VendorDashboardPage } from "./features/vendor/pages/VendorDashboardPage";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dates/styles.css";
@@ -84,6 +85,16 @@ function App() {
               element={
                 <ProtectedRoute requiredRole={USER_ROLES.ADMIN}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Vendor routes */}
+            <Route
+              path="/vendor/dashboard"
+              element={
+                <ProtectedRoute requiredRole={USER_ROLES.VENDOR}>
+                  <VendorDashboardPage />
                 </ProtectedRoute>
               }
             />

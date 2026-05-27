@@ -26,8 +26,12 @@ authRouter.post(
   authController.forgotPassword,
 );
 
-// TODO: Triển khai API kiểm tra OTP riêng cho quên mật khẩu
-// authRouter.post("/forgot-password/verify-otp", rateLimitConfig.verifyOtp, authController.verifyForgotOtp);
+// API kiểm tra OTP riêng cho quên mật khẩu
+authRouter.post(
+  "/forgot-password/verify-otp",
+  rateLimitConfig.verifyOtp,
+  authController.verifyForgotOtp,
+);
 
 authRouter.post(
   "/reset-password",

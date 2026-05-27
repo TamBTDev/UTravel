@@ -23,8 +23,11 @@ export const register = async (
 
     // Check if user already exists
     const existingUser = await userRepository.findByEmail(email);
-    console.log("[REGISTER] Checking existing user:", existingUser ? "FOUND" : "NOT FOUND");
-    
+    console.log(
+      "[REGISTER] Checking existing user:",
+      existingUser ? "FOUND" : "NOT FOUND",
+    );
+
     if (existingUser) {
       console.log("[REGISTER] User already exists with email:", email);
       throw new Error("Email đã được sử dụng");
@@ -65,7 +68,10 @@ export const register = async (
     await emailService.sendRegisterOtp(email, otp, 10);
     console.log("[REGISTER] Email sent successfully");
 
-    console.log("[REGISTER] Registration completed successfully for user ID:", user.id);
+    console.log(
+      "[REGISTER] Registration completed successfully for user ID:",
+      user.id,
+    );
 
     return {
       success: true,
@@ -152,7 +158,7 @@ export const login = async (email: string, password: string) => {
 
     const user = await userRepository.findByEmail(email);
     console.log("[LOGIN] User lookup result:", user ? "FOUND" : "NOT FOUND");
-    
+
     if (!user) {
       console.log("[LOGIN] User not found for email:", email);
       throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
@@ -172,7 +178,7 @@ export const login = async (email: string, password: string) => {
 
     console.log("[LOGIN] Verifying password for user:", email);
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
+
     if (!isPasswordValid) {
       console.log("[LOGIN] Password verification failed for user:", email);
       throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
@@ -180,7 +186,7 @@ export const login = async (email: string, password: string) => {
 
     console.log("[LOGIN] Password verified successfully for user:", email);
     console.log("[LOGIN] Generating JWT token...");
-    
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       env.JWT_SECRET,
@@ -214,11 +220,7 @@ export const login = async (email: string, password: string) => {
 export const sendResetPasswordOtp = async (email: string) => {
   const user = await userRepository.findByEmail(email);
   if (!user) {
-    return {
-      success: true,
-      message:
-        "Nếu email tồn tại trong hệ thống, mã OTP sẽ được gửi đến email của bạn.",
-    };
+    throw new Error("Email không tồn tại trong hệ thống");
   }
 
   const otp = generateOtp();
@@ -235,8 +237,34 @@ export const sendResetPasswordOtp = async (email: string) => {
 
   return {
     success: true,
-    message:
-      "Nếu email tồn tại trong hệ thống, mã OTP sẽ được gửi đến email của bạn.",
+    message: "Mã OTP đã được gửi đến email của bạn.",
+  };
+};
+
+export const verifyForgotPasswordOtp = async (
+  email: string,
+  otpCode: string,
+) => {
+  const user = await userRepository.findByEmail(email);
+  if (!user) {
+    throw new Error("Email không tìm thấy");
+  }
+
+  const userOtp = await userOtpRepository.findByCode(
+    otpCode,
+    "FORGOT_PASSWORD",
+  );
+  if (!userOtp) {
+    throw new Error("Mã OTP không hợp lệ hoặc đã hết hạn");
+  }
+
+  if (userOtp.userId !== user.id) {
+    throw new Error("Mã OTP không phù hợp với email này");
+  }
+
+  return {
+    success: true,
+    message: "Mã OTP hợp lệ.",
   };
 };
 

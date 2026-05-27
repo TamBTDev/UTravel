@@ -1,18 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Alert } from "@mantine/core";
 import {
-  Container,
-  Paper,
-  Stack,
-  ThemeIcon,
-  Title,
-  Text,
-  Button,
-  Box,
-  Stepper,
-  Alert,
-} from "@mantine/core";
-import { IconCheck, IconArrowLeft, IconAlertCircle } from "@tabler/icons-react";
+  IconArrowLeft,
+  IconAlertCircle,
+  IconCircleCheck,
+} from "@tabler/icons-react";
 import { AppLayout } from "@/components/layout";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { resetForgotFlow, setForgotStep } from "@/app/store/authSlice";
@@ -20,19 +13,11 @@ import { ForgotPasswordEmailStep } from "../components/ForgotPasswordEmailStep";
 import { ForgotPasswordOtpStep } from "../components/ForgotPasswordOtpStep";
 import { ForgotPasswordNewStep } from "../components/ForgotPasswordNewStep";
 
-const stepIndex: Record<string, number> = {
-  email: 0,
-  otp: 1,
-  newPassword: 2,
-  success: 3,
-};
-
 export const ForgotPasswordPage = () => {
   const dispatch = useAppDispatch();
   const { forgotStep: step } = useAppSelector((s) => s.auth);
   const [confirmedOtp, setConfirmedOtp] = useState("");
 
-  // Reset khi rời trang
   useEffect(
     () => () => {
       dispatch(resetForgotFlow());
@@ -42,59 +27,27 @@ export const ForgotPasswordPage = () => {
 
   return (
     <AppLayout withContainer={false}>
-      <Box
-        style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          opacity: 0.06,
-          position: "absolute",
-          top: 70,
-          left: 0,
-          right: 0,
-          height: 280,
-          zIndex: -1,
-        }}
-      />
+      <main className="flex-1 flex flex-col items-center justify-center py-16 px-4 md:px-8 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-surface-container-low via-surface-bright to-surface-bright relative min-h-[calc(100vh-140px)] overflow-hidden">
+        <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-secondary/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
 
-      <Container size="sm" py="xl">
-        {/* Back to login */}
-        <Button
-          component={Link}
-          to="/login"
-          variant="subtle"
-          color="dimmed"
-          leftSection={<IconArrowLeft size={16} />}
-          mb="md"
-          onClick={() => dispatch(resetForgotFlow())}
-        >
-          Quay lại đăng nhập
-        </Button>
-
-        <Paper shadow="md" radius="lg" p="xl" withBorder>
+        <div className="w-full max-w-[460px] z-10">
           <Alert
-            mb="xl"
+            mb="lg"
             color="blue"
             title="Lưu ý phát triển"
             icon={<IconAlertCircle size={16} />}
+            className="rounded-lg shadow-sm"
           >
             Đang trong quá trình phát triển, tạm thời nhận mã OTP tại terminal
             của Server (Ethereal Email preview).
           </Alert>
 
-          {step !== "success" ? (
-            <Stack gap="xl">
-              {/* Stepper progress */}
-              <Stepper
-                active={stepIndex[step]}
-                size="sm"
-                color="violet"
-                completedIcon={<IconCheck size={14} />}
-              >
-                <Stepper.Step label="Email" description="Xác nhận tài khoản" />
-                <Stepper.Step label="OTP" description="Nhập mã xác thực" />
-                <Stepper.Step label="Mật khẩu" description="Đặt mật khẩu mới" />
-              </Stepper>
+          {/* Form Card */}
+          <div className="bg-white dark:bg-inverse-surface rounded-xl border border-hairline dark:border-outline-variant shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
 
-              {/* Step content */}
+            <div className="p-8 md:p-10 flex flex-col">
               {step === "email" && <ForgotPasswordEmailStep />}
               {step === "otp" && (
                 <ForgotPasswordOtpStep
@@ -107,41 +60,47 @@ export const ForgotPasswordPage = () => {
               {step === "newPassword" && (
                 <ForgotPasswordNewStep otpCode={confirmedOtp} />
               )}
-            </Stack>
-          ) : (
-            // Success state
-            <Stack align="center" gap="lg" py="md">
-              <ThemeIcon
-                size={80}
-                radius="xl"
-                variant="gradient"
-                gradient={{ from: "teal", to: "green" }}
-              >
-                <IconCheck size={40} />
-              </ThemeIcon>
-              <div style={{ textAlign: "center" }}>
-                <Title order={2} fw={700} mb="xs">
-                  Thành công!
-                </Title>
-                <Text c="dimmed">
-                  Mật khẩu của bạn đã được thay đổi. Hãy đăng nhập với mật khẩu
-                  mới.
-                </Text>
-              </div>
-              <Button
-                component={Link}
+              {step === "success" && (
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-6">
+                    <IconCircleCheck size={36} className="text-secondary" />
+                  </div>
+                  <h1 className="text-headline text-on-surface mb-2">
+                    Thành công!
+                  </h1>
+                  <p className="text-body text-on-surface-variant mb-8 max-w-[320px]">
+                    Mật khẩu của bạn đã được thay đổi. Hãy đăng nhập với mật
+                    khẩu mới.
+                  </p>
+                  <Link
+                    to="/login"
+                    onClick={() => dispatch(resetForgotFlow())}
+                    className="w-full bg-primary hover:bg-primary-hover text-white font-bold rounded-lg py-3.5 px-4 text-center transition-colors shadow-sm block h-[52px] flex items-center justify-center"
+                  >
+                    Đăng nhập ngay
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {step !== "success" && (
+            <div className="mt-6 text-center">
+              <Link
                 to="/login"
-                variant="gradient"
-                gradient={{ from: "teal", to: "green" }}
-                size="md"
                 onClick={() => dispatch(resetForgotFlow())}
+                className="inline-flex items-center gap-1.5 text-ocean-slate hover:text-primary font-semibold transition-colors group"
               >
-                Đăng nhập ngay
-              </Button>
-            </Stack>
+                <IconArrowLeft
+                  size={18}
+                  className="group-hover:-translate-x-1 transition-transform"
+                />
+                Quay lại đăng nhập
+              </Link>
+            </div>
           )}
-        </Paper>
-      </Container>
+        </div>
+      </main>
     </AppLayout>
   );
 };

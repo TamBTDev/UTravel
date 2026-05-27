@@ -92,6 +92,23 @@ export const sendForgotPasswordOtp = createAsyncThunk(
   },
 );
 
+export const verifyForgotPasswordOtp = createAsyncThunk(
+  "auth/verifyForgotPasswordOtp",
+  async (
+    data: { email: string; otpCode: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await authService.verifyForgotPasswordOtp(data);
+      return res.message;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.error || err.message || "Xác thực OTP thất bại",
+      );
+    }
+  },
+);
+
 export const resetPasswordWithOtp = createAsyncThunk(
   "auth/resetPasswordWithOtp",
   async (
@@ -146,6 +163,12 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+    },
+    updateUserRole: (state, action: PayloadAction<User["role"]>) => {
+      if (state.user) {
+        state.user.role = action.payload;
+        localStorage.setItem("user", JSON.stringify(state.user));
+      }
     },
   },
   extraReducers: (builder) => {
@@ -224,6 +247,20 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
 
+      // Verify Forgot Password OTP
+      .addCase(verifyForgotPasswordOtp.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyForgotPasswordOtp.fulfilled, (state) => {
+        state.isLoading = false;
+        state.forgotStep = "newPassword";
+      })
+      .addCase(verifyForgotPasswordOtp.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+
       // Reset Password
       .addCase(resetPasswordWithOtp.pending, (state) => {
         state.isLoading = true;
@@ -240,6 +277,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setForgotStep, resetForgotFlow, clearError, logout } =
+export const { setForgotStep, resetForgotFlow, clearError, logout, updateUserRole } =
   authSlice.actions;
 export default authSlice.reducer;

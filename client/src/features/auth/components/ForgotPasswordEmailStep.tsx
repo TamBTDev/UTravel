@@ -1,15 +1,6 @@
 import { useState } from "react";
-import {
-  TextInput,
-  Button,
-  Stack,
-  Text,
-  Alert,
-  Title,
-  ThemeIcon,
-  Group,
-} from "@mantine/core";
-import { IconMail, IconAlertCircle, IconSend } from "@tabler/icons-react";
+import { Alert } from "@mantine/core";
+import { IconAlertCircle, IconMail, IconArrowRight, IconLock } from "@tabler/icons-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { sendForgotPasswordOtp, clearError } from "@/app/store/authSlice";
 
@@ -35,53 +26,82 @@ export const ForgotPasswordEmailStep = () => {
   };
 
   return (
-    <Stack gap="lg">
-      <Group gap="sm">
-        <ThemeIcon size="lg" radius="md" variant="light" color="violet">
-          <IconMail size={20} />
-        </ThemeIcon>
-        <div>
-          <Title order={3} fw={600}>
-            Quên mật khẩu
-          </Title>
-          <Text size="sm" c="dimmed">
-            Nhập email để nhận mã OTP đặt lại mật khẩu
-          </Text>
-        </div>
-      </Group>
+    <div className="flex flex-col items-center w-full">
+      {/* Icon Indicator */}
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        <IconLock size={32} className="text-primary" />
+      </div>
+
+      {/* Headers */}
+      <h1 className="text-headline text-on-surface mb-2 text-center font-bold">
+        Đặt lại mật khẩu
+      </h1>
+      <p className="text-body text-on-surface-variant text-center mb-8 max-w-[320px]">
+        Nhập email liên kết với tài khoản của bạn và chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu.
+      </p>
 
       {error && (
-        <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          color="red"
+          variant="light"
+          className="w-full mb-6 rounded-lg"
+        >
           {error}
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <Stack gap="md">
-          <TextInput
-            id="forgot-email"
-            label="Email"
-            placeholder="your@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={emailError}
-            leftSection={<IconMail size={16} />}
-            size="md"
-          />
-          <Button
-            id="forgot-send-otp-btn"
-            type="submit"
-            loading={isLoading}
-            leftSection={<IconSend size={16} />}
-            fullWidth
-            size="md"
-            variant="gradient"
-            gradient={{ from: "violet", to: "indigo" }}
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="mb-6">
+          <label
+            className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5 ml-1"
+            htmlFor="forgot-email"
           >
-            Gửi mã OTP
-          </Button>
-        </Stack>
+            Địa chỉ Email
+          </label>
+          <div className="relative group">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-outline group-focus-within:text-primary transition-colors">
+              <IconMail size={20} />
+            </span>
+            <input
+              id="forgot-email"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              required
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError("");
+                if (error) dispatch(clearError());
+              }}
+              className={`w-full pl-11 pr-4 py-3.5 bg-surface-container-lowest border ${
+                emailError ? "border-error" : "border-outline-variant"
+              } rounded-lg text-body text-on-surface placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm`}
+            />
+          </div>
+          {emailError && (
+            <p className="text-xs text-error mt-1 ml-1">{emailError}</p>
+          )}
+        </div>
+
+        <button
+          id="forgot-send-otp-btn"
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-primary hover:bg-primary-hover text-white font-bold rounded-lg py-3.5 px-4 transition-colors shadow-sm flex items-center justify-center gap-1.5 h-[52px]"
+        >
+          {isLoading ? (
+            <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+          ) : (
+            <>
+              <span>Gửi mã OTP</span>
+              <IconArrowRight size={20} />
+            </>
+          )}
+        </button>
       </form>
-    </Stack>
+    </div>
   );
 };
