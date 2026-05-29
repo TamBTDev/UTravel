@@ -179,3 +179,35 @@ export const replyToReview = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Lỗi khi phản hồi bình luận', error: error.message });
   }
 };
+
+export const resetVendorProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const result = await vendorsService.resetVendorProfile(userId);
+    res.status(200).json({
+      success: true,
+      message: 'Hồ sơ đã được đặt lại thành công. Bạn có thể gửi lại yêu cầu đăng ký mới.'
+    });
+  } catch (error: any) {
+    console.error('Error resetting vendor profile:', error);
+    if (error.message === 'Không tìm thấy hồ sơ đối tác' || 
+        error.message === 'Chỉ có thể đặt lại hồ sơ khi yêu cầu bị từ chối phê duyệt') {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Lỗi khi đặt lại hồ sơ đối tác', error: error.message });
+  }
+};
+
+export const getVendorDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const stats = await vendorsService.getVendorDashboardStats(userId);
+    res.status(200).json({ success: true, data: stats });
+  } catch (error: any) {
+    console.error('Error fetching vendor dashboard stats:', error);
+    if (error.message === 'Không tìm thấy hồ sơ đối tác') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Lỗi khi lấy dữ liệu bảng điều khiển đối tác', error: error.message });
+  }
+};

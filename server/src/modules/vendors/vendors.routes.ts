@@ -9,7 +9,9 @@ import {
   updateVendorBookingStatus,
   getVendorRevenueReport,
   getVendorReviews,
-  replyToReview
+  replyToReview,
+  resetVendorProfile,
+  getVendorDashboardStats
 } from './vendors.controller';
 
 const router = Router();
@@ -20,8 +22,14 @@ router.use(authMiddleware);
 // POST /api/vendors/register - Đăng ký trở thành Vendor (USER role cũng gọi được)
 router.post('/register', registerVendor);
 
+// DELETE /api/vendors/profile/reset - Reset hồ sơ đối tác bị từ chối
+router.delete('/profile/reset', resetVendorProfile);
+
 // GET /api/vendors/profile - Lấy thông tin Vendor của chính mình (chỉ VENDOR mới gọi được)
 router.get('/profile', requireRole(USER_ROLES.VENDOR), getVendorProfile);
+
+// GET /api/vendors/dashboard-stats - Lấy thống kê bảng điều khiển đối tác
+router.get('/dashboard-stats', requireRole(USER_ROLES.VENDOR), getVendorDashboardStats);
 
 // PATCH /api/vendors/profile - Cập nhật thông tin ngân hàng/mô tả
 router.patch('/profile', requireRole(USER_ROLES.VENDOR), updateVendorProfile);

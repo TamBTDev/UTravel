@@ -126,7 +126,19 @@ export const Navbar = () => {
                       onClick={() => handleNavigate("/admin")}
                       className="text-body text-on-surface hover:text-primary"
                     >
-                      Bảng điều khiển
+                      Kênh quản trị
+                    </Menu.Item>
+                  )}
+
+                  {user.role === USER_ROLES.VENDOR && (
+                    <Menu.Item
+                      leftSection={
+                        <IconDashboard size={16} className="text-outline" />
+                      }
+                      onClick={() => handleNavigate("/vendor/dashboard")}
+                      className="text-body text-on-surface hover:text-primary"
+                    >
+                      Kênh đối tác
                     </Menu.Item>
                   )}
 
@@ -217,7 +229,16 @@ export const Navbar = () => {
                   className="text-title text-on-surface p-2"
                   onClick={close}
                 >
-                  Bảng điều khiển
+                  Kênh quản trị
+                </Link>
+              )}
+              {user?.role === USER_ROLES.VENDOR && (
+                <Link
+                  to="/vendor/dashboard"
+                  className="text-title text-on-surface p-2"
+                  onClick={close}
+                >
+                  Kênh đối tác
                 </Link>
               )}
               <button

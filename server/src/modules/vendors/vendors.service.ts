@@ -229,4 +229,162 @@ export const vendorsService = {
       },
     });
   },
+
+  resetVendorProfile: async (userId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!vendor) {
+      throw new Error("Không tìm thấy hồ sơ đối tác");
+    }
+
+    if (vendor.status !== "REJECTED") {
+      throw new Error("Chỉ có thể đặt lại hồ sơ khi yêu cầu bị từ chối phê duyệt");
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // Delete Wallet if exists
+      await tx.wallet.deleteMany({
+        where: { vendorId: vendor.id },
+      });
+
+      // Delete Vendor Profile
+      await tx.vendorProfile.delete({
+        where: { id: vendor.id },
+      });
+
+      // Downgrade user role back to USER
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: USER_ROLES.USER },
+      });
+
+      return { success: true };
+    });
+  },
+
+  getVendorDashboardStats: async (userId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({
+      where: { userId },
+      include: { wallet: true },
+    });
+
+    if (!vendor) {
+      throw new Error("Không tìm thấy hồ sơ đối tác");
+    }
+
+    // 1. Available rooms count
+    const totalRooms = await prisma.room.count({
+      where: { hotel: { vendorId: vendor.id } },
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const occupiedRoomsCount = await prisma.booking.count({
+      where: {
+        room: { hotel: { vendorId: vendor.id } },
+        status: { in: ["PENDING", "CONFIRMED", "COMPLETED"] },
+        checkInDate: { lte: today },
+        checkOutDate: { gte: today },
+      },
+    });
+    const availableRooms = Math.max(0, totalRooms - occupiedRoomsCount);
+
+    // 2. New bookings count (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const newBookingsCount = await prisma.booking.count({
+      where: {
+        room: { hotel: { vendorId: vendor.id } },
+        createdAt: { gte: oneDayAgo },
+      },
+    });
+
+    // 3. Average review rating
+    const reviewsAggregate = await prisma.review.aggregate({
+      where: { hotel: { vendorId: vendor.id } },
+      _avg: { rating: true },
+    });
+    const averageRating = reviewsAggregate._avg.rating
+      ? Math.round(reviewsAggregate._avg.rating * 10) / 10
+      : 0.0;
+
+    // 4. Recent bookings list
+    const recentBookings = await prisma.booking.findMany({
+      where: { room: { hotel: { vendorId: vendor.id } } },
+      include: {
+        room: {
+          select: {
+            roomNumber: true,
+            type: true,
+            price: true,
+            hotel: { select: { name: true } },
+          },
+        },
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+
+    // 5. Monthly revenue chart (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const revenueTransactions = vendor.wallet
+      ? await prisma.walletTransaction.findMany({
+          where: {
+            walletId: vendor.wallet.id,
+            type: "BOOKING_INCOME",
+            createdAt: { gte: sixMonthsAgo },
+          },
+          select: { amount: true, createdAt: true },
+        })
+      : [];
+
+    // Group revenue by month
+    const months = Array.from({ length: 6 }).map((_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (5 - i));
+      return {
+        month: d.toLocaleString("vi-VN", { month: "long" }),
+        year: d.getFullYear(),
+        revenue: 0,
+        monthIndex: d.getMonth(),
+      };
+    });
+
+    revenueTransactions.forEach((tx) => {
+      const txDate = new Date(tx.createdAt);
+      const match = months.find(
+        (m) =>
+          m.monthIndex === txDate.getMonth() && m.year === txDate.getFullYear()
+      );
+      if (match) {
+        match.revenue += tx.amount;
+      }
+    });
+
+    const revenueData = months.map((m) => ({
+      name: m.month,
+      revenue: m.revenue,
+    }));
+
+    return {
+      availableRooms,
+      newBookingsCount,
+      averageRating,
+      recentBookings,
+      revenueData,
+    };
+  },
 };

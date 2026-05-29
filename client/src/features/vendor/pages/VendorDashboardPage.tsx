@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Drawer } from "@mantine/core";
+import { useState, useEffect } from "react";
+import { Drawer, Loader } from "@mantine/core";
 import {
   IconMenu2,
   IconDownload,
@@ -14,11 +14,38 @@ import { RevenueChart } from "../components/RevenueChart";
 import { RecentBookings } from "../components/RecentBookings";
 import { VendorBookingsView } from "../components/VendorBookingsView";
 import { VendorRevenueView } from "../components/VendorRevenueView";
+import { VendorReviewsView } from "../components/VendorReviewsView";
+import { vendorService, VendorDashboardStats } from "../../user/services/vendorService";
 
 export const VendorDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = useAppSelector((s) => s.auth.user);
+
+  const [stats, setStats] = useState<VendorDashboardStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab === "dashboard") {
+      const fetchStats = async () => {
+        setLoadingStats(true);
+        setStatsError(null);
+        try {
+          const res = await vendorService.getVendorDashboardStats();
+          if (res.success) {
+            setStats(res.data);
+          }
+        } catch (err: any) {
+          console.error("Error fetching vendor dashboard stats:", err);
+          setStatsError(err.message || "Không thể tải dữ liệu thống kê");
+        } finally {
+          setLoadingStats(false);
+        }
+      };
+      fetchStats();
+    }
+  }, [activeTab]);
 
   const getTabTitle = (tab: string) => {
     switch (tab) {
@@ -30,6 +57,8 @@ export const VendorDashboardPage = () => {
         return "Quản lý đặt phòng";
       case "earnings":
         return "Báo cáo doanh thu";
+      case "reviews":
+        return "Quản lý bình luận";
       case "settings":
         return "Cài đặt hệ thống";
       default:
@@ -105,32 +134,45 @@ export const VendorDashboardPage = () => {
           {activeTab === "dashboard" && (
             <>
               {/* KPI Bento Grid */}
-              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <KpiCard
-                  title="Phòng trống"
-                  value={24}
-                  badgeText="12%"
-                  badgeType="up"
-                  subtext="Sẵn sàng đón khách hôm nay"
-                  icon={<IconBed size={36} className="text-primary" />}
-                />
-                <KpiCard
-                  title="Đặt phòng mới"
-                  value={8}
-                  badgeText="3%"
-                  badgeType="up"
-                  subtext="Trong 24 giờ qua"
-                  icon={<IconBookmark size={36} className="text-secondary" />}
-                />
-                <KpiCard
-                  title="Đánh giá trung bình"
-                  value={4.8}
-                  badgeText="0%"
-                  badgeType="neutral"
-                  subtext="Từ tất cả các chỗ nghỉ"
-                  icon={<IconStar size={36} className="text-yellow-500" />}
-                />
-              </section>
+              {loadingStats ? (
+                <div className="bg-white rounded-xl border border-hairline p-8 flex flex-col items-center justify-center min-h-[140px] shadow-sm">
+                  <Loader size="sm" color="var(--color-primary)" />
+                  <span className="text-xs text-outline font-medium mt-2">
+                    Đang tải dữ liệu thống kê...
+                  </span>
+                </div>
+              ) : statsError ? (
+                <div className="bg-red-50/50 border border-red-200 rounded-xl p-4 flex items-center justify-center text-xs text-error font-medium shadow-sm">
+                  {statsError}
+                </div>
+              ) : (
+                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <KpiCard
+                    title="Phòng trống"
+                    value={stats?.availableRooms ?? 0}
+                    badgeText="Hoạt động"
+                    badgeType="neutral"
+                    subtext="Sẵn sàng đón khách hôm nay"
+                    icon={<IconBed size={36} className="text-primary" />}
+                  />
+                  <KpiCard
+                    title="Đặt phòng mới"
+                    value={stats?.newBookingsCount ?? 0}
+                    badgeText="24h qua"
+                    badgeType="neutral"
+                    subtext="Trong 24 giờ qua"
+                    icon={<IconBookmark size={36} className="text-secondary" />}
+                  />
+                  <KpiCard
+                    title="Đánh giá trung bình"
+                    value={stats?.averageRating ?? 0}
+                    badgeText={`${stats?.averageRating ? "Đánh giá" : "Chưa có"}`}
+                    badgeType="neutral"
+                    subtext="Từ tất cả các chỗ nghỉ"
+                    icon={<IconStar size={36} className="text-yellow-500" />}
+                  />
+                </section>
+              )}
 
               {/* Data & Analytics Section */}
               <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -150,7 +192,9 @@ export const VendorDashboardPage = () => {
 
           {activeTab === "earnings" && <VendorRevenueView />}
 
-          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && (
+          {activeTab === "reviews" && <VendorReviewsView />}
+
+          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && activeTab !== "reviews" && (
             <div className="bg-white p-12 rounded-xl border border-hairline text-center flex flex-col items-center justify-center min-h-[300px]">
               <h3 className="text-lg font-bold text-on-surface mb-2">
                 Tính năng "{getTabTitle(activeTab)}" đang được phát triển
