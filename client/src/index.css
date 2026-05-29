@@ -11,6 +11,9 @@
   --color-on-secondary-container: #007441;
   --color-tertiary-dim: #ffb95f;
   --color-deal-orange: #FF5E1F;
+  --color-error: #ef4444;
+  --color-error-container: #fee2e2;
+  --color-on-error-container: #991b1b;
 
   /* ── Surface / Background ── */
   --color-background: #f7f9fb;

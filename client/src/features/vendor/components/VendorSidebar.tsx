@@ -10,6 +10,7 @@ import {
   IconHelp,
   IconLogout,
   IconPlus,
+  IconMessage2,
 } from "@tabler/icons-react";
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ export const VendorSidebar = ({ activeTab = "dashboard", onTabChange }: SidebarP
     { id: "listings", label: "Chỗ nghỉ", icon: <IconBuilding size={20} /> },
     { id: "bookings", label: "Đơn đặt phòng", icon: <IconCalendar size={20} /> },
     { id: "earnings", label: "Doanh thu", icon: <IconTrendingUp size={20} /> },
+    { id: "reviews", label: "Bình luận", icon: <IconMessage2 size={20} /> },
     { id: "settings", label: "Cài đặt", icon: <IconSettings size={20} /> },
   ];
 

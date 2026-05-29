@@ -37,6 +37,44 @@ interface FormInputProps {
   disabled?: boolean;
 }
 
+const getErrorMessage = (error: any): string => {
+  if (!error) return "";
+  
+  if (typeof error === "string") return error;
+  
+  if (typeof error === "object") {
+    if (error.response?.data) {
+      return getErrorMessage(error.response.data);
+    }
+    if (error.error) {
+      if (typeof error.error === "string") return error.error;
+      if (error.error.message && typeof error.error.message === "string") {
+        return error.error.message;
+      }
+    }
+    if (error.message) {
+      if (typeof error.message === "string") return error.message;
+      if (Array.isArray(error.message)) {
+        return error.message
+          .map((m: any) => (typeof m === "object" ? getErrorMessage(m) : String(m)))
+          .join(", ");
+      }
+      if (typeof error.message === "object") {
+        return getErrorMessage(error.message);
+      }
+    }
+    if (Array.isArray(error)) {
+      return error.map((e: any) => getErrorMessage(e)).join(", ");
+    }
+    if (error.toString && error.toString() !== "[object Object]") {
+      return error.toString();
+    }
+    return JSON.stringify(error);
+  }
+  
+  return String(error);
+};
+
 const FormInput = ({
   label,
   field,
@@ -45,7 +83,8 @@ const FormInput = ({
   icon,
   disabled = false,
 }: FormInputProps) => {
-  const errorMsg = field.state.meta.errors?.[0];
+  const rawError = field.state.meta.errors?.[0];
+  const errorMsg = rawError ? getErrorMessage(rawError) : null;
 
   return (
     <div>
@@ -70,7 +109,7 @@ const FormInput = ({
             icon ? "pl-11" : "px-4"
           } pr-4 py-3 bg-surface-container-lowest border ${
             errorMsg
-              ? "border-error focus:ring-error/20"
+              ? "border-error focus:ring-error/20 focus:border-error"
               : "border-outline-variant focus:border-primary focus:ring-primary/20"
           } rounded-lg text-body text-on-surface placeholder:text-outline outline-none transition-all shadow-sm ${
             disabled
@@ -79,9 +118,7 @@ const FormInput = ({
           }`}
         />
       </div>
-      {errorMsg && (
-        <p className="text-xs text-error mt-1 ml-1">{String(errorMsg)}</p>
-      )}
+      {errorMsg && <p className="text-xs text-error mt-1.5 ml-1 font-medium">{errorMsg}</p>}
     </div>
   );
 };
@@ -115,6 +152,30 @@ export const RegisterVendorForm = () => {
     fetchVendorDetails();
   }, []);
 
+  const handleResetProfile = async () => {
+    if (
+      !window.confirm(
+        "Bạn có chắc chắn muốn đặt lại hồ sơ? Thao tác này sẽ xóa hồ sơ hiện tại để bạn nộp lại từ đầu.",
+      )
+    )
+      return;
+    setSubmitting(true);
+    setApiError(null);
+    try {
+      const res = await vendorService.resetVendorProfile();
+      if (res.success) {
+        setVendorProfile(null);
+        dispatch(updateUserRole("USER"));
+        dispatch(fetchProfile());
+        form.reset();
+      }
+    } catch (err: any) {
+      setApiError(getErrorMessage(err) || "Đặt lại hồ sơ thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const form = useForm({
     defaultValues: {
       shopName: "",
@@ -140,7 +201,7 @@ export const RegisterVendorForm = () => {
           dispatch(fetchProfile());
         }
       } catch (err: any) {
-        setApiError(err.message || "Đăng ký đối tác thất bại");
+        setApiError(getErrorMessage(err) || "Đăng ký đối tác thất bại");
       } finally {
         setSubmitting(false);
       }
@@ -224,6 +285,31 @@ export const RegisterVendorForm = () => {
           Hồ sơ đăng ký đối tác của bạn đang được Quản trị viên kiểm duyệt. Quá
           trình này thường diễn ra trong vòng 24 giờ làm việc.
         </Alert>
+      )}
+
+      {vendorProfile && vendorProfile.status === "REJECTED" && (
+        <div className="flex flex-col gap-4 bg-red-50/50 p-6 rounded-xl border border-red-200 shadow-sm">
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+            className="rounded-lg font-medium"
+          >
+            Hồ sơ đăng ký đối tác của bạn đã bị từ chối bởi Quản trị viên. Lý do
+            có thể do thông tin giấy phép, ngân hàng hoặc mô tả chưa chính xác.
+            Bạn có thể nhấn nút đặt lại bên dưới để gửi lại hồ sơ đăng ký mới.
+          </Alert>
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={handleResetProfile}
+              disabled={submitting}
+              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-colors duration-200"
+            >
+              Đặt lại và Đăng ký lại
+            </button>
+          </div>
+        </div>
       )}
 
       {vendorProfile && vendorProfile.status === "APPROVED" && (

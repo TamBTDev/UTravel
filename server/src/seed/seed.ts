@@ -22,77 +22,99 @@ async function main() {
   await prisma.vendorProfile.deleteMany();
 
   // Create admin account
-  const existingAdmin = await prisma.user.findUnique({
+  const adminPasswordHash = await bcrypt.hash("123456", 10);
+  const adminUser = await prisma.user.upsert({
     where: { email: "admin@gmail.com" },
+    update: {
+      password: adminPasswordHash,
+      role: USER_ROLES.ADMIN,
+      firstName: "System",
+      lastName: "Admin",
+      phone: "0999999999",
+      status: USER_STATUS.VERIFIED,
+    },
+    create: {
+      email: "admin@gmail.com",
+      password: adminPasswordHash,
+      firstName: "System",
+      lastName: "Admin",
+      phone: "0999999999",
+      role: USER_ROLES.ADMIN,
+      status: USER_STATUS.VERIFIED,
+    },
   });
-
-  if (!existingAdmin) {
-    await prisma.user.create({
-      data: {
-        email: "admin@gmail.com",
-        password: await bcrypt.hash("123456", 10),
-        firstName: "System",
-        lastName: "Admin",
-        phone: "0999999999",
-        role: USER_ROLES.ADMIN,
-        status: USER_STATUS.VERIFIED,
-      },
-    });
-    console.log("Created admin user");
-  }
+  console.log("Upserted admin user");
 
   // Create users
-  let testUser = await prisma.user.findUnique({
+  const testUserPasswordHash = await bcrypt.hash("123456", 10);
+  const testUser = await prisma.user.upsert({
     where: { email: "test@gmail.com" },
+    update: {
+      password: testUserPasswordHash,
+      role: USER_ROLES.USER,
+      firstName: "John",
+      lastName: "Doe",
+      phone: "0123456789",
+      status: USER_STATUS.VERIFIED,
+    },
+    create: {
+      email: "test@gmail.com",
+      password: testUserPasswordHash,
+      firstName: "John",
+      lastName: "Doe",
+      phone: "0123456789",
+      role: USER_ROLES.USER,
+      status: USER_STATUS.VERIFIED,
+    },
   });
-  if (!testUser) {
-    testUser = await prisma.user.create({
-      data: {
-        email: "test@gmail.com",
-        password: await bcrypt.hash("123456", 10),
-        firstName: "John",
-        lastName: "Doe",
-        phone: "0123456789",
-        status: USER_STATUS.VERIFIED,
-      },
-    });
-    console.log("Created test user 1 (John Doe)");
-  }
+  console.log("Upserted test user 1 (John Doe)");
 
-  let janeUser = await prisma.user.findUnique({
+  const janeUserPasswordHash = await bcrypt.hash("password123", 10);
+  const janeUser = await prisma.user.upsert({
     where: { email: "jane@example.com" },
+    update: {
+      password: janeUserPasswordHash,
+      role: USER_ROLES.USER,
+      firstName: "Jane",
+      lastName: "Smith",
+      phone: "0987654321",
+      status: USER_STATUS.VERIFIED,
+    },
+    create: {
+      email: "jane@example.com",
+      password: janeUserPasswordHash,
+      firstName: "Jane",
+      lastName: "Smith",
+      phone: "0987654321",
+      role: USER_ROLES.USER,
+      status: USER_STATUS.VERIFIED,
+    },
   });
-  if (!janeUser) {
-    janeUser = await prisma.user.create({
-      data: {
-        email: "jane@example.com",
-        password: await bcrypt.hash("password123", 10),
-        firstName: "Jane",
-        lastName: "Smith",
-        phone: "0987654321",
-        status: USER_STATUS.VERIFIED,
-      },
-    });
-    console.log("Created test user 2 (Jane Smith)");
-  }
+  console.log("Upserted test user 2 (Jane Smith)");
 
   // Create Vendor
-  let vendorUser = await prisma.user.findUnique({
+  const vendorUserPasswordHash = await bcrypt.hash("123456", 10);
+  const vendorUser = await prisma.user.upsert({
     where: { email: "vendor@gmail.com" },
+    update: {
+      password: vendorUserPasswordHash,
+      role: USER_ROLES.VENDOR,
+      firstName: "Nhà cung cấp",
+      lastName: "UTravel",
+      phone: "0888888888",
+      status: USER_STATUS.VERIFIED,
+    },
+    create: {
+      email: "vendor@gmail.com",
+      password: vendorUserPasswordHash,
+      firstName: "Nhà cung cấp",
+      lastName: "UTravel",
+      phone: "0888888888",
+      role: USER_ROLES.VENDOR,
+      status: USER_STATUS.VERIFIED,
+    },
   });
-  if (!vendorUser) {
-    vendorUser = await prisma.user.create({
-      data: {
-        email: "vendor@gmail.com",
-        password: await bcrypt.hash("123456", 10),
-        firstName: "Nhà cung cấp",
-        lastName: "UTravel",
-        phone: "0888888888",
-        role: USER_ROLES.VENDOR,
-        status: USER_STATUS.VERIFIED,
-      },
-    });
-  }
+  console.log("Upserted vendor user");
 
   const vendorProfile = await prisma.vendorProfile.create({
     data: {
@@ -301,6 +323,84 @@ async function main() {
       hotelId: hotels[1].id,
       rating: 4,
       comment: "Vị trí đẹp, view biển xịn xò. Đồ ăn sáng ngon.",
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: testUser.id,
+      hotelId: hotels[2].id,
+      rating: 5,
+      comment: "Phòng sạch sẽ, giường ngủ rất êm. Nhất định sẽ quay lại!",
+      vendorReply: "Cảm ơn quý khách đã tin tưởng và lựa chọn khách sạn của chúng tôi! Hẹn gặp lại bạn trong chuyến đi tiếp theo.",
+      vendorReplyAt: new Date(2026, 4, 12),
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: janeUser.id,
+      hotelId: hotels[0].id,
+      rating: 3,
+      comment: "Phòng hơi nhỏ so với ảnh chụp. WiFi buổi tối hơi chập chờn.",
+      vendorReply: "Chào bạn, chúng tôi rất tiếc vì trải nghiệm WiFi chưa tốt. Khách sạn đã nâng cấp băng thông hệ thống và hy vọng được phục vụ bạn tốt hơn lần sau.",
+      vendorReplyAt: new Date(2026, 4, 15),
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: testUser.id,
+      hotelId: hotels[1].id,
+      rating: 2,
+      comment: "Nhà vệ sinh có mùi nhẹ, phục vụ phòng dọn dẹp hơi trễ. Cần cải thiện chất lượng phục vụ.",
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: janeUser.id,
+      hotelId: hotels[3].id,
+      rating: 4,
+      comment: "Không gian yên tĩnh phù hợp nghỉ dưỡng gia đình. Hồ bơi sạch.",
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: testUser.id,
+      hotelId: hotels[4].id,
+      rating: 5,
+      comment: "Tuyệt vời! Giá cả hợp lý, nhân viên phục vụ chu đáo tận tình.",
+      vendorReply: "Cảm ơn bạn rất nhiều vì phản hồi tích cực! Chúc bạn và gia đình luôn nhiều niềm vui.",
+      vendorReplyAt: new Date(2026, 4, 20),
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: janeUser.id,
+      hotelId: hotels[2].id,
+      rating: 1,
+      comment: "Phòng đặt trước bị trùng, phải đợi giải quyết rất lâu. Rất không hài lòng.",
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: janeUser.id,
+      hotelId: hotels[0].id,
+      rating: 5,
+      comment: "Rất hài lòng với chuyến đi này. Đồ ăn buffet ngon miệng.",
+    },
+  });
+
+  await prisma.review.create({
+    data: {
+      userId: testUser.id,
+      hotelId: hotels[1].id,
+      rating: 3,
+      comment: "Khách sạn khá cũ, tuy nhiên vị trí thuận lợi gần trung tâm.",
     },
   });
 

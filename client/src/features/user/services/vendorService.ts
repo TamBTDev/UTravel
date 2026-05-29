@@ -28,6 +28,14 @@ export interface VendorProfile {
   };
 }
 
+export interface VendorDashboardStats {
+  availableRooms: number;
+  newBookingsCount: number;
+  averageRating: number;
+  recentBookings: any[];
+  revenueData: { name: string; revenue: number }[];
+}
+
 export interface VendorBooking {
   id: number;
   userId: number;
@@ -84,6 +92,27 @@ export interface VendorRevenueReport {
   transactions: WalletTransaction[];
 }
 
+export interface VendorReview {
+  id: number;
+  userId: number;
+  hotelId: number;
+  bookingId: number | null;
+  rating: number;
+  comment: string | null;
+  vendorReply: string | null;
+  vendorReplyAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  hotel: {
+    name: string;
+  };
+  user: {
+    firstName: string;
+    lastName: string;
+    avatar: string | null;
+  };
+}
+
 export const vendorService = {
   registerVendor: async (payload: RegisterVendorPayload): Promise<{ success: boolean; message: string; data: VendorProfile }> => {
     try {
@@ -124,6 +153,42 @@ export const vendorService = {
   getVendorRevenueReport: async (): Promise<{ success: boolean; data: VendorRevenueReport }> => {
     try {
       const response = await apiClient.get("/vendors/revenue-report");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getVendorReviews: async (): Promise<{ success: boolean; data: VendorReview[] }> => {
+    try {
+      const response = await apiClient.get("/vendors/reviews");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  replyToReview: async (reviewId: number, reply: string): Promise<{ success: boolean; message: string; data: any }> => {
+    try {
+      const response = await apiClient.patch(`/vendors/reviews/${reviewId}/reply`, { reply });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  resetVendorProfile: async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.delete("/vendors/profile/reset");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getVendorDashboardStats: async (): Promise<{ success: boolean; data: VendorDashboardStats }> => {
+    try {
+      const response = await apiClient.get("/vendors/dashboard-stats");
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
