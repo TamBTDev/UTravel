@@ -18,4 +18,14 @@ export const userService = {
     const response = await apiClient.put("/users/profile", data);
     return response.data;
   },
+
+  getWallet: async () => {
+    const response = await apiClient.get("/users/wallet");
+    return response.data.data;
+  },
+
+  getWalletTransactions: async (page = 1, limit = 20) => {
+    const response = await apiClient.get(`/users/wallet/transactions?page=${page}&limit=${limit}`);
+    return response.data.data;
+  },
 };

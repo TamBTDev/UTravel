@@ -214,10 +214,20 @@ export const hotelsService = {
    */
   getHotelDetail: async (hotelId: string) => {
     const id = Number(hotelId);
+    
+    // Tăng số lượt xem (nếu gọi từ web mà k cần auth cũng được, hoặc nếu auth thì gọi API addViewed)
+    // Tạm thời ở đây k đổi db nếu ko rõ ngữ cảnh người dùng gọi.
+
     const hotel = await prisma.hotel.findUnique({
       where: { id },
       include: {
-        rooms: true,
+        rooms: {
+          include: {
+            _count: {
+              select: { bookings: { where: { status: 'COMPLETED' } } }
+            }
+          }
+        },
         reviews: {
           include: {
             user: {
@@ -232,6 +242,11 @@ export const hotelsService = {
           take: 10,
           orderBy: { createdAt: "desc" },
         },
+        _count: {
+          select: {
+            reviews: true
+          }
+        }
       },
     });
 
@@ -239,7 +254,13 @@ export const hotelsService = {
       throw new Error("Hotel not found");
     }
 
-    return hotel;
+    // Tính tổng số lượng booking hoàn thành của tất cả các phòng
+    const totalBookings = hotel.rooms.reduce((acc, room) => acc + (room._count?.bookings || 0), 0);
+
+    return {
+      ...hotel,
+      bookingCount: totalBookings + hotel.bookingCount // cộng thêm dữ liệu cached nếu có
+    };
   },
 
   /**

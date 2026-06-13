@@ -11,6 +11,7 @@ import paymentsRoutes from "./modules/payments/payments.routes.js";
 import roomsRoutes from "./modules/rooms/rooms.routes.js";
 import vendorsRoutes from "./modules/vendors/vendors.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
+import reviewsRoutes from "./modules/reviews/reviews.routes.js";
 
 const app: Application = express();
 
@@ -32,6 +33,7 @@ app.use("/api/payments", paymentsRoutes);
 app.use("/api/rooms", roomsRoutes);
 app.use("/api/vendors", vendorsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/reviews", reviewsRoutes);
 
 app.use(errorHandler);
 

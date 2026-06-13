@@ -78,3 +78,51 @@ export const updateProfile = async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, error: error.message });
   }
 };
+
+export const toggleFavorite = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const hotelId = parseInt(req.body.hotelId);
+    
+    if (!hotelId) return res.status(400).json({ success: false, error: "hotelId is required" });
+    
+    const result = await userService.toggleFavorite(userId, hotelId);
+    return res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+export const getFavorites = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const result = await userService.getFavorites(userId);
+    return res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+export const addViewed = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const hotelId = parseInt(req.body.hotelId);
+    
+    if (!hotelId) return res.status(400).json({ success: false, error: "hotelId is required" });
+    
+    const result = await userService.addViewed(userId, hotelId);
+    return res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+export const getViewed = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const result = await userService.getViewed(userId);
+    return res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};

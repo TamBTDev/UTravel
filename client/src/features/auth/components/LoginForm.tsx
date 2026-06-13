@@ -33,24 +33,20 @@ export const LoginForm = () => {
   };
 
   return (
-    <AuthCard>
+    <AuthCard shadow="lg" padding="xl" radius="md" style={{ boxShadow: '0 18px 40px rgba(11,99,214,0.12)' }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ margin: "0 0 8px 0", fontSize: 24, fontWeight: 600 }}>
-          Đăng Nhập
-        </h2>
-        <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
-          Đăng nhập để tiếp tục
-        </p>
+      <div style={{ marginBottom: 18, textAlign: 'center' }}>
+        <h2 style={{ margin: "0 0 8px 0", fontSize: 20, fontWeight: 800 }}>Đăng nhập</h2>
+        <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>Chào mừng trở lại — đăng nhập để tiếp tục.</p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack gap="md">
+        <Stack gap="sm">
           {/* Email */}
           <TextInput
-            label="Email"
-            placeholder="Nhập email của bạn"
+            label="Địa chỉ email"
+            placeholder="name@example.com"
             {...register("email")}
             error={errors.email?.message}
             disabled={isLoading}
@@ -69,55 +65,23 @@ export const LoginForm = () => {
 
           {/* Remember me & Forgot password */}
           <Group justify="space-between" align="center">
-            <Checkbox label="Nhớ mật khẩu" size="sm" />
-            <Text
-              component="a"
-              href="/forgot-password"
-              size="sm"
-              style={{ color: "#667eea", cursor: "pointer" }}
-            >
+            <Checkbox label="Ghi nhớ đăng nhập" size="sm" />
+            <Text component="a" href="/forgot-password" size="sm" style={{ color: "#0b63d6", cursor: "pointer" }}>
               Quên mật khẩu?
             </Text>
           </Group>
 
           {/* Submit button */}
-          <Button
-            type="submit"
-            fullWidth
-            loading={isLoading}
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            }}
-          >
-            Đăng Nhập
+          <Button type="submit" fullWidth loading={isLoading} radius="md" size="md" style={{ background: 'linear-gradient(90deg,#0b63d6,#4f46e5)', height: 46 }}>
+            Đăng nhập
           </Button>
         </Stack>
       </form>
 
-      {/* Divider */}
-      <div style={{ margin: "20px 0", position: "relative" }}>
-        <div style={{ borderTop: "1px solid #e9ecef" }} />
-        <span
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "-12px",
-            transform: "translateX(-50%)",
-            background: "white",
-            padding: "0 8px",
-            color: "#999",
-            fontSize: 12,
-          }}
-        >
-          hoặc
-        </span>
-      </div>
-
-      {/* Social login */}
-      <SocialLoginButtons />
-
       {/* Signup link */}
-      <AuthSignupLink />
+      <div style={{ marginTop: 14, textAlign: 'center' }}>
+        <AuthSignupLink />
+      </div>
     </AuthCard>
   );
 };

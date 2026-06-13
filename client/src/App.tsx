@@ -23,6 +23,7 @@ import { PaymentPage } from "./pages/Payment";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { USER_ROLES } from "@shared/constants/roles";
 import { VendorDashboardPage } from "./features/vendor/pages/VendorDashboardPage";
+import CreateReview from "./features/reviews/pages/CreateReview";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dates/styles.css";
@@ -78,6 +79,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/bookings/:id/review"
+              element={
+                <ProtectedRoute>
+                  <CreateReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/wallet" element={<Navigate to="/profile?tab=wallet" replace />} />
 
             {/* Admin routes */}
             <Route

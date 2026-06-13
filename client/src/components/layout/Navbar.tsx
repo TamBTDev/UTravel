@@ -1,11 +1,16 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, Avatar, Burger, Drawer, Divider } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconLogout, IconUser, IconDashboard } from "@tabler/icons-react";
+import { IconLogout, IconUser, IconDashboard, IconStar, IconWallet } from "@tabler/icons-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { logout } from "@/app/store/authSlice";
 import { USER_ROLES } from "@shared/constants/roles";
+import { userService } from "@/features/user/services/userService";
+import { useState, useEffect } from "react";
 import logo from "@/assets/logo.svg";
+
+const formatVND = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -13,6 +18,15 @@ export const Navbar = () => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [opened, { toggle, close }] = useDisclosure(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      userService.getWallet().then((w) => setWalletBalance(w?.balance ?? 0)).catch(() => {});
+    } else {
+      setWalletBalance(null);
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -95,9 +109,21 @@ export const Navbar = () => {
                     >
                       {user.firstName?.charAt(0).toUpperCase()}
                     </Avatar>
-                    <span className="text-body-bold text-on-surface">
-                      {user.firstName}
-                    </span>
+                    <div className="flex flex-col items-start">
+                      <span className="text-body-bold text-on-surface">
+                        {user.firstName}
+                      </span>
+                      <span className="text-xs text-yellow-600 font-medium flex items-center gap-1">
+                         <IconStar size={12} className="text-yellow-500 fill-yellow-500" />
+                         {((user as any).rewardPoints) || 0} điểm
+                      </span>
+                      {walletBalance !== null && (
+                        <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                          <IconWallet size={11} />
+                          {formatVND(walletBalance)}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 </Menu.Target>
 
@@ -109,13 +135,24 @@ export const Navbar = () => {
                   </Menu.Item>
                   <Menu.Divider />
                   <Menu.Item
-                    leftSection={
-                      <IconUser size={16} className="text-outline" />
-                    }
+                    leftSection={<IconUser size={16} className="text-outline" />}
                     onClick={() => handleNavigate("/profile")}
                     className="text-body text-on-surface hover:text-primary"
                   >
                     Hồ sơ của tôi
+                  </Menu.Item>
+
+                  <Menu.Item
+                    leftSection={<IconWallet size={16} className="text-outline" />}
+                    onClick={() => handleNavigate("/profile?tab=wallet")}
+                    className="text-body text-on-surface hover:text-primary"
+                    rightSection={
+                      walletBalance !== null ? (
+                        <span className="text-xs font-bold text-emerald-600">{formatVND(walletBalance)}</span>
+                      ) : null
+                    }
+                  >
+                    Ví UTravel
                   </Menu.Item>
 
                   {user.role === USER_ROLES.ADMIN && (

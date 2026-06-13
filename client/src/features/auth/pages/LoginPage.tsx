@@ -1,66 +1,42 @@
-import { Container, Grid, Box, Title, Text, Stack } from "@mantine/core";
+import { Box, Image } from "@mantine/core";
+import { LoginForm } from "../components";
+import logo from "@/assets/logo.svg";
 import { AppLayout } from "@/components/layout";
-import { LoginForm, AuthBenefits } from "../components";
 
 /**
- * Login Page
- * Hiển thị form đăng nhập với benefits showcase
+ * Login Page (Centered card on top of a clean white background)
  */
 export const LoginPage = () => {
   return (
     <AppLayout withContainer={false}>
-      <Box
+      <div
+        className="login-page-centered"
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          opacity: 0.05,
-          position: "absolute",
-          top: 70,
-          left: 0,
-          right: 0,
-          height: 300,
-          zIndex: -1,
+          minHeight: "100vh", // Chiếm toàn bộ chiều cao màn hình, xóa vệt trắng thừa ở đáy
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#ffffff", // Nền trắng tinh (Thay thế cho ảnh và lớp phủ xám cũ)
+          padding: 24,
         }}
-      />
+      >
+        <div style={{ width: 420, maxWidth: "96%" }}>
+          <div 
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              flexDirection: "column", 
+              gap: 8, 
+              marginBottom: 12 
+            }}
+          >
+            <Image src={logo} width={88} height={88} alt="UTravel" />
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#0b63d6" }}>UTravel</h1>
+          </div>
 
-      <Container size="lg" py="xl">
-        <Grid gutter="xl" align="stretch">
-          {/* Left side - Info */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Stack gap="lg" justify="center" h="100%">
-              <div>
-                <Title
-                  order={1}
-                  size="h2"
-                  fw={700}
-                  mb="md"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    backgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  Khám Phá Thế Giới
-                </Title>
-                <Text size="lg" c="dimmed" mb="xl">
-                  Đăng nhập để bắt đầu tìm kiếm và đặt khách sạn tuyệt vời trên
-                  toàn thế giới. Nhận thêm các ưu đãi độc quyền và quản lý đơn
-                  đặt phòng của bạn dễ dàng.
-                </Text>
-              </div>
-
-              <AuthBenefits />
-            </Stack>
-          </Grid.Col>
-
-          {/* Right side - Form */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Box h="100%" style={{ display: "flex", alignItems: "center" }}>
-              <LoginForm />
-            </Box>
-          </Grid.Col>
-        </Grid>
-      </Container>
+          <LoginForm />
+        </div>
+      </div>
     </AppLayout>
   );
 };

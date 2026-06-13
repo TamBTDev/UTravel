@@ -1,5 +1,8 @@
 import prisma from "@/config/database";
 import bcrypt from "bcrypt";
+import * as dotenv from 'dotenv'; // 1. Import dotenv
+
+dotenv.config(); // 2. Kích hoạt dotenv để nạp file .env vào process.env
 import {
   USER_STATUS,
   BOOKING_STATUS,
