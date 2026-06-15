@@ -66,6 +66,12 @@ interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  images?: any;
+  highlights?: string[] | null;
+  cleanlinessRating?: number;
+  serviceRating?: number;
+  locationRating?: number;
+  valueRating?: number;
   user?: {
     id: number;
     firstName: string;
@@ -92,6 +98,7 @@ export const HotelDetailPage: React.FC = () => {
 
   const [relatedHotels, setRelatedHotels] = useState<Hotel[]>([]);
   const [viewedHotels, setViewedHotels] = useState<Hotel[]>([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -361,33 +368,88 @@ export const HotelDetailPage: React.FC = () => {
               {/* REVIEWS */}
               <Box mb={40}>
                  <Group justify="space-between" mb="lg">
-                    <Title order={3} size="h3" fw={700}>Đánh giá của khách</Title>
-                    <Anchor size="sm" fw={500}>Xem tất cả</Anchor>
+                    <Title order={3} size="h3" fw={700}>
+                      Đánh giá của khách
+                      {hotel.reviews && hotel.reviews.length > 0 && (
+                        <Text span c="dimmed" fw={400} size="sm" ml={8}>({hotel.reviews.length} đánh giá)</Text>
+                      )}
+                    </Title>
+                    {hotel.reviews && hotel.reviews.length > 3 && (
+                      <Button variant="subtle" size="sm" onClick={() => setShowAllReviews(v => !v)}>
+                        {showAllReviews ? 'Thu gọn' : `Xem tất cả (${hotel.reviews.length})`}
+                      </Button>
+                    )}
                  </Group>
                  
                  <Stack gap="xl">
-                    {hotel.reviews?.map((review) => (
-                      <div key={review.id}>
-                        <Group justify="space-between" mb="xs">
-                          <Group>
-                            <Avatar src={review.user?.avatar} color="blue" radius="xl">
-                               {review.user?.firstName?.charAt(0)}{review.user?.lastName?.charAt(0)}
-                            </Avatar>
-                            <div>
-                               <Text fw={600} size="sm">{review.user?.firstName} {review.user?.lastName}</Text>
-                               <Text size="xs" c="dimmed">{dayjs(review.createdAt).format('MMM YYYY')}</Text>
-                            </div>
-                          </Group>
-                          <Badge color="dark" radius="sm" variant="filled">
-                            {review.rating.toFixed(1)} ★
-                          </Badge>
-                        </Group>
-                        <Text size="sm" lh={1.6}>{review.comment}</Text>
-                      </div>
-                    ))}
                     {(!hotel.reviews || hotel.reviews.length === 0) && (
                       <Text c="dimmed">Chưa có đánh giá nào.</Text>
                     )}
+                    {(showAllReviews ? hotel.reviews : hotel.reviews?.slice(0, 3))?.map((review) => {
+                      const reviewImgs: string[] = (() => {
+                        if (!review.images) return [];
+                        if (Array.isArray(review.images)) return review.images;
+                        try { const p = JSON.parse(review.images); return Array.isArray(p) ? p : []; } catch { return []; }
+                      })();
+                      const highlights: string[] = (() => {
+                        if (!review.highlights) return [];
+                        if (Array.isArray(review.highlights)) return review.highlights;
+                        try { const p = JSON.parse(review.highlights as any); return Array.isArray(p) ? p : []; } catch { return []; }
+                      })();
+                      return (
+                        <div key={review.id} style={{ paddingBottom: 24, borderBottom: '1px solid #f3f4f6' }}>
+                          <Group justify="space-between" mb="sm">
+                            <Group>
+                              <Avatar src={review.user?.avatar || undefined} color="blue" radius="xl" size="md">
+                                 {review.user?.firstName?.charAt(0)}{review.user?.lastName?.charAt(0)}
+                              </Avatar>
+                              <div>
+                                 <Text fw={600} size="sm">{review.user?.firstName} {review.user?.lastName}</Text>
+                                 <Text size="xs" c="dimmed">{dayjs(review.createdAt).format('DD/MM/YYYY')}</Text>
+                              </div>
+                            </Group>
+                            <Group gap={4} align="center" style={{ background: '#111827', borderRadius: 6, padding: '4px 10px' }}>
+                              <IconStar size={14} color="#facc15" fill="#facc15" />
+                              <Text fw={700} size="sm" c="white">{review.rating.toFixed(1)}</Text>
+                            </Group>
+                          </Group>
+
+                          {/* Highlights tags */}
+                          {highlights.length > 0 && (
+                            <Group gap={6} mb="xs">
+                              {highlights.map((h, i) => (
+                                <Badge key={i} variant="light" color="blue" size="sm" radius="xl">{h}</Badge>
+                              ))}
+                            </Group>
+                          )}
+
+                          {review.comment && (
+                            <Text size="sm" lh={1.7} mb={reviewImgs.length > 0 ? 'sm' : 0}>{review.comment}</Text>
+                          )}
+
+                          {/* Review images */}
+                          {reviewImgs.length > 0 && (
+                            <Group gap="xs" mt="xs">
+                              {reviewImgs.map((imgUrl, i) => (
+                                <div key={i} style={{ width: 80, height: 80, borderRadius: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                                  <img src={imgUrl} alt={`Review ${i+1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+                              ))}
+                            </Group>
+                          )}
+
+                          {/* Sub-ratings */}
+                          {(review.cleanlinessRating || review.serviceRating || review.locationRating || review.valueRating) && (
+                            <Group gap="xl" mt="sm">
+                              {review.cleanlinessRating && <Text size="xs" c="dimmed">Vệ sinh: <strong>{review.cleanlinessRating}/5</strong></Text>}
+                              {review.serviceRating && <Text size="xs" c="dimmed">Dịch vụ: <strong>{review.serviceRating}/5</strong></Text>}
+                              {review.locationRating && <Text size="xs" c="dimmed">Vị trí: <strong>{review.locationRating}/5</strong></Text>}
+                              {review.valueRating && <Text size="xs" c="dimmed">Giá trị: <strong>{review.valueRating}/5</strong></Text>}
+                            </Group>
+                          )}
+                        </div>
+                      );
+                    })}
                  </Stack>
               </Box>
 
