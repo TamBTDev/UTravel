@@ -1,3 +1,26 @@
 #root {
   min-height: 100vh;
 }
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Login page specific tweaks */
+.login-right-overlay {
+  backdrop-filter: blur(4px);
+}
+
+/* Centered login page helper */
+.login-page-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive: keep card centered and reduce padding on small screens */
+@media (max-width: 640px) {
+  .login-page-centered {
+    padding: 12px;
+  }
+}

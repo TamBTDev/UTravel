@@ -1,4 +1,4 @@
-import { IconUser, IconLock, IconLink, IconBell, IconCreditCard, IconBuildingStore } from "@tabler/icons-react";
+import { IconUser, IconLock, IconLink, IconBell, IconCreditCard, IconBuildingStore, IconWallet } from "@tabler/icons-react";
 import { useAppSelector } from "@/hooks/useAppStore";
 
 interface ProfileSidebarProps {
@@ -12,6 +12,7 @@ export const ProfileSidebar = ({ activeTab, onTabChange }: ProfileSidebarProps) 
 
   const menuItems = [
     { id: "personal", label: "Thông tin cá nhân", icon: IconUser },
+    { id: "wallet", label: "Ví UTravel", icon: IconWallet },
     { id: "security", label: "Mật khẩu & Bảo mật", icon: IconLock },
     { id: "linked", label: "Tài khoản liên kết", icon: IconLink },
     { id: "notifications", label: "Thông báo", icon: IconBell },

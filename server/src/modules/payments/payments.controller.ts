@@ -1,72 +1,193 @@
 import { Request, Response } from 'express';
 import prisma from '../../config/database';
 import { PAYMENT_METHOD, PAYMENT_STATUS, BOOKING_STATUS } from '../../../../shared/constants/roles';
+import env from '../../config/env';
 
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
   return Number(val);
 };
 
+/**
+ * Tạo nội dung chuyển khoản duy nhất theo bookingId
+ */
+const buildTransferContent = (bookingId: number): string => {
+  return `UTRAVEL${bookingId}`;
+};
+
+/**
+ * Tạo URL QR code SePay
+ * https://qr.sepay.vn/img?acc=STK&bank=BANKCODE&amount=AMOUNT&des=NOIDUNG&template=compact
+ */
+const buildSePayQrUrl = (amount: number, transferContent: string): string => {
+  const params = new URLSearchParams({
+    acc: env.SEPAY_ACCOUNT_NUMBER || '0123456789',
+    bank: env.SEPAY_BANK_CODE || 'MB',
+    amount: Math.round(amount).toString(),
+    des: transferContent,
+    template: 'compact',
+  });
+  return `https://qr.sepay.vn/img?${params.toString()}`;
+};
+
+/**
+ * POST /payments — Tạo payment cho booking
+ * Hỗ trợ CASH và BANK_TRANSFER
+ */
 export const createPayment = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = (req as any).user?.id;
     const { bookingId, method } = req.body;
 
     if (!bookingId || !method) {
-      return res.status(400).json({ message: 'Missing required fields: bookingId, method' });
+      return res.status(400).json({ success: false, message: 'Thiếu bookingId hoặc phương thức thanh toán' });
     }
 
-    const validMethods = Object.values(PAYMENT_METHOD);
-    if (!validMethods.includes(method)) {
-      return res.status(400).json({ message: `Invalid payment method. Must be one of: ${validMethods.join(', ')}` });
+    // Chỉ chấp nhận CASH và BANK_TRANSFER
+    if (method !== PAYMENT_METHOD.CASH && method !== PAYMENT_METHOD.BANK_TRANSFER) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phương thức thanh toán không hợp lệ. Chỉ chấp nhận CASH hoặc BANK_TRANSFER',
+      });
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
+      where: { id: Number(bookingId) },
+      include: { payment: true },
     });
 
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đặt phòng' });
     }
 
     if (booking.userId !== userId) {
-      return res.status(403).json({ message: 'Unauthorized: This booking does not belong to you' });
+      return res.status(403).json({ success: false, message: 'Không có quyền thực hiện thao tác này' });
     }
 
-    const existingPayment = await prisma.payment.findFirst({
-      where: { bookingId },
-    });
-
-    if (existingPayment && existingPayment.status === PAYMENT_STATUS.COMPLETED) {
-      return res.status(400).json({ message: 'Payment already completed for this booking' });
+    // Nếu đã có payment COMPLETED thì từ chối
+    if (booking.payment && booking.payment.status === PAYMENT_STATUS.COMPLETED) {
+      return res.status(400).json({ success: false, message: 'Đặt phòng này đã được thanh toán' });
     }
+
+    const transferContent = buildTransferContent(Number(bookingId));
+
+    // ── CASH: Đặt phòng trước, trả tiền mặt khi nhận phòng ──
+    if (method === PAYMENT_METHOD.CASH) {
+      const payment = await prisma.payment.upsert({
+        where: { bookingId: Number(bookingId) },
+        create: {
+          bookingId: Number(bookingId),
+          amount: booking.finalPrice,
+          method: 'CASH',
+          status: 'PENDING',
+          transactionId: `CASH_${Date.now()}_${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        },
+        update: {
+          method: 'CASH',
+          status: 'PENDING',
+        },
+      });
+
+      return res.status(201).json({
+        success: true,
+        method: 'CASH',
+        message: 'Đặt phòng thành công! Vui lòng thanh toán tiền mặt khi đến nhận phòng.',
+        data: payment,
+      });
+    }
+
+    // ── BANK_TRANSFER: Tạo QR SePay ──
+    const qrCodeUrl = buildSePayQrUrl(booking.finalPrice, transferContent);
 
     const payment = await prisma.payment.upsert({
-      where: { bookingId },
+      where: { bookingId: Number(bookingId) },
       create: {
-        bookingId,
+        bookingId: Number(bookingId),
         amount: booking.finalPrice,
-        method,
-        status: PAYMENT_STATUS.PENDING,
-        transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        method: 'BANK_TRANSFER',
+        status: 'PENDING',
+        transactionId: transferContent,
       },
       update: {
-        method,
-        status: PAYMENT_STATUS.PENDING,
+        method: 'BANK_TRANSFER',
+        status: 'PENDING',
+        transactionId: transferContent,
       },
     });
 
-    res.status(201).json({ data: payment });
+    return res.status(201).json({
+      success: true,
+      method: 'BANK_TRANSFER',
+      message: 'Vui lòng quét mã QR hoặc chuyển khoản theo thông tin bên dưới',
+      data: {
+        payment,
+        bankInfo: {
+          bankCode: env.SEPAY_BANK_CODE || 'MB',
+          accountNumber: env.SEPAY_ACCOUNT_NUMBER || '0123456789',
+          accountName: env.SEPAY_ACCOUNT_NAME || 'CONG TY UTRAVEL',
+          amount: booking.finalPrice,
+          transferContent,
+          qrCodeUrl,
+        },
+      },
+    });
   } catch (error: any) {
     console.error('Error creating payment:', error);
-    res.status(500).json({ message: 'Failed to create payment', error: error.message });
+    res.status(500).json({ success: false, message: 'Lỗi tạo thanh toán', error: error.message });
   }
 };
 
+/**
+ * GET /payments/booking/:bookingId — Polling: Kiểm tra trạng thái thanh toán theo booking
+ * Frontend gọi mỗi 5 giây để check
+ */
+export const getPaymentByBooking = async (req: Request, res: Response) => {
+  try {
+    const bookingId = getIdParam(req.params.bookingId);
+    const userId = (req as any).user?.id;
+
+    const payment = await prisma.payment.findUnique({
+      where: { bookingId },
+      include: {
+        booking: {
+          select: { userId: true, status: true, finalPrice: true },
+        },
+      },
+    });
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Chưa có thông tin thanh toán' });
+    }
+
+    if (payment.booking.userId !== userId) {
+      return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: payment.id,
+        bookingId: payment.bookingId,
+        status: payment.status,
+        method: payment.method,
+        amount: payment.amount,
+        paidAt: payment.paidAt,
+        bookingStatus: payment.booking.status,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error checking payment status:', error);
+    res.status(500).json({ success: false, message: 'Lỗi kiểm tra trạng thái', error: error.message });
+  }
+};
+
+/**
+ * GET /payments/:id — Lấy chi tiết payment
+ */
 export const getPaymentStatus = async (req: Request, res: Response) => {
   try {
     const id = getIdParam(req.params.id);
-    const userId = (req as any).userId;
+    const userId = (req as any).user?.id;
 
     const payment = await prisma.payment.findUnique({
       where: { id },
@@ -74,32 +195,97 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
     });
 
     if (!payment) {
-      return res.status(404).json({ message: 'Payment not found' });
+      return res.status(404).json({ success: false, message: 'Không tìm thấy thanh toán' });
     }
 
-    if (payment.booking.userId !== userId && (req as any).userRole !== 'ADMIN') {
-      return res.status(403).json({ message: 'Unauthorized' });
+    if (payment.booking.userId !== userId && (req as any).user?.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
     }
 
-    res.status(200).json({ data: payment });
+    res.status(200).json({ success: true, data: payment });
   } catch (error: any) {
     console.error('Error fetching payment status:', error);
-    res.status(500).json({ message: 'Failed to fetch payment status', error: error.message });
+    res.status(500).json({ success: false, message: 'Lỗi lấy trạng thái thanh toán', error: error.message });
   }
 };
 
+/**
+ * POST /payments/sepay-webhook — SePay gửi webhook xác nhận giao dịch thành công
+ * Hoạt động trong production (có URL public)
+ * Trong dev: dùng polling thay thế
+ */
+export const sePayWebhook = async (req: Request, res: Response) => {
+  try {
+    const { content, transferAmount, referenceCode } = req.body;
+
+    // SePay gửi về nội dung chuyển khoản, tìm payment theo transferContent
+    const transferContent = content || referenceCode || '';
+
+    if (!transferContent.startsWith('UTRAVEL')) {
+      // Không phải giao dịch của UTravel, bỏ qua
+      return res.status(200).json({ success: true, message: 'Bỏ qua giao dịch không liên quan' });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: { transactionId: transferContent },
+      include: { booking: true },
+    });
+
+    if (!payment) {
+      console.warn('[SEPAY_WEBHOOK] Không tìm thấy payment với transactionId:', transferContent);
+      return res.status(200).json({ success: true, message: 'Không tìm thấy payment' });
+    }
+
+    if (payment.status === PAYMENT_STATUS.COMPLETED) {
+      return res.status(200).json({ success: true, message: 'Đã xử lý trước đó' });
+    }
+
+    // Cập nhật payment COMPLETED + booking CONFIRMED trong transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'COMPLETED',
+          paidAt: new Date(),
+        },
+      });
+
+      await tx.booking.update({
+        where: { id: payment.bookingId },
+        data: {
+          paymentStatus: 'COMPLETED',
+          status: 'CONFIRMED',
+        },
+      });
+    });
+
+    console.log(`[SEPAY_WEBHOOK] Xác nhận thanh toán thành công: ${transferContent}, booking #${payment.bookingId}`);
+    return res.status(200).json({ success: true, message: 'Xác nhận thanh toán thành công' });
+  } catch (error: any) {
+    console.error('[SEPAY_WEBHOOK] Error:', error);
+    // Trả 200 để SePay không retry
+    return res.status(200).json({ success: false, message: 'Lỗi xử lý webhook' });
+  }
+};
+
+/**
+ * PATCH /payments/:id — Admin cập nhật trạng thái payment (dùng cho dev/testing)
+ */
 export const updatePaymentStatus = async (req: Request, res: Response) => {
   try {
     const id = getIdParam(req.params.id);
     const { status } = req.body;
 
-    if ((req as any).userRole !== 'ADMIN') {
-      return res.status(403).json({ message: 'Unauthorized: Only admin can update payment status' });
+    if ((req as any).user?.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Chỉ Admin mới được cập nhật trạng thái' });
     }
 
     const validStatuses = Object.values(PAYMENT_STATUS);
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: `Invalid payment status. Must be one of: ${validStatuses.join(', ')}` });
+      return res.status(400).json({
+        success: false,
+        message: `Trạng thái không hợp lệ. Phải là: ${validStatuses.join(', ')}`,
+      });
     }
 
     const payment = await prisma.payment.update({
@@ -112,15 +298,15 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
       await prisma.booking.update({
         where: { id: payment.bookingId },
         data: {
-          paymentStatus: PAYMENT_STATUS.COMPLETED,
-          status: BOOKING_STATUS.CONFIRMED,
+          paymentStatus: 'COMPLETED',
+          status: 'CONFIRMED',
         },
       });
     }
 
-    res.status(200).json({ data: payment });
+    res.status(200).json({ success: true, data: payment });
   } catch (error: any) {
     console.error('Error updating payment status:', error);
-    res.status(500).json({ message: 'Failed to update payment status', error: error.message });
+    res.status(500).json({ success: false, message: 'Lỗi cập nhật trạng thái', error: error.message });
   }
 };

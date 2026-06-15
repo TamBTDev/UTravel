@@ -27,17 +27,17 @@ enum UserStatus {
 }
 
 enum VendorStatus {
-  PENDING    // Chờ Admin duyệt
-  APPROVED   // Đã duyệt
-  REJECTED   // Từ chối
-  SUSPENDED  // Tạm khóa
+  PENDING // Chờ Admin duyệt
+  APPROVED // Đã duyệt
+  REJECTED // Từ chối
+  SUSPENDED // Tạm khóa
 }
 
 enum ApprovalStatus {
-  DRAFT      // Vendor đang soạn, chưa gửi duyệt
-  PENDING    // Chờ Admin duyệt
-  APPROVED   // Đã duyệt, hiển thị trên sàn
-  REJECTED   // Admin từ chối
+  DRAFT // Vendor đang soạn, chưa gửi duyệt
+  PENDING // Chờ Admin duyệt
+  APPROVED // Đã duyệt, hiển thị trên sàn
+  REJECTED // Admin từ chối
 }
 
 enum BookingStatus {
@@ -50,6 +50,7 @@ enum BookingStatus {
 enum PaymentMethod {
   CREDIT_CARD
   BANK_TRANSFER
+  CASH
   MOMO
   VNPAY
   ZALOPAY
@@ -63,11 +64,11 @@ enum PaymentStatus {
 }
 
 enum TransactionType {
-  BOOKING_INCOME     // Thu nhập từ đơn đặt phòng
-  COMMISSION_FEE     // Phí hoa hồng sàn trừ
-  WITHDRAWAL         // Vendor rút tiền
-  REFUND             // Hoàn tiền cho khách
-  ADJUSTMENT         // Admin điều chỉnh thủ công
+  BOOKING_INCOME // Thu nhập từ đơn đặt phòng
+  COMMISSION_FEE // Phí hoa hồng sàn trừ
+  WITHDRAWAL // Vendor rút tiền
+  REFUND // Hoàn tiền cho khách
+  ADJUSTMENT // Admin điều chỉnh thủ công
 }
 
 enum TicketStatus {
@@ -91,18 +92,19 @@ enum TicketPriority {
 // ══════════════════════════════════════════════════════════
 
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
-  password  String
-  firstName String?
-  lastName  String?
-  phone     String?
-  address   String?
-  avatar    String?
-  role      Role       @default(USER)
-  status    UserStatus @default(UNVERIFIED)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  password     String
+  firstName    String?
+  lastName     String?
+  phone        String?
+  address      String?
+  avatar       String?
+  role         Role       @default(USER)
+  status       UserStatus @default(UNVERIFIED)
+  rewardPoints Int        @default(0) // Điểm thưởng tích lũy
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   // Relations
   vendorProfile  VendorProfile?
@@ -111,6 +113,9 @@ model User {
   otps           UserOtp[]
   supportTickets SupportTicket[]
   ticketMessages TicketMessage[]
+  favorites      FavoriteHotel[]
+  viewedHotels   ViewedHotel[]
+  userWallet     UserWallet?
 
   @@map("users")
 }
@@ -119,7 +124,7 @@ model UserOtp {
   id        Int      @id @default(autoincrement())
   userId    Int
   otpCode   String
-  type      String   // Ví dụ: "REGISTER", "FORGOT_PASSWORD"
+  type      String // Ví dụ: "REGISTER", "FORGOT_PASSWORD"
   expiresAt DateTime
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -130,26 +135,66 @@ model UserOtp {
 }
 
 // ══════════════════════════════════════════════════════════
+// USER WALLET — Ví tiền hoàn của người dùng
+// Phục vụ: Hoàn tiền khi hủy đặt phòng đã TT bank transfer
+// ══════════════════════════════════════════════════════════
+
+enum UserTransactionType {
+  REFUND    // Hoàn tiền do hủy booking
+  TOPUP     // Nạp tiền thủ công (admin)
+  WITHDRAW  // Rút tiền
+}
+
+model UserWallet {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  balance   Float    @default(0) // Số dư hiện tại (VND)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions UserWalletTransaction[]
+
+  @@map("user_wallets")
+}
+
+model UserWalletTransaction {
+  id          Int                 @id @default(autoincrement())
+  walletId    Int
+  bookingId   Int?                // Booking liên quan (nếu là REFUND)
+  type        UserTransactionType
+  amount      Float               // Số tiền (VND, luôn dương)
+  description String?             @db.Text
+  createdAt   DateTime            @default(now())
+
+  wallet UserWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([bookingId])
+  @@map("user_wallet_transactions")
+}
+
+// ══════════════════════════════════════════════════════════
 // VENDOR / CHỦ PHÒNG
 // Phục vụ: Đăng ký Shop, Dashboard Vendor, Ví điện tử
 // ══════════════════════════════════════════════════════════
 
 model VendorProfile {
-  id           Int          @id @default(autoincrement())
-  userId       Int          @unique
-  shopName     String       @unique                      // Tên cửa hàng / thương hiệu
-  description  String?      @db.Text                     // Giới thiệu ngắn
-  businessLicense String?                                // Số GPKD (tùy chọn)
-  bankName     String?                                   // Tên ngân hàng
-  bankAccount  String?                                   // Số tài khoản
-  bankOwner    String?                                   // Tên chủ TK
-  logo         String?                                   // URL logo
-  status       VendorStatus @default(PENDING)
-  commissionRate Float      @default(10)                 // % hoa hồng sàn (mặc định 10%)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id              Int          @id @default(autoincrement())
+  userId          Int          @unique
+  shopName        String       @unique // Tên cửa hàng / thương hiệu
+  description     String?      @db.Text // Giới thiệu ngắn
+  businessLicense String? // Số GPKD (tùy chọn)
+  bankName        String? // Tên ngân hàng
+  bankAccount     String? // Số tài khoản
+  bankOwner       String? // Tên chủ TK
+  logo            String? // URL logo
+  status          VendorStatus @default(PENDING)
+  commissionRate  Float        @default(10) // % hoa hồng sàn (mặc định 10%)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   hotels Hotel[]
   wallet Wallet?
 
@@ -159,7 +204,7 @@ model VendorProfile {
 model Wallet {
   id        Int      @id @default(autoincrement())
   vendorId  Int      @unique
-  balance   Float    @default(0)       // Số dư hiện tại
+  balance   Float    @default(0) // Số dư hiện tại
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -172,9 +217,9 @@ model Wallet {
 model WalletTransaction {
   id          Int             @id @default(autoincrement())
   walletId    Int
-  bookingId   Int?                                       // Liên kết đơn hàng (nếu có)
+  bookingId   Int? // Liên kết đơn hàng (nếu có)
   type        TransactionType
-  amount      Float                                      // Số tiền (dương = cộng, âm = trừ)
+  amount      Float // Số tiền (dương = cộng, âm = trừ)
   description String?         @db.Text
   createdAt   DateTime        @default(now())
 
@@ -194,24 +239,28 @@ model WalletTransaction {
 
 model Hotel {
   id             Int            @id @default(autoincrement())
-  vendorId       Int?                                    // null = do Admin tạo (legacy)
+  vendorId       Int? // null = do Admin tạo (legacy)
   name           String         @unique
   description    String?        @db.Text
   location       String
   city           String
   country        String
   rating         Float          @default(0)
-  amenities      Json?                                   // Mảng JSON tiện ích
-  images         Json?                                   // Mảng JSON URL ảnh
-  approvalStatus ApprovalStatus @default(DRAFT)          // Trạng thái duyệt của Admin
-  rejectReason   String?        @db.Text                 // Lý do từ chối (nếu có)
-  isActive       Boolean        @default(true)           // Vendor tắt/bật hiển thị
+  viewCount      Int            @default(0) // Số lượt xem
+  bookingCount   Int            @default(0) // Số lượt đặt thành công
+  amenities      Json? // Mảng JSON tiện ích
+  images         Json? // Mảng JSON URL ảnh
+  approvalStatus ApprovalStatus @default(DRAFT) // Trạng thái duyệt của Admin
+  rejectReason   String?        @db.Text // Lý do từ chối (nếu có)
+  isActive       Boolean        @default(true) // Vendor tắt/bật hiển thị
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  vendor  VendorProfile? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  rooms   Room[]
-  reviews Review[]
+  vendor      VendorProfile?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  rooms       Room[]
+  reviews     Review[]
+  favoritedBy FavoriteHotel[]
+  viewedBy    ViewedHotel[]
 
   @@index([vendorId])
   @@index([city])
@@ -223,12 +272,12 @@ model Room {
   id          Int      @id @default(autoincrement())
   hotelId     Int
   roomNumber  String
-  type        String   // Ví dụ: "single", "double", "suite", "deluxe"
+  type        String // Ví dụ: "single", "double", "suite", "deluxe"
   price       Float
   capacity    Int
   description String?  @db.Text
-  amenities   Json?    // Mảng JSON tiện ích phòng
-  images      Json?    // Mảng JSON URL ảnh phòng
+  amenities   Json? // Mảng JSON tiện ích phòng
+  images      Json? // Mảng JSON URL ảnh phòng
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -247,22 +296,24 @@ model Room {
 // ══════════════════════════════════════════════════════════
 
 model Booking {
-  id            Int           @id @default(autoincrement())
-  userId        Int
-  roomId        Int
-  promotionId   Int?                                     // Mã khuyến mãi đã áp dụng
-  checkInDate   DateTime
-  checkOutDate  DateTime
-  adults        Int           @default(1)
-  children      Int           @default(0)
-  specialNote   String?       @db.Text
-  status        BookingStatus @default(PENDING)
-  totalPrice    Float                                    // Giá gốc
-  discountAmount Float        @default(0)                // Số tiền giảm
-  finalPrice    Float                                    // = totalPrice - discountAmount
-  paymentStatus PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  roomId         Int
+  promotionId    Int? // Mã khuyến mãi đã áp dụng
+  checkInDate    DateTime
+  checkOutDate   DateTime
+  adults         Int           @default(1)
+  children       Int           @default(0)
+  specialNote    String?       @db.Text
+  status         BookingStatus @default(PENDING)
+  totalPrice     Float // Giá gốc
+  discountAmount Float         @default(0) // Số tiền giảm từ khuyến mãi
+  pointsUsed     Int           @default(0) // Số điểm thưởng đã sử dụng
+  pointsDiscount Float         @default(0) // Số tiền giảm do dùng điểm
+  finalPrice     Float // = totalPrice - discountAmount - pointsDiscount
+  paymentStatus  PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   room               Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -282,9 +333,9 @@ model Payment {
   bookingId     Int           @unique
   amount        Float
   method        PaymentMethod
-  transactionId String?                                  // Mã giao dịch từ cổng thanh toán
+  transactionId String? // Mã giao dịch từ cổng thanh toán
   status        PaymentStatus @default(PENDING)
-  paidAt        DateTime?                                // Thời điểm thanh toán thành công
+  paidAt        DateTime? // Thời điểm thanh toán thành công
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -302,16 +353,22 @@ model Review {
   id            Int       @id @default(autoincrement())
   userId        Int
   hotelId       Int
-  bookingId     Int?      @unique                        // Liên kết đơn đặt phòng (1 booking → 1 review)
-  rating        Int                                      // 1-5
-  comment       String?   @db.Text
-  vendorReply   String?   @db.Text                       // Vendor phản hồi
-  vendorReplyAt DateTime?                                // Thời điểm phản hồi
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  bookingId     Int?      @unique // Liên kết đơn đặt phòng (1 booking → 1 review)
+  rating          Int // 1-5
+  cleanlinessRating Float?
+  serviceRating     Float?
+  locationRating    Float?
+  valueRating       Float?
+  highlights        Json?     // Mảng các tag nổi bật
+  images            Json?     // Mảng URL ảnh
+  comment         String?   @db.Text
+  vendorReply     String?   @db.Text // Vendor phản hồi
+  vendorReplyAt   DateTime? // Thời điểm phản hồi
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hotel   Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel   Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
   booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
   @@index([hotelId])
@@ -325,22 +382,22 @@ model Review {
 // ══════════════════════════════════════════════════════════
 
 model Promotion {
-  id             Int       @id @default(autoincrement())
-  vendorId       Int                                     // Vendor sở hữu mã
-  code           String    @unique                       // Mã giảm giá, VD: "SUMMER2026"
-  name           String                                  // Tên chương trình
-  description    String?   @db.Text
-  discountType   String    @default("percentage")        // "percentage" | "fixed"
-  discountValue  Float                                   // Giá trị giảm (% hoặc VND)
-  minOrderValue  Float     @default(0)                   // Đơn tối thiểu
-  maxDiscount    Float?                                  // Giảm tối đa (cho loại %)
-  usageLimit     Int?                                    // Giới hạn lượt sử dụng
-  usedCount      Int       @default(0)                   // Số lượt đã dùng
-  startDate      DateTime
-  endDate        DateTime
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id            Int      @id @default(autoincrement())
+  vendorId      Int // Vendor sở hữu mã
+  code          String   @unique // Mã giảm giá, VD: "SUMMER2026"
+  name          String // Tên chương trình
+  description   String?  @db.Text
+  discountType  String   @default("percentage") // "percentage" | "fixed"
+  discountValue Float // Giá trị giảm (% hoặc VND)
+  minOrderValue Float    @default(0) // Đơn tối thiểu
+  maxDiscount   Float? // Giảm tối đa (cho loại %)
+  usageLimit    Int? // Giới hạn lượt sử dụng
+  usedCount     Int      @default(0) // Số lượt đã dùng
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   bookings Booking[]
 
@@ -355,15 +412,15 @@ model Promotion {
 // ══════════════════════════════════════════════════════════
 
 model SupportTicket {
-  id         Int            @id @default(autoincrement())
-  userId     Int
-  bookingId  Int?                                        // Liên kết đơn hàng (nếu có)
-  subject    String
-  category   String         @default("general")          // "booking", "payment", "account", "general"
-  status     TicketStatus   @default(OPEN)
-  priority   TicketPriority @default(MEDIUM)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  bookingId Int? // Liên kết đơn hàng (nếu có)
+  subject   String
+  category  String         @default("general") // "booking", "payment", "account", "general"
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(MEDIUM)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages TicketMessage[]
@@ -376,7 +433,7 @@ model SupportTicket {
 model TicketMessage {
   id        Int      @id @default(autoincrement())
   ticketId  Int
-  senderId  Int                                          // userId của người gửi (user hoặc admin)
+  senderId  Int // userId của người gửi (user hoặc admin)
   content   String   @db.Text
   createdAt DateTime @default(now())
 
@@ -394,13 +451,43 @@ model TicketMessage {
 
 model CmsPage {
   id          Int      @id @default(autoincrement())
-  slug        String   @unique                           // URL-friendly, VD: "about-us"
+  slug        String   @unique // URL-friendly, VD: "about-us"
   title       String
-  content     String   @db.LongText                      // Nội dung HTML/Markdown
+  content     String   @db.LongText // Nội dung HTML/Markdown
   isPublished Boolean  @default(false)
-  sortOrder   Int      @default(0)                       // Thứ tự hiển thị
+  sortOrder   Int      @default(0) // Thứ tự hiển thị
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@map("cms_pages")
+}
+
+// ══════════════════════════════════════════════════════════
+// THÔNG KÊ & TƯƠNG TÁC NGƯỜI DÙNG (YÊU THÍCH, ĐÃ XEM)
+// ══════════════════════════════════════════════════════════
+
+model FavoriteHotel {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  hotelId   Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+  @@map("favorite_hotels")
+}
+
+model ViewedHotel {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  hotelId  Int
+  viewedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+  @@map("viewed_hotels")
 }

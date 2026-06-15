@@ -1,73 +1,81 @@
 import { useEffect, useState } from "react";
 import { Loader } from "@mantine/core";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { fetchProfile } from "@/app/store/profileSlice";
 import { ProfileSidebar } from "../components/ProfileSidebar";
 import { ProfileEditForm } from "../components/ProfileEditForm";
 import { RegisterVendorForm } from "../components/RegisterVendorForm";
+import { WalletTab } from "../components/WalletTab";
 
 export const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const { isLoading } = useAppSelector((s) => s.profile);
-  const [activeTab, setActiveTab] = useState("personal");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "personal");
 
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
 
+  // Sync URL ?tab= param
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t && t !== activeTab) setActiveTab(t);
+  }, [searchParams]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
+
   const getPageHeader = () => {
     switch (activeTab) {
       case "personal":
-        return {
-          title: "Thông tin cá nhân",
-          desc: "Cập nhật thông tin chi tiết và cách chúng tôi có thể liên hệ với bạn.",
-        };
+        return { title: "Thông tin cá nhân", desc: "Cập nhật thông tin chi tiết và cách chúng tôi có thể liên hệ với bạn." };
+      case "wallet":
+        return { title: "Ví UTravel", desc: "Quản lý số dư và xem lịch sử giao dịch hoàn tiền." };
       case "register-vendor":
-        return {
-          title: "Đăng ký / Quản lý đối tác",
-          desc: "Đăng ký bán hàng hoặc quản lý thông tin cửa hàng, tài khoản ngân hàng liên kết.",
-        };
+        return { title: "Đăng ký / Quản lý đối tác", desc: "Đăng ký bán hàng hoặc quản lý thông tin cửa hàng, tài khoản ngân hàng liên kết." };
       default:
-        return {
-          title: "Tài khoản",
-          desc: "Quản lý thiết lập tài khoản và các tùy chọn cá nhân hóa.",
-        };
+        return { title: "Tài khoản", desc: "Quản lý thiết lập tài khoản và các tùy chọn cá nhân hóa." };
     }
   };
 
   const headerInfo = getPageHeader();
 
+  const renderContent = () => {
+    if (activeTab === "personal") return <ProfileEditForm />;
+    if (activeTab === "wallet") return <WalletTab />;
+    if (activeTab === "register-vendor") return <RegisterVendorForm />;
+    return (
+      <div className="py-16 text-center text-on-surface-variant font-medium">
+        Tính năng đang được phát triển...
+      </div>
+    );
+  };
+
   return (
     <AppLayout withContainer={false}>
       <div className="flex flex-1 w-full max-w-[1200px] mx-auto px-8 py-8 gap-8">
         {/* Cột trái: Sidebar điều hướng */}
-        <ProfileSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <ProfileSidebar activeTab={activeTab} onTabChange={handleTabChange} />
 
         {/* Cột phải: Khung nội dung chính */}
-        <main className="flex-1 max-w-[800px]">
+        <main className="flex-1 min-w-0">
           <div className="mb-8">
             <h1 className="text-display text-on-surface mb-2">{headerInfo.title}</h1>
-            <p className="text-body text-on-surface-variant">
-              {headerInfo.desc}
-            </p>
+            <p className="text-body text-on-surface-variant">{headerInfo.desc}</p>
           </div>
 
-          {isLoading ? (
+          {isLoading && activeTab !== "wallet" ? (
             <div className="flex justify-center py-16">
               <Loader color="var(--color-primary)" size="lg" />
             </div>
           ) : (
             <div className="bg-white rounded-xl border border-hairline p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-              {activeTab === "personal" ? (
-                <ProfileEditForm />
-              ) : activeTab === "register-vendor" ? (
-                <RegisterVendorForm />
-              ) : (
-                <div className="py-16 text-center text-on-surface-variant font-medium">
-                  Tính năng đang được phát triển...
-                </div>
-              )}
+              {renderContent()}
             </div>
           )}
         </main>

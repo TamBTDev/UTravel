@@ -8,8 +8,8 @@ export const RegisterPage = () => {
     <AppLayout withContainer={false}>
       <Box
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          opacity: 0.05,
+          background: "linear-gradient(135deg, #0b63d6 0%, #4f46e5 100%)",
+          opacity: 0.06,
           position: "absolute",
           top: 70,
           left: 0,
@@ -31,8 +31,7 @@ export const RegisterPage = () => {
                   fw={700}
                   mb="md"
                   style={{
-                    background:
-                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(90deg,#0b63d6,#4f46e5)",
                     backgroundClip: "text",
                     color: "transparent",
                   }}

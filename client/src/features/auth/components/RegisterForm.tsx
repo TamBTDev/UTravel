@@ -29,11 +29,11 @@ export const RegisterForm = () => {
 
   return (
     <AuthCard>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ margin: "0 0 8px 0", fontSize: 24, fontWeight: 600 }}>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: "0 0 8px 0", fontSize: 22, fontWeight: 700, color: '#0b63d6' }}>
           Đăng Ký Tài Khoản
         </h2>
-        <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
+        <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>
           Tạo tài khoản mới để trải nghiệm dịch vụ
         </p>
       </div>
@@ -89,8 +89,11 @@ export const RegisterForm = () => {
             type="submit"
             fullWidth
             loading={isLoading}
+            radius="md"
+            size="md"
             style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "linear-gradient(90deg,#0b63d6,#4f46e5)",
+              height: 44,
             }}
           >
             Đăng Ký
@@ -101,15 +104,7 @@ export const RegisterForm = () => {
       <div style={{ marginTop: "20px", textAlign: "center" }}>
         <Text size="sm">
           Đã có tài khoản?{" "}
-          <Text
-            component="a"
-            href="/login"
-            style={{
-              color: "#667eea",
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
+          <Text component="a" href="/login" style={{ color: "#0b63d6", fontWeight: 700, textDecoration: "none" }}>
             Đăng nhập ngay
           </Text>
         </Text>
