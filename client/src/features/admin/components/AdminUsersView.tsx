@@ -4,6 +4,7 @@ import { IconAlertCircle, IconUsers } from "@tabler/icons-react";
 import { adminService, AdminUser } from "../services/adminService";
 import { UserTable } from "./users/UserTable";
 import { UserFilters } from "./users/UserFilters";
+import { RoleConfigModal } from "./users/RoleConfigModal";
 
 export const AdminUsersView = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -13,6 +14,9 @@ export const AdminUsersView = () => {
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [actionId, setActionId] = useState<number | null>(null);
+
+  const [roleModalOpened, setRoleModalOpened] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -56,6 +60,26 @@ export const AdminUsersView = () => {
       alert(err.message || "Lỗi khi cập nhật trạng thái tài khoản");
     } finally {
       setActionId(null);
+    }
+  };
+
+  const handleOpenRoleModal = (user: AdminUser) => {
+    setSelectedUser(user);
+    setRoleModalOpened(true);
+  };
+
+  const handleSaveRole = async (userId: number, role: string, permissions: string[]) => {
+    try {
+      const res = await adminService.updateUserRole(userId, role, permissions);
+      if (res.success) {
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, role, permissions } : u))
+        );
+        alert("Cập nhật quyền thành công!");
+      }
+    } catch (err: any) {
+      alert(err.message || "Lỗi khi phân quyền");
+      throw err;
     }
   };
 
@@ -124,9 +148,20 @@ export const AdminUsersView = () => {
         <UserTable
           users={filteredUsers}
           onToggleStatus={handleToggleStatus}
+          onOpenRoleModal={handleOpenRoleModal}
           actionId={actionId}
         />
       )}
+
+      <RoleConfigModal 
+        opened={roleModalOpened} 
+        onClose={() => {
+          setRoleModalOpened(false);
+          setSelectedUser(null);
+        }} 
+        user={selectedUser} 
+        onSave={handleSaveRole} 
+      />
     </div>
   );
 };

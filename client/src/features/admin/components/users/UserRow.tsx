@@ -6,10 +6,11 @@ import dayjs from "dayjs";
 interface UserRowProps {
   user: AdminUser;
   onToggleStatus: (userId: number, currentStatus: string) => Promise<void>;
+  onOpenRoleModal: (user: AdminUser) => void;
   isProcessing: boolean;
 }
 
-export const UserRow = ({ user, onToggleStatus, isProcessing }: UserRowProps) => {
+export const UserRow = ({ user, onToggleStatus, onOpenRoleModal, isProcessing }: UserRowProps) => {
   const isSuspended = user.status === "SUSPENDED";
 
   return (
@@ -41,6 +42,8 @@ export const UserRow = ({ user, onToggleStatus, isProcessing }: UserRowProps) =>
         >
           {user.role === "ADMIN"
             ? "Quản trị"
+            : user.role === "MANAGER"
+            ? "Quản lý"
             : user.role === "VENDOR"
             ? "Đối tác"
             : "Khách hàng"}
@@ -68,18 +71,27 @@ export const UserRow = ({ user, onToggleStatus, isProcessing }: UserRowProps) =>
       </Table.Td>
       <Table.Td className="text-right">
         {user.role !== "ADMIN" && (
-          <button
-            disabled={isProcessing}
-            onClick={() => onToggleStatus(user.id, user.status)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm ${
-              isSuspended
-                ? "bg-white border-green-600 text-green-600 hover:bg-green-50"
-                : "bg-white border-red-600 text-red-600 hover:bg-red-50"
-            }`}
-          >
-            {isSuspended ? <IconLockOpen size={14} /> : <IconLock size={14} />}
-            {isSuspended ? "Mở khóa" : "Khóa tài khoản"}
-          </button>
+          <div className="flex justify-end gap-2">
+            <button
+              disabled={isProcessing}
+              onClick={() => onOpenRoleModal(user)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm bg-white border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              Phân quyền
+            </button>
+            <button
+              disabled={isProcessing}
+              onClick={() => onToggleStatus(user.id, user.status)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm ${
+                isSuspended
+                  ? "bg-white border-green-600 text-green-600 hover:bg-green-50"
+                  : "bg-white border-red-600 text-red-600 hover:bg-red-50"
+              }`}
+            >
+              {isSuspended ? <IconLockOpen size={14} /> : <IconLock size={14} />}
+              {isSuspended ? "Mở khóa" : "Khóa"}
+            </button>
+          </div>
         )}
       </Table.Td>
     </Table.Tr>

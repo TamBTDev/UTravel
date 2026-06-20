@@ -51,6 +51,7 @@ export interface AdminUser {
   lastName: string;
   phone: string | null;
   role: string;
+  permissions?: string[] | null;
   status: string;
   createdAt: string;
   _count: {
@@ -121,6 +122,15 @@ export const adminService = {
   updateUserStatus: async (userId: number, status: "VERIFIED" | "SUSPENDED"): Promise<{ success: boolean; message: string }> => {
     try {
       const res = await apiClient.patch(`/admin/users/${userId}/status`, { status });
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  updateUserRole: async (userId: number, role: string, permissions: string[]): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await apiClient.patch(`/admin/users/${userId}/role`, { role, permissions });
       return res.data;
     } catch (error: any) {
       throw error.response?.data || error;

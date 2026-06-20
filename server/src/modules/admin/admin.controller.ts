@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { adminService } from "./admin.service";
-import { VENDOR_STATUS, APPROVAL_STATUS, USER_STATUS } from "../../../../shared/constants/roles";
+import { VENDOR_STATUS, APPROVAL_STATUS, USER_STATUS, USER_ROLES } from "../../../../shared/constants/roles";
 
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
@@ -100,6 +100,23 @@ export const updateUserStatus = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error updating user status:", error);
     res.status(500).json({ message: "Lỗi cập nhật người dùng", error: error.message });
+  }
+};
+
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+    const { role, permissions } = req.body;
+
+    if (!role || !Object.values(USER_ROLES).includes(role as any)) {
+      return res.status(400).json({ message: "Role không hợp lệ" });
+    }
+
+    const updated = await adminService.updateUserRole(id, role, permissions);
+    res.status(200).json({ success: true, message: "Phân quyền người dùng thành công", data: updated });
+  } catch (error: any) {
+    console.error("Error updating user role:", error);
+    res.status(500).json({ message: "Lỗi phân quyền người dùng", error: error.message });
   }
 };
 

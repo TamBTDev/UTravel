@@ -9,6 +9,7 @@ import {
   getAdminFinanceReport,
   getAllUsers,
   updateUserStatus,
+  updateUserRole,
   getAllAdminHotels,
   toggleHotelActive,
   getAdminDashboardStats
@@ -45,6 +46,9 @@ router.get("/users", getAllUsers);
 
 // Khóa hoặc mở khóa tài khoản người dùng
 router.patch("/users/:id/status", updateUserStatus);
+
+// Phân quyền cho người dùng (Role và Permissions)
+router.patch("/users/:id/role", updateUserRole);
 
 // --- Quản lý Sản phẩm (Hotels) toàn sàn ---
 // Lấy danh sách toàn bộ khách sạn trên sàn (hỗ trợ lọc theo isActive)

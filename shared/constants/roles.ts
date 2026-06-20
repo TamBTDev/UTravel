@@ -2,6 +2,7 @@ export const USER_ROLES = {
   ADMIN: 'ADMIN',
   VENDOR: 'VENDOR',
   USER: 'USER',
+  MANAGER: 'MANAGER',
 } as const;
 
 export const ROOM_TYPES = {

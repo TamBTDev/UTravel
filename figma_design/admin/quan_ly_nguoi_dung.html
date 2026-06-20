@@ -1,0 +1,814 @@
+<!doctype html>
+
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>UTravel Admin - User Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "error-container": "#ffdad6",
+              "primary-fixed-dim": "#adc6ff",
+              "on-tertiary-container": "#ffe3c6",
+              "surface-dim": "#d8dadc",
+              surface: "#f7f9fb",
+              outline: "#727785",
+              "tertiary-fixed-dim": "#ffb95f",
+              "on-secondary-fixed": "#00210f",
+              "surface-tint": "#005bc0",
+              "inverse-on-surface": "#eff1f3",
+              "secondary-fixed": "#7cfbad",
+              "on-secondary-container": "#007441",
+              "tertiary-fixed": "#ffddb8",
+              "on-tertiary": "#ffffff",
+              "surface-variant": "#e0e3e5",
+              "on-primary-fixed": "#001a41",
+              "on-primary-fixed-variant": "#004493",
+              "on-background": "#191c1e",
+              "primary-container": "#0064d2",
+              tertiary: "#714600",
+              "ocean-slate": "#475569",
+              "inverse-primary": "#adc6ff",
+              "outline-variant": "#c2c6d5",
+              "on-secondary": "#ffffff",
+              "tertiary-container": "#925c00",
+              "on-surface": "#191c1e",
+              "surface-container": "#eceef0",
+              "midnight-slate": "#0F172A",
+              "on-surface-variant": "#424753",
+              "surface-container-low": "#f2f4f6",
+              "secondary-container": "#7cfbad",
+              "on-tertiary-fixed-variant": "#653e00",
+              "border-hairline": "#E2E8F0",
+              "shore-white": "#FFFFFF",
+              "on-primary-container": "#dfe7ff",
+              error: "#ba1a1a",
+              "on-tertiary-fixed": "#2a1700",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              primary: "#004da4",
+              "on-error": "#ffffff",
+              "on-secondary-fixed-variant": "#00522d",
+              "inverse-surface": "#2d3133",
+              secondary: "#006d3d",
+              "surface-container-high": "#e6e8ea",
+              "surface-container-highest": "#e0e3e5",
+              "surface-bright": "#f7f9fb",
+              background: "#f7f9fb",
+              "primary-fixed": "#d8e2ff",
+              "secondary-fixed-dim": "#5ede93",
+              "deal-orange": "#FF5E1F",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              "container-max": "1200px",
+              md: "16px",
+              "margin-mobile": "16px",
+              "margin-desktop": "32px",
+              xs: "4px",
+              "form-max": "800px",
+              sm: "8px",
+              lg: "24px",
+              xl: "32px",
+              unit: "4px",
+              gutter: "16px",
+            },
+            fontFamily: {
+              "body-base": ["Inter"],
+              "title-sm": ["Inter"],
+              "headline-md": ["Inter"],
+              "display-lg": ["Inter"],
+              "headline-lg-mobile": ["Inter"],
+              "body-bold": ["Inter"],
+              "stat-lg": ["Inter"],
+              "label-caps": ["Inter"],
+            },
+            fontSize: {
+              "body-base": [
+                "16px",
+                { lineHeight: "24px", letterSpacing: "0", fontWeight: "400" },
+              ],
+              "title-sm": [
+                "18px",
+                { lineHeight: "24px", letterSpacing: "0", fontWeight: "600" },
+              ],
+              "headline-md": [
+                "24px",
+                {
+                  lineHeight: "32px",
+                  letterSpacing: "-0.01em",
+                  fontWeight: "700",
+                },
+              ],
+              "display-lg": [
+                "40px",
+                {
+                  lineHeight: "48px",
+                  letterSpacing: "-0.02em",
+                  fontWeight: "800",
+                },
+              ],
+              "headline-lg-mobile": [
+                "32px",
+                {
+                  lineHeight: "40px",
+                  letterSpacing: "-0.02em",
+                  fontWeight: "800",
+                },
+              ],
+              "body-bold": [
+                "16px",
+                { lineHeight: "24px", letterSpacing: "0", fontWeight: "600" },
+              ],
+              "stat-lg": [
+                "32px",
+                {
+                  lineHeight: "40px",
+                  letterSpacing: "-0.01em",
+                  fontWeight: "700",
+                },
+              ],
+              "label-caps": [
+                "12px",
+                {
+                  lineHeight: "16px",
+                  letterSpacing: "0.05em",
+                  fontWeight: "700",
+                },
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      [data-weight="fill"] .material-symbols-outlined {
+        font-variation-settings: "FILL" 1;
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface font-body-base min-h-screen flex">
+    <!-- SideNavBar (Shared Component) -->
+    <aside
+      class="bg-surface-container-lowest dark:bg-midnight-slate h-screen w-64 fixed left-0 top-0 border-r border-hairline dark:border-outline-variant flex flex-col h-full py-lg px-md hidden md:flex z-40 transition-all duration-200 ease-in-out"
+    >
+      <div class="mb-xl px-sm">
+        <h1
+          class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed"
+        >
+          UTravel
+        </h1>
+      </div>
+      <div
+        class="flex items-center gap-md mb-xl p-sm rounded-lg hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors cursor-pointer"
+      >
+        <img
+          alt="Admin Profile"
+          class="w-12 h-12 rounded-full object-cover"
+          data-alt="Professional headshot of a mature corporate executive in a modern bright office setting. Soft natural light highlights a friendly yet authoritative expression. The background features subtle glass partitions and light grey walls, adhering to a modern corporate aesthetic."
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfcJ4DueYTd_v3P-7gfnBXutrZCKYxZNKQjr8mS4NB27LBef17n_c06iLpwXI7JL2BBRIcR0UEiePBUOsYAOorDt7kFYi7441oR64AMaBEpDqbGSAik9NFvj8vgIEkjcFzAsiMGC6XQTeQuzo2AYTnRCDMcOhgEIhF_T5Bufz7Fz8IVpufVJUeKY0amSve_X5p6DFRXJltJWG3ug5vXLT2ie0qejTH-tQxQSjiYWijiEB8UbSFY__yEc-_9AGa0wcd7UqxZ88xAHA"
+        />
+        <div>
+          <p
+            class="font-title-sm text-title-sm text-primary dark:text-primary-fixed"
+          >
+            Admin Portal
+          </p>
+          <p
+            class="font-label-caps text-label-caps text-ocean-slate dark:text-surface-variant"
+          >
+            System Administrator
+          </p>
+        </div>
+      </div>
+      <button
+        class="w-full bg-primary text-shore-white font-body-bold py-md px-lg rounded-lg mb-xl flex items-center justify-center gap-sm hover:opacity-90 transition-opacity"
+      >
+        <span class="material-symbols-outlined">add</span>
+        Add New User
+      </button>
+      <nav class="flex-1 overflow-y-auto space-y-sm">
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="dashboard"
+            >dashboard</span
+          >
+          Dashboard
+        </a>
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="inventory_2"
+            >inventory_2</span
+          >
+          Inventory
+        </a>
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg bg-primary-container text-on-primary-container font-body-bold transition-all duration-200 ease-in-out"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="group">group</span>
+          Users
+        </a>
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="local_offer"
+            >local_offer</span
+          >
+          Promotions
+        </a>
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span
+            class="material-symbols-outlined"
+            data-icon="account_balance_wallet"
+            >account_balance_wallet</span
+          >
+          Finance
+        </a>
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="analytics"
+            >analytics</span
+          >
+          Reports
+        </a>
+      </nav>
+      <div class="mt-auto border-t border-hairline pt-md space-y-sm">
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="settings"
+            >settings</span
+          >
+          Settings
+        </a>
+        <a
+          class="flex items-center gap-md px-md py-sm rounded-lg text-ocean-slate dark:text-surface-variant hover:bg-surface-container-low hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-all duration-200 ease-in-out font-label-caps text-label-caps"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="help">help</span>
+          Help
+        </a>
+      </div>
+    </aside>
+    <!-- Main Content Area -->
+    <main class="flex-1 md:ml-64 w-full min-h-screen flex flex-col">
+      <!-- Top App Bar (Mobile Only - Simplified for Admin) -->
+      <header
+        class="md:hidden sticky top-0 z-50 bg-shore-white border-b border-hairline flex items-center justify-between px-margin-mobile py-md w-full"
+      >
+        <div class="flex items-center gap-sm">
+          <button
+            class="p-sm rounded-full hover:bg-surface-container text-primary"
+          >
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <h1 class="font-headline-md text-headline-md font-bold text-primary">
+            Users
+          </h1>
+        </div>
+        <img
+          alt="Admin Profile"
+          class="w-10 h-10 rounded-full object-cover"
+          data-alt="Professional headshot of a mature corporate executive in a modern bright office setting. Soft natural light highlights a friendly yet authoritative expression. The background features subtle glass partitions and light grey walls, adhering to a modern corporate aesthetic."
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7OTp7IGzv3fNpY9pM3m7Vv524SvMf2OeDpSjx0Y2sU5Op13GlTgU0hvf4QaMLlH1Fu-l9SxLNf2vKpc_AxtkWNZXftCVDH1x1leV0mviF8FjW5MdSf19RKVtUm9n2zA9Xo-GhlEddxoodxhbVyzJ2n_gn7aq9U56_fyUkQX6lTPv_9Amw7uFp0BF02rGzfP14GQosvI74mBivS4TtUnGGuV-QruFDBaXWbFXT9Z2-k6LWdT5HiopdBBJ9R2B2Pe52W-NpsDXO6v0"
+        />
+      </header>
+      <div
+        class="flex-1 p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto w-full"
+      >
+        <!-- Page Header -->
+        <div
+          class="flex flex-col md:flex-row justify-between items-start md:items-center mb-xl gap-md"
+        >
+          <div>
+            <h2
+              class="font-display-lg text-display-lg text-on-surface mb-xs hidden md:block"
+            >
+              User Management
+            </h2>
+            <h2
+              class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-xs md:hidden"
+            >
+              User Management
+            </h2>
+            <p class="text-ocean-slate font-body-base text-body-base">
+              Manage system administrators, vendors, and registered travelers.
+            </p>
+          </div>
+          <div class="flex gap-sm w-full md:w-auto">
+            <button
+              class="flex-1 md:flex-none flex items-center justify-center gap-xs px-lg py-sm bg-surface-container-lowest border-2 border-hairline text-ocean-slate font-body-bold rounded-lg hover:border-primary hover:text-primary transition-all"
+            >
+              <span class="material-symbols-outlined text-title-sm"
+                >download</span
+              >
+              Export
+            </button>
+          </div>
+        </div>
+        <!-- KPIs / Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
+          <div
+            class="bg-shore-white p-lg rounded-xl border border-hairline hover:shadow-lg transition-shadow"
+          >
+            <div class="flex justify-between items-start mb-md">
+              <span
+                class="material-symbols-outlined text-primary bg-primary-container/20 p-sm rounded-lg"
+                data-weight="fill"
+                >group</span
+              >
+              <span
+                class="flex items-center text-secondary text-label-caps font-label-caps bg-secondary/10 px-xs py-unit rounded"
+              >
+                <span class="material-symbols-outlined text-[16px] mr-unit"
+                  >trending_up</span
+                >
+                +12%
+              </span>
+            </div>
+            <p class="text-ocean-slate font-label-caps text-label-caps mb-xs">
+              TOTAL USERS
+            </p>
+            <p class="font-stat-lg text-stat-lg text-on-surface">24,592</p>
+          </div>
+          <div
+            class="bg-shore-white p-lg rounded-xl border border-hairline hover:shadow-lg transition-shadow"
+          >
+            <div class="flex justify-between items-start mb-md">
+              <span
+                class="material-symbols-outlined text-tertiary-container bg-tertiary-fixed p-sm rounded-lg"
+                data-weight="fill"
+                >storefront</span
+              >
+              <span
+                class="flex items-center text-secondary text-label-caps font-label-caps bg-secondary/10 px-xs py-unit rounded"
+              >
+                <span class="material-symbols-outlined text-[16px] mr-unit"
+                  >trending_up</span
+                >
+                +5%
+              </span>
+            </div>
+            <p class="text-ocean-slate font-label-caps text-label-caps mb-xs">
+              ACTIVE VENDORS
+            </p>
+            <p class="font-stat-lg text-stat-lg text-on-surface">1,843</p>
+          </div>
+          <div
+            class="bg-shore-white p-lg rounded-xl border border-hairline hover:shadow-lg transition-shadow"
+          >
+            <div class="flex justify-between items-start mb-md">
+              <span
+                class="material-symbols-outlined text-deal-orange bg-deal-orange/10 p-sm rounded-lg"
+                data-weight="fill"
+                >shield_person</span
+              >
+              <span
+                class="flex items-center text-ocean-slate text-label-caps font-label-caps bg-surface-container px-xs py-unit rounded"
+              >
+                <span class="material-symbols-outlined text-[16px] mr-unit"
+                  >horizontal_rule</span
+                >
+                0%
+              </span>
+            </div>
+            <p class="text-ocean-slate font-label-caps text-label-caps mb-xs">
+              ADMIN &amp; MANAGERS
+            </p>
+            <p class="font-stat-lg text-stat-lg text-on-surface">42</p>
+          </div>
+          <div
+            class="bg-shore-white p-lg rounded-xl border border-hairline hover:shadow-lg transition-shadow"
+          >
+            <div class="flex justify-between items-start mb-md">
+              <span
+                class="material-symbols-outlined text-error bg-error-container p-sm rounded-lg"
+                data-weight="fill"
+                >block</span
+              >
+              <span
+                class="flex items-center text-error text-label-caps font-label-caps bg-error/10 px-xs py-unit rounded"
+              >
+                <span class="material-symbols-outlined text-[16px] mr-unit"
+                  >trending_down</span
+                >
+                -2%
+              </span>
+            </div>
+            <p class="text-ocean-slate font-label-caps text-label-caps mb-xs">
+              SUSPENDED ACCOUNTS
+            </p>
+            <p class="font-stat-lg text-stat-lg text-on-surface">128</p>
+          </div>
+        </div>
+        <!-- Data Table Section -->
+        <div
+          class="bg-shore-white rounded-xl border border-hairline shadow-sm overflow-hidden flex flex-col flex-1"
+        >
+          <!-- Toolbar -->
+          <div
+            class="p-md border-b border-hairline bg-surface-bright flex flex-col md:flex-row gap-md justify-between items-center"
+          >
+            <!-- Search -->
+            <div class="relative w-full md:w-96">
+              <span
+                class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline"
+                >search</span
+              >
+              <input
+                class="w-full pl-xl pr-md py-sm bg-surface-container-lowest border border-hairline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary font-body-base text-body-base transition-shadow"
+                placeholder="Search by name, email, or ID..."
+                type="text"
+              />
+            </div>
+            <!-- Filters & Actions -->
+            <div
+              class="flex gap-sm w-full md:w-auto overflow-x-auto pb-xs md:pb-0 hide-scrollbar"
+            >
+              <div class="relative group min-w-max">
+                <button
+                  class="flex items-center gap-xs px-md py-sm bg-surface-container-lowest border border-hairline text-on-surface font-body-base rounded-lg hover:bg-surface-container-low transition-colors"
+                >
+                  Role: All
+                  <span class="material-symbols-outlined text-[20px]"
+                    >expand_more</span
+                  >
+                </button>
+              </div>
+              <div class="relative group min-w-max">
+                <button
+                  class="flex items-center gap-xs px-md py-sm bg-surface-container-lowest border border-hairline text-on-surface font-body-base rounded-lg hover:bg-surface-container-low transition-colors"
+                >
+                  Status: All
+                  <span class="material-symbols-outlined text-[20px]"
+                    >expand_more</span
+                  >
+                </button>
+              </div>
+              <div
+                class="h-8 w-px bg-hairline my-auto mx-xs hidden md:block"
+              ></div>
+              <button
+                class="flex items-center gap-xs px-md py-sm bg-primary-container text-on-primary-container font-body-bold rounded-lg hover:opacity-90 transition-opacity min-w-max"
+              >
+                Bulk Actions
+                <span class="material-symbols-outlined text-[20px]"
+                  >expand_more</span
+                >
+              </button>
+            </div>
+          </div>
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  class="bg-surface-container-lowest border-b border-hairline"
+                >
+                  <th
+                    class="p-md font-label-caps text-label-caps text-ocean-slate w-12 text-center"
+                  >
+                    <input
+                      class="rounded border-outline text-primary focus:ring-primary"
+                      type="checkbox"
+                    />
+                  </th>
+                  <th
+                    class="p-md font-label-caps text-label-caps text-ocean-slate cursor-pointer hover:text-primary"
+                  >
+                    <div class="flex items-center gap-xs">
+                      USER
+                      <span class="material-symbols-outlined text-[16px]"
+                        >arrow_downward</span
+                      >
+                    </div>
+                  </th>
+                  <th
+                    class="p-md font-label-caps text-label-caps text-ocean-slate"
+                  >
+                    ROLE
+                  </th>
+                  <th
+                    class="p-md font-label-caps text-label-caps text-ocean-slate"
+                  >
+                    JOIN DATE
+                  </th>
+                  <th
+                    class="p-md font-label-caps text-label-caps text-ocean-slate"
+                  >
+                    STATUS
+                  </th>
+                  <th
+                    class="p-md font-label-caps text-label-caps text-ocean-slate text-right"
+                  >
+                    ACTIONS
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                class="divide-y divide-hairline bg-shore-white font-body-base text-body-base"
+              >
+                <!-- Row 1 -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group"
+                >
+                  <td class="p-md text-center">
+                    <input
+                      class="rounded border-outline text-primary focus:ring-primary"
+                      type="checkbox"
+                    />
+                  </td>
+                  <td class="p-md">
+                    <div class="flex items-center gap-md">
+                      <div
+                        class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-sm"
+                      >
+                        ES
+                      </div>
+                      <div>
+                        <p class="font-title-sm text-on-surface">Elena Smith</p>
+                        <p class="text-ocean-slate text-sm">
+                          elena.s@example.com
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center px-sm py-unit rounded-full bg-primary/10 text-primary font-label-caps text-label-caps"
+                    >
+                      USER
+                    </span>
+                  </td>
+                  <td class="p-md text-on-surface-variant">Oct 24, 2023</td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center gap-xs text-secondary"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                      Active
+                    </span>
+                  </td>
+                  <td class="p-md text-right">
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Row 2 -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group"
+                >
+                  <td class="p-md text-center">
+                    <input
+                      class="rounded border-outline text-primary focus:ring-primary"
+                      type="checkbox"
+                    />
+                  </td>
+                  <td class="p-md">
+                    <div class="flex items-center gap-md">
+                      <div
+                        class="w-10 h-10 rounded-full bg-tertiary-fixed text-tertiary-container flex items-center justify-center font-title-sm"
+                      >
+                        MK
+                      </div>
+                      <div>
+                        <p class="font-title-sm text-on-surface">
+                          Marcus Kensington
+                        </p>
+                        <p class="text-ocean-slate text-sm">
+                          marcus@kensingtonhotels.com
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center px-sm py-unit rounded-full bg-tertiary-container/10 text-tertiary-container font-label-caps text-label-caps"
+                    >
+                      VENDOR
+                    </span>
+                  </td>
+                  <td class="p-md text-on-surface-variant">Sep 12, 2022</td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center gap-xs text-secondary"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                      Active
+                    </span>
+                  </td>
+                  <td class="p-md text-right">
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Row 3 -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group bg-error-container/5"
+                >
+                  <td class="p-md text-center">
+                    <input
+                      class="rounded border-outline text-primary focus:ring-primary"
+                      type="checkbox"
+                    />
+                  </td>
+                  <td class="p-md">
+                    <div class="flex items-center gap-md">
+                      <img
+                        alt="User Avatar"
+                        class="w-10 h-10 rounded-full object-cover"
+                        data-alt="Close up portrait of a young man with glasses in a casual setting, slightly blurry background. Natural lighting."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNy83jrOkq9End-Lm8Hh93QSudV2GMS2ItCmzKnDncw_wV7a4C-rNK9Er88eTTmiYoWfqXTOvdx6V0CvUWuTF5STCqHvUwHE2mRr-xrLaMdgRteN6kgG6Rhzdc2z3AVXW5DXwEIHjjpF-lIzZTAxJGTtsgD4-p_VHg2SISsYj5Dm1AAdL702JwsxL0TpKUj0oufJ5WxT0pBO5JUhxttDY-qwBXOnEaKGUm0Fv0oJGmw7zUpggf5UvyIkGlBRiImXUvRpI9byO1uxI"
+                      />
+                      <div>
+                        <p class="font-title-sm text-on-surface">David Chen</p>
+                        <p class="text-ocean-slate text-sm">
+                          d.chen_susp@example.com
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center px-sm py-unit rounded-full bg-ocean-slate/10 text-ocean-slate font-label-caps text-label-caps"
+                    >
+                      GUEST
+                    </span>
+                  </td>
+                  <td class="p-md text-on-surface-variant">Nov 05, 2023</td>
+                  <td class="p-md">
+                    <span class="inline-flex items-center gap-xs text-error">
+                      <span class="w-2 h-2 rounded-full bg-error"></span>
+                      Suspended
+                    </span>
+                  </td>
+                  <td class="p-md text-right">
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Row 4 -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group"
+                >
+                  <td class="p-md text-center">
+                    <input
+                      class="rounded border-outline text-primary focus:ring-primary"
+                      type="checkbox"
+                    />
+                  </td>
+                  <td class="p-md">
+                    <div class="flex items-center gap-md">
+                      <div
+                        class="w-10 h-10 rounded-full bg-deal-orange/20 text-deal-orange flex items-center justify-center font-title-sm"
+                      >
+                        SL
+                      </div>
+                      <div>
+                        <p class="font-title-sm text-on-surface">Sarah Lange</p>
+                        <p class="text-ocean-slate text-sm">
+                          s.lange@utravel.com
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center px-sm py-unit rounded-full bg-deal-orange/10 text-deal-orange font-label-caps text-label-caps"
+                    >
+                      MANAGER
+                    </span>
+                  </td>
+                  <td class="p-md text-on-surface-variant">Jan 15, 2021</td>
+                  <td class="p-md">
+                    <span
+                      class="inline-flex items-center gap-xs text-secondary"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                      Active
+                    </span>
+                  </td>
+                  <td class="p-md text-right">
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button
+                      class="p-xs text-ocean-slate hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div
+            class="p-md border-t border-hairline bg-surface-container-lowest flex justify-between items-center mt-auto"
+          >
+            <p class="text-ocean-slate font-body-base text-sm">
+              Showing 1 to 4 of 24,592 entries
+            </p>
+            <div class="flex gap-xs">
+              <button
+                class="p-xs border border-hairline rounded hover:bg-surface-container-low text-ocean-slate disabled:opacity-50"
+                disabled=""
+              >
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button
+                class="px-sm py-xs border border-primary bg-primary text-shore-white rounded font-body-bold"
+              >
+                1
+              </button>
+              <button
+                class="px-sm py-xs border border-hairline rounded hover:bg-surface-container-low text-ocean-slate font-body-base"
+              >
+                2
+              </button>
+              <button
+                class="px-sm py-xs border border-hairline rounded hover:bg-surface-container-low text-ocean-slate font-body-base"
+              >
+                3
+              </button>
+              <span class="px-sm py-xs text-ocean-slate">...</span>
+              <button
+                class="p-xs border border-hairline rounded hover:bg-surface-container-low text-ocean-slate"
+              >
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

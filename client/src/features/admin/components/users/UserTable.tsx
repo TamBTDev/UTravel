@@ -5,10 +5,11 @@ import { UserRow } from "./UserRow";
 interface UserTableProps {
   users: AdminUser[];
   onToggleStatus: (userId: number, currentStatus: string) => Promise<void>;
+  onOpenRoleModal: (user: AdminUser) => void;
   actionId: number | null;
 }
 
-export const UserTable = ({ users, onToggleStatus, actionId }: UserTableProps) => {
+export const UserTable = ({ users, onToggleStatus, onOpenRoleModal, actionId }: UserTableProps) => {
   return (
     <div className="bg-white border border-border-hairline rounded-xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -30,6 +31,7 @@ export const UserTable = ({ users, onToggleStatus, actionId }: UserTableProps) =
                 key={user.id}
                 user={user}
                 onToggleStatus={onToggleStatus}
+                onOpenRoleModal={onOpenRoleModal}
                 isProcessing={actionId === user.id}
               />
             ))}

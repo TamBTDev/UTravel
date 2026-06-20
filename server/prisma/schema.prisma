@@ -18,6 +18,7 @@ enum Role {
   USER
   VENDOR
   ADMIN
+  MANAGER
 }
 
 enum UserStatus {
@@ -101,6 +102,7 @@ model User {
   address      String?
   avatar       String?
   role         Role       @default(USER)
+  permissions  Json? // Mảng quyền hạn dành riêng cho role MANAGER
   status       UserStatus @default(UNVERIFIED)
   rewardPoints Int        @default(0) // Điểm thưởng tích lũy
   createdAt    DateTime   @default(now())
@@ -140,9 +142,9 @@ model UserOtp {
 // ══════════════════════════════════════════════════════════
 
 enum UserTransactionType {
-  REFUND    // Hoàn tiền do hủy booking
-  TOPUP     // Nạp tiền thủ công (admin)
-  WITHDRAW  // Rút tiền
+  REFUND // Hoàn tiền do hủy booking
+  TOPUP // Nạp tiền thủ công (admin)
+  WITHDRAW // Rút tiền
 }
 
 model UserWallet {
@@ -161,9 +163,9 @@ model UserWallet {
 model UserWalletTransaction {
   id          Int                 @id @default(autoincrement())
   walletId    Int
-  bookingId   Int?                // Booking liên quan (nếu là REFUND)
+  bookingId   Int? // Booking liên quan (nếu là REFUND)
   type        UserTransactionType
-  amount      Float               // Số tiền (VND, luôn dương)
+  amount      Float // Số tiền (VND, luôn dương)
   description String?             @db.Text
   createdAt   DateTime            @default(now())
 
@@ -350,22 +352,22 @@ model Payment {
 // ══════════════════════════════════════════════════════════
 
 model Review {
-  id            Int       @id @default(autoincrement())
-  userId        Int
-  hotelId       Int
-  bookingId     Int?      @unique // Liên kết đơn đặt phòng (1 booking → 1 review)
-  rating          Int // 1-5
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  hotelId           Int
+  bookingId         Int?      @unique // Liên kết đơn đặt phòng (1 booking → 1 review)
+  rating            Int // 1-5
   cleanlinessRating Float?
   serviceRating     Float?
   locationRating    Float?
   valueRating       Float?
-  highlights        Json?     // Mảng các tag nổi bật
-  images            Json?     // Mảng URL ảnh
-  comment         String?   @db.Text
-  vendorReply     String?   @db.Text // Vendor phản hồi
-  vendorReplyAt   DateTime? // Thời điểm phản hồi
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  highlights        Json? // Mảng các tag nổi bật
+  images            Json? // Mảng URL ảnh
+  comment           String?   @db.Text
+  vendorReply       String?   @db.Text // Vendor phản hồi
+  vendorReplyAt     DateTime? // Thời điểm phản hồi
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   hotel   Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)

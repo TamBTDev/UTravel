@@ -99,6 +99,16 @@ export const adminService = {
     });
   },
 
+  updateUserRole: async (userId: number, role: string, permissions: string[] | null) => {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        role: role as any,
+        permissions: permissions ? permissions : null
+      },
+    });
+  },
+
   // === QUẢN LÝ SẢN PHẨM (ADMIN) ===
   getAllAdminHotels: async (search?: string, approvalStatus?: string, isActive?: boolean) => {
     return await prisma.hotel.findMany({
