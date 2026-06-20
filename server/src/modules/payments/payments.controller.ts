@@ -20,9 +20,13 @@ const buildTransferContent = (bookingId: number): string => {
  * https://qr.sepay.vn/img?acc=STK&bank=BANKCODE&amount=AMOUNT&des=NOIDUNG&template=compact
  */
 const buildSePayQrUrl = (amount: number, transferContent: string): string => {
+  // Strip angle brackets that may have been accidentally included in env values
+  const accountNumber = (env.SEPAY_ACCOUNT_NUMBER || '').replace(/[<>]/g, '').trim();
+  const bankCode = (env.SEPAY_BANK_CODE || 'MB').replace(/[<>]/g, '').trim();
+
   const params = new URLSearchParams({
-    acc: env.SEPAY_ACCOUNT_NUMBER || '0123456789',
-    bank: env.SEPAY_BANK_CODE || 'MB',
+    acc: accountNumber,
+    bank: bankCode,
     amount: Math.round(amount).toString(),
     des: transferContent,
     template: 'compact',
@@ -122,9 +126,9 @@ export const createPayment = async (req: Request, res: Response) => {
       data: {
         payment,
         bankInfo: {
-          bankCode: env.SEPAY_BANK_CODE || 'MB',
-          accountNumber: env.SEPAY_ACCOUNT_NUMBER || '0123456789',
-          accountName: env.SEPAY_ACCOUNT_NAME || 'CONG TY UTRAVEL',
+          bankCode: (env.SEPAY_BANK_CODE || 'MB').replace(/[<>]/g, '').trim(),
+          accountNumber: (env.SEPAY_ACCOUNT_NUMBER || '').replace(/[<>]/g, '').trim(),
+          accountName: (env.SEPAY_ACCOUNT_NAME || 'CONG TY UTRAVEL').replace(/[<>]/g, '').trim(),
           amount: booking.finalPrice,
           transferContent,
           qrCodeUrl,
@@ -161,6 +165,59 @@ export const getPaymentByBooking = async (req: Request, res: Response) => {
 
     if (payment.booking.userId !== userId) {
       return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
+    }
+
+    // --- SEPAY API POLLING LOGIC ---
+    if (payment.status === 'PENDING' && payment.method === 'BANK_TRANSFER') {
+      try {
+        const token = env.SEPAY_API_TOKEN;
+        if (token) {
+          const sepayRes = await fetch('https://my.sepay.vn/userapi/transactions/list', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (sepayRes.ok) {
+            const data: any = await sepayRes.json();
+            if (data && data.transactions && Array.isArray(data.transactions) && payment.transactionId) {
+              const matchedTx = data.transactions.find((tx: any) => 
+                tx.transaction_content && 
+                tx.transaction_content.toUpperCase().includes(payment.transactionId!.toUpperCase())
+              );
+
+              if (matchedTx) {
+                // Khớp giao dịch -> Cập nhật trạng thái
+                await prisma.$transaction(async (tx) => {
+                  await tx.payment.update({
+                    where: { id: payment.id },
+                    data: {
+                      status: 'COMPLETED',
+                      paidAt: new Date(matchedTx.transaction_date || new Date()),
+                    },
+                  });
+
+                  await tx.booking.update({
+                    where: { id: payment.bookingId },
+                    data: {
+                      paymentStatus: 'COMPLETED',
+                      status: 'CONFIRMED',
+                    },
+                  });
+                });
+                
+                // Cập nhật lại bộ nhớ để trả về client luôn
+                payment.status = 'COMPLETED';
+                payment.paidAt = new Date(matchedTx.transaction_date || new Date());
+                payment.booking.status = 'CONFIRMED';
+                console.log(`[SEPAY_API] Đã tìm thấy giao dịch chuyển khoản cho booking #${payment.bookingId}`);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error polling Sepay API:', err);
+      }
     }
 
     return res.status(200).json({
