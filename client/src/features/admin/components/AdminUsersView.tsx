@@ -30,7 +30,7 @@ export const AdminUsersView = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Lỗi khi tải danh sách người dùng");
+      setError(err.error || err.message || "Lỗi khi tải danh sách người dùng");
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export const AdminUsersView = () => {
         );
       }
     } catch (err: any) {
-      alert(err.message || "Lỗi khi cập nhật trạng thái tài khoản");
+      alert(err.error || err.message || "Lỗi khi cập nhật trạng thái tài khoản");
     } finally {
       setActionId(null);
     }
@@ -78,7 +78,7 @@ export const AdminUsersView = () => {
         alert("Cập nhật quyền thành công!");
       }
     } catch (err: any) {
-      alert(err.message || "Lỗi khi phân quyền");
+      alert(err.error || err.message || "Lỗi khi phân quyền");
       throw err;
     }
   };

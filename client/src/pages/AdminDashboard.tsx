@@ -7,6 +7,7 @@ import { AdminStats } from "../features/admin/components/AdminStats";
 import { AdminPendingVendors } from "../features/admin/components/AdminPendingVendors";
 import { AdminPendingHotels } from "../features/admin/components/AdminPendingHotels";
 import { AdminUsersView } from "../features/admin/components/AdminUsersView";
+import { AdminFinanceView } from "../features/admin/components/AdminFinanceView";
 
 export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -20,7 +21,9 @@ export const AdminDashboard = () => {
       case "vendors":
         return "Duyệt đối tác đăng ký";
       case "hotels":
-        return "Duyệt tin đăng khách sạn";
+        return "Quản lý khách sạn toàn sàn";
+      case "finance":
+        return "Quản lý tài chính sàn";
       case "users":
         return "Quản lý người dùng";
       default:
@@ -111,6 +114,7 @@ export const AdminDashboard = () => {
           {activeTab === "dashboard" && <AdminStats />}
           {activeTab === "vendors" && <AdminPendingVendors />}
           {activeTab === "hotels" && <AdminPendingHotels />}
+          {activeTab === "finance" && <AdminFinanceView />}
           {activeTab === "users" && <AdminUsersView />}
         </div>
       </main>

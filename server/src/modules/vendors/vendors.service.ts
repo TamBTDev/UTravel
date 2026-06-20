@@ -12,10 +12,58 @@ export interface RegisterVendorInput {
 }
 
 export interface UpdateVendorInput {
+  shopName?: string;
+  logo?: string;
   description?: string;
   bankName?: string;
   bankOwner?: string;
   bankAccount?: string;
+}
+
+export interface CreateHotelInput {
+  name: string;
+  description: string;
+  address: string;
+  city: string;
+  stars: number;
+  latitude?: number;
+  longitude?: number;
+  images?: string;
+  amenities?: string;
+}
+
+export interface UpdateHotelInput {
+  name?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  stars?: number;
+  latitude?: number;
+  longitude?: number;
+  images?: string;
+  amenities?: string;
+  isActive?: boolean;
+}
+
+export interface CreateRoomInput {
+  roomNumber: string;
+  type: string;
+  price: number;
+  capacity: number;
+  description?: string;
+  amenities?: string;
+  images?: string;
+}
+
+export interface UpdateRoomInput {
+  roomNumber?: string;
+  type?: string;
+  price?: number;
+  capacity?: number;
+  description?: string;
+  amenities?: string;
+  images?: string;
+  isAvailable?: boolean;
 }
 
 export const vendorsService = {
@@ -98,6 +146,8 @@ export const vendorsService = {
     return await prisma.vendorProfile.update({
       where: { userId },
       data: {
+        shopName: data.shopName || vendor.shopName,
+        logo: data.logo !== undefined ? data.logo : vendor.logo,
         description:
           data.description !== undefined
             ? data.description
@@ -106,6 +156,152 @@ export const vendorsService = {
         bankOwner: data.bankOwner || vendor.bankOwner,
         bankAccount: data.bankAccount || vendor.bankAccount,
       },
+    });
+  },
+
+  // === QUẢN LÝ KHÁCH SẠN (VENDOR) ===
+  getVendorHotels: async (userId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    return await prisma.hotel.findMany({
+      where: { vendorId: vendor.id },
+      include: {
+        _count: {
+          select: { rooms: true, reviews: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  createVendorHotel: async (userId: number, data: CreateHotelInput) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    return await prisma.hotel.create({
+      data: {
+        vendorId: vendor.id,
+        name: data.name,
+        description: data.description,
+        location: data.address,
+        city: data.city,
+        country: "Vietnam",
+        rating: data.stars,
+        images: data.images || "[]",
+        amenities: data.amenities || "[]",
+        approvalStatus: "PENDING",
+        isActive: false,
+      },
+    });
+  },
+
+  updateVendorHotel: async (userId: number, hotelId: number, data: UpdateHotelInput) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const hotel = await prisma.hotel.findUnique({ where: { id: hotelId, vendorId: vendor.id } });
+    if (!hotel) throw new Error("Không tìm thấy khách sạn");
+
+    return await prisma.hotel.update({
+      where: { id: hotel.id },
+      data: {
+        name: data.name !== undefined ? data.name : hotel.name,
+        description: data.description !== undefined ? data.description : hotel.description,
+        location: data.address !== undefined ? data.address : hotel.location,
+        city: data.city !== undefined ? data.city : hotel.city,
+        rating: data.stars !== undefined ? data.stars : hotel.rating,
+        images: data.images !== undefined ? data.images : (hotel.images as any),
+        amenities: data.amenities !== undefined ? data.amenities : (hotel.amenities as any),
+        isActive: data.isActive !== undefined ? data.isActive : hotel.isActive,
+      },
+    });
+  },
+
+  deleteVendorHotel: async (userId: number, hotelId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const hotel = await prisma.hotel.findUnique({ where: { id: hotelId, vendorId: vendor.id } });
+    if (!hotel) throw new Error("Không tìm thấy khách sạn");
+
+    return await prisma.hotel.delete({
+      where: { id: hotel.id },
+    });
+  },
+
+  getVendorHotelRooms: async (userId: number, hotelId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const hotel = await prisma.hotel.findUnique({ where: { id: hotelId, vendorId: vendor.id } });
+    if (!hotel) throw new Error("Không tìm thấy khách sạn");
+
+    return await prisma.room.findMany({
+      where: { hotelId: hotel.id },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  createVendorHotelRoom: async (userId: number, hotelId: number, data: CreateRoomInput) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const hotel = await prisma.hotel.findUnique({ where: { id: hotelId, vendorId: vendor.id } });
+    if (!hotel) throw new Error("Không tìm thấy khách sạn");
+
+    return await prisma.room.create({
+      data: {
+        hotelId: hotel.id,
+        roomNumber: data.roomNumber,
+        type: data.type,
+        price: data.price,
+        capacity: data.capacity,
+        description: data.description,
+        images: data.images || "[]",
+        amenities: data.amenities || "[]",
+        isAvailable: true,
+      },
+    });
+  },
+
+  updateVendorHotelRoom: async (userId: number, hotelId: number, roomId: number, data: UpdateRoomInput) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const hotel = await prisma.hotel.findUnique({ where: { id: hotelId, vendorId: vendor.id } });
+    if (!hotel) throw new Error("Không tìm thấy khách sạn");
+
+    const room = await prisma.room.findUnique({ where: { id: roomId, hotelId: hotel.id } });
+    if (!room) throw new Error("Không tìm thấy phòng");
+
+    return await prisma.room.update({
+      where: { id: room.id },
+      data: {
+        roomNumber: data.roomNumber !== undefined ? data.roomNumber : room.roomNumber,
+        type: data.type !== undefined ? data.type : room.type,
+        price: data.price !== undefined ? data.price : room.price,
+        capacity: data.capacity !== undefined ? data.capacity : room.capacity,
+        description: data.description !== undefined ? data.description : room.description,
+        images: data.images !== undefined ? data.images : (room.images as any),
+        amenities: data.amenities !== undefined ? data.amenities : (room.amenities as any),
+        isAvailable: data.isAvailable !== undefined ? data.isAvailable : room.isAvailable,
+      },
+    });
+  },
+
+  deleteVendorHotelRoom: async (userId: number, hotelId: number, roomId: number) => {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
+
+    const hotel = await prisma.hotel.findUnique({ where: { id: hotelId, vendorId: vendor.id } });
+    if (!hotel) throw new Error("Không tìm thấy khách sạn");
+
+    const room = await prisma.room.findUnique({ where: { id: roomId, hotelId: hotel.id } });
+    if (!room) throw new Error("Không tìm thấy phòng");
+
+    return await prisma.room.delete({
+      where: { id: room.id },
     });
   },
 
@@ -172,7 +368,7 @@ export const vendorsService = {
       where: { walletId: vendor.wallet.id },
       include: {
         booking: {
-          select: { id: true, checkInDate: true, checkOutDate: true, room: { include: { hotel: { select: { name: true } } } } }
+          select: { id: true, checkInDate: true, checkOutDate: true, room: { include: { hotel: { select: { id: true, name: true } } } } }
         }
       },
       orderBy: { createdAt: "desc" },

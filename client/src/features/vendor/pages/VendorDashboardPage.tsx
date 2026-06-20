@@ -15,16 +15,34 @@ import { RecentBookings } from "../components/RecentBookings";
 import { VendorBookingsView } from "../components/VendorBookingsView";
 import { VendorRevenueView } from "../components/VendorRevenueView";
 import { VendorReviewsView } from "../components/VendorReviewsView";
-import { vendorService, VendorDashboardStats } from "../../user/services/vendorService";
+import { VendorSettingsView } from "../components/VendorSettingsView";
+import { VendorListingsView } from "../components/VendorListingsView";
+import { VendorRoomsView } from "../components/VendorRoomsView";
+import { vendorService, VendorDashboardStats, VendorProfile, VendorHotel } from "../../user/services/vendorService";
 
 export const VendorDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedHotel, setSelectedHotel] = useState<VendorHotel | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = useAppSelector((s) => s.auth.user);
 
   const [stats, setStats] = useState<VendorDashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+
+  const [profile, setProfile] = useState<VendorProfile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await vendorService.getVendorProfile();
+        if (res.success) {
+          setProfile(res.data);
+        }
+      } catch (e) {}
+    };
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     if (activeTab === "dashboard") {
@@ -52,7 +70,7 @@ export const VendorDashboardPage = () => {
       case "dashboard":
         return "Bảng điều khiển";
       case "listings":
-        return "Danh sách chỗ nghỉ";
+        return "Danh sách khách sạn";
       case "bookings":
         return "Quản lý đặt phòng";
       case "earnings":
@@ -69,7 +87,14 @@ export const VendorDashboardPage = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
-      <VendorSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <VendorSidebar 
+        activeTab={activeTab} 
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setSelectedHotel(null);
+        }} 
+        profile={profile} 
+      />
 
       {/* Mobile Drawer Navigation */}
       <Drawer
@@ -85,8 +110,10 @@ export const VendorDashboardPage = () => {
             activeTab={activeTab}
             onTabChange={(tab) => {
               setActiveTab(tab);
+              setSelectedHotel(null);
               setMobileMenuOpen(false);
             }}
+            profile={profile}
           />
         </div>
       </Drawer>
@@ -102,12 +129,12 @@ export const VendorDashboardPage = () => {
             >
               <IconMenu2 size={24} />
             </button>
-            <h1 className="text-title-sm font-semibold text-primary">Kênh Đối Tác</h1>
+            <h1 className="text-title-sm font-semibold text-primary">{profile?.shopName || "Kênh Đối Tác"}</h1>
           </div>
           <img
             alt="Vendor Profile"
             className="w-8 h-8 rounded-full object-cover border border-outline-variant"
-            src={user?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=60"}
+            src={profile?.logo || user?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=60"}
           />
         </div>
 
@@ -119,7 +146,7 @@ export const VendorDashboardPage = () => {
                 {getTabTitle(activeTab)}
               </h1>
               <p className="text-sm md:text-base text-on-surface-variant mt-1">
-                Chào mừng quay trở lại, {user?.firstName || "Đối tác"}. Dưới đây là tình hình hoạt động của các chỗ nghỉ hôm nay.
+                Chào mừng quay trở lại, {user?.firstName || "Đối tác"}. Dưới đây là tình hình hoạt động của các khách sạn hôm nay.
               </p>
             </div>
             {activeTab === "dashboard" && (
@@ -168,7 +195,7 @@ export const VendorDashboardPage = () => {
                     value={stats?.averageRating ?? 0}
                     badgeText={`${stats?.averageRating ? "Đánh giá" : "Chưa có"}`}
                     badgeType="neutral"
-                    subtext="Từ tất cả các chỗ nghỉ"
+                    subtext="Từ tất cả các khách sạn"
                     icon={<IconStar size={36} className="text-yellow-500" />}
                   />
                 </section>
@@ -188,13 +215,23 @@ export const VendorDashboardPage = () => {
             </>
           )}
 
+          {activeTab === "listings" && !selectedHotel && (
+            <VendorListingsView onSelectHotel={(hotel) => setSelectedHotel(hotel)} />
+          )}
+
+          {activeTab === "listings" && selectedHotel && (
+            <VendorRoomsView hotel={selectedHotel} onBack={() => setSelectedHotel(null)} />
+          )}
+
           {activeTab === "bookings" && <VendorBookingsView />}
 
           {activeTab === "earnings" && <VendorRevenueView />}
 
           {activeTab === "reviews" && <VendorReviewsView />}
 
-          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && activeTab !== "reviews" && (
+          {activeTab === "settings" && <VendorSettingsView />}
+
+          {activeTab !== "dashboard" && activeTab !== "listings" && activeTab !== "bookings" && activeTab !== "earnings" && activeTab !== "reviews" && activeTab !== "settings" && (
             <div className="bg-white p-12 rounded-xl border border-hairline text-center flex flex-col items-center justify-center min-h-[300px]">
               <h3 className="text-lg font-bold text-on-surface mb-2">
                 Tính năng "{getTabTitle(activeTab)}" đang được phát triển

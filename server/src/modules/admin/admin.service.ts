@@ -82,6 +82,7 @@ export const adminService = {
         lastName: true,
         phone: true,
         role: true,
+        permissions: true,
         status: true,
         createdAt: true,
         _count: {
@@ -104,7 +105,7 @@ export const adminService = {
       where: { id: userId },
       data: { 
         role: role as any,
-        permissions: permissions ? permissions : null
+        permissions: permissions ? (permissions as any) : null
       },
     });
   },

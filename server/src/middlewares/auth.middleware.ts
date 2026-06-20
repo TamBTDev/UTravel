@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import env from "../config/env";
+import prisma from "../config/database";
 
 declare global {
   namespace Express {
@@ -59,5 +60,53 @@ export const requireRole = (...allowedRoles: string[]) => {
     }
 
     next();
+  };
+};
+
+/**
+ * Permission-Based Authorization Middleware for Manager
+ */
+
+export const requirePermission = (permission: string) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized - Vui lòng xác thực",
+      });
+    }
+
+    if (req.user.role === "ADMIN") {
+      return next();
+    }
+
+    if (req.user.role === "MANAGER") {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: req.user.id },
+          select: { permissions: true },
+        });
+
+        let perms: string[] = [];
+        if (user?.permissions) {
+          if (typeof user.permissions === "string") {
+            perms = JSON.parse(user.permissions);
+          } else {
+            perms = user.permissions as string[];
+          }
+        }
+
+        if (perms.includes(permission)) {
+          return next();
+        }
+      } catch (e) {
+        console.error("Error checking permissions:", e);
+      }
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: "Forbidden - Bạn không có quyền thực hiện thao tác này",
+    });
   };
 };

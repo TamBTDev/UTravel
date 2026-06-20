@@ -13,12 +13,15 @@ import {
   IconMessage2,
 } from "@tabler/icons-react";
 
+import { VendorProfile } from "../../user/services/vendorService";
+
 interface SidebarProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  profile?: VendorProfile | null;
 }
 
-export const VendorSidebar = ({ activeTab = "dashboard", onTabChange }: SidebarProps) => {
+export const VendorSidebar = ({ activeTab = "dashboard", onTabChange, profile }: SidebarProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
@@ -30,7 +33,7 @@ export const VendorSidebar = ({ activeTab = "dashboard", onTabChange }: SidebarP
 
   const navItems = [
     { id: "dashboard", label: "Bảng điều khiển", icon: <IconLayoutDashboard size={20} /> },
-    { id: "listings", label: "Chỗ nghỉ", icon: <IconBuilding size={20} /> },
+    { id: "listings", label: "Khách sạn", icon: <IconBuilding size={20} /> },
     { id: "bookings", label: "Đơn đặt phòng", icon: <IconCalendar size={20} /> },
     { id: "earnings", label: "Doanh thu", icon: <IconTrendingUp size={20} /> },
     { id: "reviews", label: "Bình luận", icon: <IconMessage2 size={20} /> },
@@ -44,21 +47,17 @@ export const VendorSidebar = ({ activeTab = "dashboard", onTabChange }: SidebarP
         <img
           alt="Vendor Profile"
           className="w-10 h-10 rounded-full object-cover border border-outline-variant"
-          src={user?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=60"}
+          src={profile?.logo || user?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=60"}
         />
         <div>
-          <h2 className="text-title-sm font-semibold text-primary">Kênh Đối Tác</h2>
-          <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+          <h2 className="text-title-sm font-semibold text-primary" title={profile?.shopName}>
+            {profile?.shopName || "Kênh Đối Tác"}
+          </h2>
+          <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant line-clamp-1">
             {user?.firstName} {user?.lastName}
           </p>
         </div>
       </div>
-
-      {/* CTA */}
-      <button className="w-full bg-primary text-white font-bold rounded-lg py-2.5 px-4 mb-6 hover:bg-primary-hover transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
-        <IconPlus size={18} />
-        Thêm chỗ nghỉ mới
-      </button>
 
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto">

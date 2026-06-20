@@ -8,6 +8,7 @@ import {
   IconCertificate,
   IconLogout,
   IconArrowBackUp,
+  IconChartBar,
 } from "@tabler/icons-react";
 
 interface AdminSidebarProps {
@@ -29,6 +30,7 @@ export const AdminSidebar = ({ activeTab = "dashboard", onTabChange }: AdminSide
     { id: "dashboard", label: "Bảng điều khiển", icon: <IconLayoutDashboard size={20} /> },
     { id: "vendors", label: "Duyệt đối tác", icon: <IconCertificate size={20} /> },
     { id: "hotels", label: "Duyệt khách sạn", icon: <IconBuilding size={20} /> },
+    { id: "finance", label: "Tài chính sàn", icon: <IconChartBar size={20} /> },
     { id: "users", label: "Quản lý người dùng", icon: <IconUsers size={20} /> },
   ];
 

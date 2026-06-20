@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Loader, Alert } from "@mantine/core";
+import { useState, useEffect, useMemo } from "react";
+import { Loader, Alert, Select } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
   IconDownload,
@@ -15,6 +15,19 @@ export const VendorRevenueView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
+
+  const uniqueHotels = useMemo(() => {
+    if (!report) return [];
+    const hotelMap = new Map<number, { id: number; name: string }>();
+    report.transactions.forEach((tx) => {
+      const hotel = tx.booking?.room?.hotel;
+      if (hotel) {
+        hotelMap.set(hotel.id, { id: hotel.id, name: hotel.name });
+      }
+    });
+    return Array.from(hotelMap.values());
+  }, [report]);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -52,9 +65,17 @@ export const VendorRevenueView = () => {
     );
   }
 
-  // Filter transactions by selected date range
+  // Filter transactions by selected date range and hotel
   const filteredTransactions = report?.transactions.filter((tx) => {
     let matchesDate = true;
+    let matchesHotel = true;
+
+    if (selectedHotelId) {
+      if (tx.booking?.room?.hotel?.id.toString() !== selectedHotelId) {
+        matchesHotel = false;
+      }
+    }
+
     const [start, end] = dateRange;
     if (start || end) {
       const txDate = new Date(tx.createdAt);
@@ -71,7 +92,7 @@ export const VendorRevenueView = () => {
         if (txDate > eDate) matchesDate = false;
       }
     }
-    return matchesDate;
+    return matchesDate && matchesHotel;
   }) || [];
 
   // Calculate stats based on filtered transactions
@@ -135,14 +156,23 @@ export const VendorRevenueView = () => {
     <div className="space-y-6">
       {/* Date Filter & Export Row */}
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-        <div className="w-full sm:w-64">
+        <div className="flex-1 flex flex-col sm:flex-row gap-4">
+          <Select
+            placeholder="Lọc theo khách sạn"
+            data={uniqueHotels.map((h) => ({ value: h.id.toString(), label: h.name }))}
+            value={selectedHotelId}
+            onChange={setSelectedHotelId}
+            clearable
+            searchable
+            className="w-full sm:w-64"
+          />
           <DatePickerInput
             type="range"
             placeholder="Lọc theo khoảng ngày giao dịch"
             value={dateRange}
             onChange={(val) => setDateRange(val as [Date | null, Date | null])}
             clearable
-            className="w-full"
+            className="w-full sm:w-64"
           />
         </div>
         <button

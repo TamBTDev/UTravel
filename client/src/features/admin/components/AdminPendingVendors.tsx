@@ -20,7 +20,7 @@ export const AdminPendingVendors = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Lỗi khi tải danh sách đối tác chờ duyệt");
+      setError(err.error || err.message || "Lỗi khi tải danh sách đối tác chờ duyệt");
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export const AdminPendingVendors = () => {
         setVendors((prev) => prev.filter((v) => v.id !== vendorId));
       }
     } catch (err: any) {
-      alert(err.message || "Lỗi khi cập nhật trạng thái");
+      alert(err.error || err.message || "Lỗi khi cập nhật trạng thái");
     } finally {
       setActionId(null);
     }

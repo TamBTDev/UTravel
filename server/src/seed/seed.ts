@@ -1,6 +1,6 @@
 import prisma from "@/config/database";
 import bcrypt from "bcrypt";
-import * as dotenv from 'dotenv'; // 1. Import dotenv
+import * as dotenv from "dotenv"; // 1. Import dotenv
 
 dotenv.config(); // 2. Kích hoạt dotenv để nạp file .env vào process.env
 import {
@@ -72,12 +72,12 @@ async function main() {
   });
   console.log("Upserted test user 1 (John Doe)");
 
-  const janeUserPasswordHash = await bcrypt.hash("password123", 10);
+  const janeUserPasswordHash = await bcrypt.hash("123456", 10);
   const janeUser = await prisma.user.upsert({
     where: { email: "jane@example.com" },
     update: {
       password: janeUserPasswordHash,
-      role: USER_ROLES.USER,
+      role: USER_ROLES.MANAGER,
       firstName: "Jane",
       lastName: "Smith",
       phone: "0987654321",
@@ -89,7 +89,7 @@ async function main() {
       firstName: "Jane",
       lastName: "Smith",
       phone: "0987654321",
-      role: USER_ROLES.USER,
+      role: USER_ROLES.MANAGER,
       status: USER_STATUS.VERIFIED,
     },
   });
@@ -123,7 +123,8 @@ async function main() {
     data: {
       userId: vendorUser.id,
       shopName: "UTravel Resort & Spa",
-      description: "Hệ thống Resort và Khách sạn nghỉ dưỡng cao cấp trên toàn quốc.",
+      description:
+        "Hệ thống Resort và Khách sạn nghỉ dưỡng cao cấp trên toàn quốc.",
       businessLicense: "0102030405",
       bankName: "Techcombank",
       bankOwner: "NGUYEN VAN VENDOR",
@@ -143,7 +144,14 @@ async function main() {
   console.log("Created vendor, profile and wallet");
 
   console.log("Creating sample hotels and rooms...");
-  const cities = ["Hà Nội", "Đà Nẵng", "Hồ Chí Minh", "Miami", "New York", "Đà Lạt"];
+  const cities = [
+    "Hà Nội",
+    "Đà Nẵng",
+    "Hồ Chí Minh",
+    "Miami",
+    "New York",
+    "Đà Lạt",
+  ];
   const amenitiesList = [
     ["WiFi", "Pool", "Gym", "Restaurant"],
     ["Beach Access", "Pool", "Spa", "Water Sports"],
@@ -164,13 +172,47 @@ async function main() {
 
   for (let i = 1; i <= 15; i++) {
     const city = cities[i % cities.length];
+
+    // Tạo địa chỉ thực tế hơn
+    const vnStreets = [
+      "Nguyễn Văn Linh",
+      "Lê Duẩn",
+      "Trần Hưng Đạo",
+      "Nguyễn Đình Chiểu",
+      "Hoàng Sa",
+      "Võ Nguyên Giáp",
+      "Nguyễn Trãi",
+    ];
+    const usStreets = [
+      "5th Avenue",
+      "Ocean Drive",
+      "Broadway",
+      "Market Street",
+      "Washington Blvd",
+    ];
+    const isVn = ["Hà Nội", "Đà Nẵng", "Hồ Chí Minh", "Đà Lạt"].includes(city);
+    const streetName = isVn
+      ? vnStreets[i % vnStreets.length]
+      : usStreets[i % usStreets.length];
+    const buildingNo = 10 + ((i * 17) % 200);
+    const wardName = isVn
+      ? i % 2 === 0
+        ? "Phường 1"
+        : "Phường Bến Nghé"
+      : "Downtown";
+    const detailLocation = isVn
+      ? `Số ${buildingNo} ${streetName}, ${wardName}`
+      : `${buildingNo} ${streetName}, ${wardName}`;
+
     const hotel = await prisma.hotel.create({
       data: {
         name: `Khách sạn Grand ${city} ${i}`,
         description: `Tận hưởng kỳ nghỉ tuyệt vời tại Khách sạn Grand ${city} ${i} với đầy đủ tiện nghi và dịch vụ đẳng cấp.`,
-        location: `Trung tâm ${city}`,
+        location: detailLocation,
         city: city,
-        country: ["Hà Nội", "Đà Nẵng", "Hồ Chí Minh", "Đà Lạt"].includes(city) ? "Vietnam" : "USA",
+        country: ["Hà Nội", "Đà Nẵng", "Hồ Chí Minh", "Đà Lạt"].includes(city)
+          ? "Vietnam"
+          : "USA",
         rating: 3 + (i % 3),
         images: JSON.stringify([images[i % images.length]]),
         amenities: JSON.stringify(amenitiesList[i % amenitiesList.length]),
@@ -210,18 +252,102 @@ async function main() {
 
   // Rich sample bookings spanning different months of 2026
   const bookingTemplates = [
-    { month: 0, price: 15000000, status: BOOKING_STATUS.COMPLETED, pStatus: PAYMENT_STATUS.COMPLETED, user: testUser, room: rooms[0] },
-    { month: 1, price: 8000000, status: BOOKING_STATUS.COMPLETED, pStatus: PAYMENT_STATUS.COMPLETED, user: janeUser, room: rooms[1] },
-    { month: 2, price: 12500000, status: BOOKING_STATUS.COMPLETED, pStatus: PAYMENT_STATUS.COMPLETED, user: testUser, room: rooms[2] },
-    { month: 3, price: 9000000, status: BOOKING_STATUS.COMPLETED, pStatus: PAYMENT_STATUS.COMPLETED, user: janeUser, room: rooms[3] },
-    { month: 4, price: 22000000, status: BOOKING_STATUS.COMPLETED, pStatus: PAYMENT_STATUS.COMPLETED, user: testUser, room: rooms[4] },
-    { month: 5, price: 11000000, status: BOOKING_STATUS.CONFIRMED, pStatus: PAYMENT_STATUS.COMPLETED, user: janeUser, room: rooms[5] },
-    { month: 6, price: 18500000, status: BOOKING_STATUS.CONFIRMED, pStatus: PAYMENT_STATUS.COMPLETED, user: testUser, room: rooms[6] },
-    { month: 7, price: 7500000, status: BOOKING_STATUS.PENDING, pStatus: PAYMENT_STATUS.PENDING, user: janeUser, room: rooms[7] },
-    { month: 8, price: 24000000, status: BOOKING_STATUS.CANCELLED, pStatus: PAYMENT_STATUS.REFUNDED, user: testUser, room: rooms[8] },
-    { month: 9, price: 13000000, status: BOOKING_STATUS.CONFIRMED, pStatus: PAYMENT_STATUS.COMPLETED, user: janeUser, room: rooms[9] },
-    { month: 10, price: 16000000, status: BOOKING_STATUS.CONFIRMED, pStatus: PAYMENT_STATUS.COMPLETED, user: testUser, room: rooms[10] },
-    { month: 11, price: 21500000, status: BOOKING_STATUS.CONFIRMED, pStatus: PAYMENT_STATUS.COMPLETED, user: janeUser, room: rooms[11] },
+    {
+      month: 0,
+      price: 15000000,
+      status: BOOKING_STATUS.COMPLETED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: testUser,
+      room: rooms[0],
+    },
+    {
+      month: 1,
+      price: 8000000,
+      status: BOOKING_STATUS.COMPLETED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: janeUser,
+      room: rooms[1],
+    },
+    {
+      month: 2,
+      price: 12500000,
+      status: BOOKING_STATUS.COMPLETED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: testUser,
+      room: rooms[2],
+    },
+    {
+      month: 3,
+      price: 9000000,
+      status: BOOKING_STATUS.COMPLETED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: janeUser,
+      room: rooms[3],
+    },
+    {
+      month: 4,
+      price: 22000000,
+      status: BOOKING_STATUS.COMPLETED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: testUser,
+      room: rooms[4],
+    },
+    {
+      month: 5,
+      price: 11000000,
+      status: BOOKING_STATUS.CONFIRMED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: janeUser,
+      room: rooms[5],
+    },
+    {
+      month: 6,
+      price: 18500000,
+      status: BOOKING_STATUS.CONFIRMED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: testUser,
+      room: rooms[6],
+    },
+    {
+      month: 7,
+      price: 7500000,
+      status: BOOKING_STATUS.PENDING,
+      pStatus: PAYMENT_STATUS.PENDING,
+      user: janeUser,
+      room: rooms[7],
+    },
+    {
+      month: 8,
+      price: 24000000,
+      status: BOOKING_STATUS.CANCELLED,
+      pStatus: PAYMENT_STATUS.REFUNDED,
+      user: testUser,
+      room: rooms[8],
+    },
+    {
+      month: 9,
+      price: 13000000,
+      status: BOOKING_STATUS.CONFIRMED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: janeUser,
+      room: rooms[9],
+    },
+    {
+      month: 10,
+      price: 16000000,
+      status: BOOKING_STATUS.CONFIRMED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: testUser,
+      room: rooms[10],
+    },
+    {
+      month: 11,
+      price: 21500000,
+      status: BOOKING_STATUS.CONFIRMED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: janeUser,
+      room: rooms[11],
+    },
   ];
 
   console.log("Creating bookings, payments and wallet transactions...");
@@ -258,7 +384,11 @@ async function main() {
     });
 
     // Create wallet transactions for confirmed or completed bookings
-    if (tmpl.status === BOOKING_STATUS.CONFIRMED || tmpl.status === BOOKING_STATUS.COMPLETED || tmpl.status === BOOKING_STATUS.CANCELLED) {
+    if (
+      tmpl.status === BOOKING_STATUS.CONFIRMED ||
+      tmpl.status === BOOKING_STATUS.COMPLETED ||
+      tmpl.status === BOOKING_STATUS.CANCELLED
+    ) {
       // Booking Income
       await prisma.walletTransaction.create({
         data: {
@@ -335,7 +465,8 @@ async function main() {
       hotelId: hotels[2].id,
       rating: 5,
       comment: "Phòng sạch sẽ, giường ngủ rất êm. Nhất định sẽ quay lại!",
-      vendorReply: "Cảm ơn quý khách đã tin tưởng và lựa chọn khách sạn của chúng tôi! Hẹn gặp lại bạn trong chuyến đi tiếp theo.",
+      vendorReply:
+        "Cảm ơn quý khách đã tin tưởng và lựa chọn khách sạn của chúng tôi! Hẹn gặp lại bạn trong chuyến đi tiếp theo.",
       vendorReplyAt: new Date(2026, 4, 12),
     },
   });
@@ -346,7 +477,8 @@ async function main() {
       hotelId: hotels[0].id,
       rating: 3,
       comment: "Phòng hơi nhỏ so với ảnh chụp. WiFi buổi tối hơi chập chờn.",
-      vendorReply: "Chào bạn, chúng tôi rất tiếc vì trải nghiệm WiFi chưa tốt. Khách sạn đã nâng cấp băng thông hệ thống và hy vọng được phục vụ bạn tốt hơn lần sau.",
+      vendorReply:
+        "Chào bạn, chúng tôi rất tiếc vì trải nghiệm WiFi chưa tốt. Khách sạn đã nâng cấp băng thông hệ thống và hy vọng được phục vụ bạn tốt hơn lần sau.",
       vendorReplyAt: new Date(2026, 4, 15),
     },
   });
@@ -356,7 +488,8 @@ async function main() {
       userId: testUser.id,
       hotelId: hotels[1].id,
       rating: 2,
-      comment: "Nhà vệ sinh có mùi nhẹ, phục vụ phòng dọn dẹp hơi trễ. Cần cải thiện chất lượng phục vụ.",
+      comment:
+        "Nhà vệ sinh có mùi nhẹ, phục vụ phòng dọn dẹp hơi trễ. Cần cải thiện chất lượng phục vụ.",
     },
   });
 
@@ -375,7 +508,8 @@ async function main() {
       hotelId: hotels[4].id,
       rating: 5,
       comment: "Tuyệt vời! Giá cả hợp lý, nhân viên phục vụ chu đáo tận tình.",
-      vendorReply: "Cảm ơn bạn rất nhiều vì phản hồi tích cực! Chúc bạn và gia đình luôn nhiều niềm vui.",
+      vendorReply:
+        "Cảm ơn bạn rất nhiều vì phản hồi tích cực! Chúc bạn và gia đình luôn nhiều niềm vui.",
       vendorReplyAt: new Date(2026, 4, 20),
     },
   });
@@ -385,7 +519,8 @@ async function main() {
       userId: janeUser.id,
       hotelId: hotels[2].id,
       rating: 1,
-      comment: "Phòng đặt trước bị trùng, phải đợi giải quyết rất lâu. Rất không hài lòng.",
+      comment:
+        "Phòng đặt trước bị trùng, phải đợi giải quyết rất lâu. Rất không hài lòng.",
     },
   });
 

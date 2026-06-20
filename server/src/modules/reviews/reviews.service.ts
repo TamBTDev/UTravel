@@ -58,8 +58,8 @@ export class ReviewService {
           serviceRating: data.serviceRating,
           locationRating: data.locationRating,
           valueRating: data.valueRating,
-          highlights: data.highlights ? data.highlights : null,
-          images: data.images ? data.images : null,
+          highlights: data.highlights ? (data.highlights as any) : null,
+          images: data.images ? (data.images as any) : null,
         },
       });
 

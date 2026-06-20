@@ -18,6 +18,7 @@ export interface VendorProfile {
   bankName: string;
   bankOwner: string;
   bankAccount: string;
+  logo: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
   commissionRate: number;
   createdAt: string;
@@ -34,6 +35,86 @@ export interface VendorDashboardStats {
   averageRating: number;
   recentBookings: any[];
   revenueData: { name: string; revenue: number }[];
+}
+
+export interface VendorHotel {
+  id: number;
+  name: string;
+  description: string | null;
+  location: string;
+  city: string;
+  rating: number;
+  images: string;
+  amenities: string;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED" | "DRAFT";
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    rooms: number;
+    reviews: number;
+  };
+}
+
+export interface CreateHotelPayload {
+  name: string;
+  description: string;
+  address: string;
+  city: string;
+  stars: number;
+  latitude?: number;
+  longitude?: number;
+  images?: string[];
+  amenities?: string[];
+}
+
+export interface UpdateHotelPayload {
+  name?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  stars?: number;
+  latitude?: number;
+  longitude?: number;
+  images?: string[];
+  amenities?: string[];
+  isActive?: boolean;
+}
+
+export interface VendorRoom {
+  id: number;
+  hotelId: number;
+  roomNumber: string;
+  type: string;
+  price: number;
+  capacity: number;
+  description: string | null;
+  amenities: string | null;
+  images: string | null;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRoomPayload {
+  roomNumber: string;
+  type: string;
+  price: number;
+  capacity: number;
+  description?: string;
+  images?: string[];
+  amenities?: string[];
+}
+
+export interface UpdateRoomPayload {
+  roomNumber?: string;
+  type?: string;
+  price?: number;
+  capacity?: number;
+  description?: string;
+  images?: string[];
+  amenities?: string[];
+  isAvailable?: boolean;
 }
 
 export interface VendorBooking {
@@ -80,6 +161,7 @@ export interface WalletTransaction {
     checkOutDate: string;
     room: {
       hotel: {
+        id: number;
         name: string;
       };
     };
@@ -131,6 +213,16 @@ export const vendorService = {
       throw error.response?.data || error;
     }
   },
+
+  updateVendorProfile: async (payload: Partial<RegisterVendorPayload> & { logo?: string }): Promise<{ success: boolean; message: string; data: VendorProfile }> => {
+    try {
+      const response = await apiClient.patch("/vendors/profile", payload);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
 
   getVendorBookings: async (): Promise<{ success: boolean; data: VendorBooking[] }> => {
     try {
@@ -189,6 +281,78 @@ export const vendorService = {
   getVendorDashboardStats: async (): Promise<{ success: boolean; data: VendorDashboardStats }> => {
     try {
       const response = await apiClient.get("/vendors/dashboard-stats");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getVendorHotels: async (): Promise<{ success: boolean; data: VendorHotel[] }> => {
+    try {
+      const response = await apiClient.get("/vendors/hotels");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  createVendorHotel: async (payload: CreateHotelPayload): Promise<{ success: boolean; message: string; data: VendorHotel }> => {
+    try {
+      const response = await apiClient.post("/vendors/hotels", payload);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  updateVendorHotel: async (hotelId: number, payload: UpdateHotelPayload): Promise<{ success: boolean; message: string; data: VendorHotel }> => {
+    try {
+      const response = await apiClient.patch(`/vendors/hotels/${hotelId}`, payload);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  deleteVendorHotel: async (hotelId: number): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.delete(`/vendors/hotels/${hotelId}`);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getVendorHotelRooms: async (hotelId: number): Promise<{ success: boolean; data: VendorRoom[] }> => {
+    try {
+      const response = await apiClient.get(`/vendors/hotels/${hotelId}/rooms`);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  createVendorHotelRoom: async (hotelId: number, payload: CreateRoomPayload): Promise<{ success: boolean; message: string; data: VendorRoom }> => {
+    try {
+      const response = await apiClient.post(`/vendors/hotels/${hotelId}/rooms`, payload);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  updateVendorHotelRoom: async (hotelId: number, roomId: number, payload: UpdateRoomPayload): Promise<{ success: boolean; message: string; data: VendorRoom }> => {
+    try {
+      const response = await apiClient.patch(`/vendors/hotels/${hotelId}/rooms/${roomId}`, payload);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  deleteVendorHotelRoom: async (hotelId: number, roomId: number): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.delete(`/vendors/hotels/${hotelId}/rooms/${roomId}`);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;

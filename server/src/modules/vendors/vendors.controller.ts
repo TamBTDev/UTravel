@@ -70,6 +70,8 @@ export const updateVendorProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { 
+      shopName,
+      logo,
       description, 
       bankName, 
       bankOwner, 
@@ -77,6 +79,8 @@ export const updateVendorProfile = async (req: Request, res: Response) => {
     } = req.body;
 
     const updated = await vendorsService.updateVendorProfile(userId, {
+      shopName,
+      logo,
       description,
       bankName,
       bankOwner,
@@ -96,6 +100,204 @@ export const updateVendorProfile = async (req: Request, res: Response) => {
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
   return Number(val);
+};
+
+export const getVendorHotels = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotels = await vendorsService.getVendorHotels(userId);
+    res.status(200).json({ success: true, data: hotels });
+  } catch (error: any) {
+    console.error('Error fetching vendor hotels:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách khách sạn', error: error.message });
+  }
+};
+
+export const createVendorHotel = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const {
+      name,
+      description,
+      address,
+      city,
+      stars,
+      latitude,
+      longitude,
+      images,
+      amenities
+    } = req.body;
+
+    if (!name || !description || !address || !city || stars === undefined) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp đủ thông tin bắt buộc của khách sạn' });
+    }
+
+    const hotel = await vendorsService.createVendorHotel(userId, {
+      name,
+      description,
+      address,
+      city,
+      stars: Number(stars),
+      latitude: latitude ? Number(latitude) : undefined,
+      longitude: longitude ? Number(longitude) : undefined,
+      images: images ? JSON.stringify(images) : "[]",
+      amenities: amenities ? JSON.stringify(amenities) : "[]"
+    });
+
+    res.status(201).json({ success: true, message: 'Tạo khách sạn thành công, chờ duyệt', data: hotel });
+  } catch (error: any) {
+    console.error('Error creating vendor hotel:', error);
+    res.status(500).json({ message: 'Lỗi khi tạo khách sạn', error: error.message });
+  }
+};
+
+export const updateVendorHotel = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotelId = getIdParam(req.params.hotelId);
+    
+    const {
+      name,
+      description,
+      address,
+      city,
+      stars,
+      latitude,
+      longitude,
+      images,
+      amenities,
+      isActive
+    } = req.body;
+
+    const hotel = await vendorsService.updateVendorHotel(userId, hotelId, {
+      name,
+      description,
+      address,
+      city,
+      stars: stars !== undefined ? Number(stars) : undefined,
+      latitude: latitude !== undefined ? Number(latitude) : undefined,
+      longitude: longitude !== undefined ? Number(longitude) : undefined,
+      images: images ? JSON.stringify(images) : undefined,
+      amenities: amenities ? JSON.stringify(amenities) : undefined,
+      isActive
+    });
+
+    res.status(200).json({ success: true, message: 'Cập nhật khách sạn thành công', data: hotel });
+  } catch (error: any) {
+    console.error('Error updating vendor hotel:', error);
+    res.status(500).json({ message: 'Lỗi khi cập nhật khách sạn', error: error.message });
+  }
+};
+
+export const deleteVendorHotel = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotelId = getIdParam(req.params.hotelId);
+    
+    await vendorsService.deleteVendorHotel(userId, hotelId);
+
+    res.status(200).json({ success: true, message: 'Xóa khách sạn thành công' });
+  } catch (error: any) {
+    console.error('Error deleting vendor hotel:', error);
+    res.status(500).json({ message: 'Lỗi khi xóa khách sạn', error: error.message });
+  }
+};
+
+export const getVendorHotelRooms = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotelId = getIdParam(req.params.hotelId);
+    const rooms = await vendorsService.getVendorHotelRooms(userId, hotelId);
+    res.status(200).json({ success: true, data: rooms });
+  } catch (error: any) {
+    console.error('Error fetching vendor hotel rooms:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách phòng', error: error.message });
+  }
+};
+
+export const createVendorHotelRoom = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotelId = getIdParam(req.params.hotelId);
+    const {
+      roomNumber,
+      type,
+      price,
+      capacity,
+      description,
+      images,
+      amenities
+    } = req.body;
+
+    if (!roomNumber || !type || price === undefined || capacity === undefined) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp đủ thông tin bắt buộc của phòng' });
+    }
+
+    const room = await vendorsService.createVendorHotelRoom(userId, hotelId, {
+      roomNumber,
+      type,
+      price: Number(price),
+      capacity: Number(capacity),
+      description,
+      images: images ? JSON.stringify(images) : "[]",
+      amenities: amenities ? JSON.stringify(amenities) : "[]"
+    });
+
+    res.status(201).json({ success: true, message: 'Tạo phòng thành công', data: room });
+  } catch (error: any) {
+    console.error('Error creating vendor hotel room:', error);
+    res.status(500).json({ message: 'Lỗi khi tạo phòng', error: error.message });
+  }
+};
+
+export const updateVendorHotelRoom = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotelId = getIdParam(req.params.hotelId);
+    const roomId = getIdParam(req.params.roomId);
+    
+    const {
+      roomNumber,
+      type,
+      price,
+      capacity,
+      description,
+      images,
+      amenities,
+      isAvailable
+    } = req.body;
+
+    const room = await vendorsService.updateVendorHotelRoom(userId, hotelId, roomId, {
+      roomNumber,
+      type,
+      price: price !== undefined ? Number(price) : undefined,
+      capacity: capacity !== undefined ? Number(capacity) : undefined,
+      description,
+      images: images ? JSON.stringify(images) : undefined,
+      amenities: amenities ? JSON.stringify(amenities) : undefined,
+      isAvailable
+    });
+
+    res.status(200).json({ success: true, message: 'Cập nhật phòng thành công', data: room });
+  } catch (error: any) {
+    console.error('Error updating vendor hotel room:', error);
+    res.status(500).json({ message: 'Lỗi khi cập nhật phòng', error: error.message });
+  }
+};
+
+export const deleteVendorHotelRoom = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const hotelId = getIdParam(req.params.hotelId);
+    const roomId = getIdParam(req.params.roomId);
+    
+    await vendorsService.deleteVendorHotelRoom(userId, hotelId, roomId);
+
+    res.status(200).json({ success: true, message: 'Xóa phòng thành công' });
+  } catch (error: any) {
+    console.error('Error deleting vendor hotel room:', error);
+    res.status(500).json({ message: 'Lỗi khi xóa phòng', error: error.message });
+  }
 };
 
 export const getVendorBookings = async (req: Request, res: Response) => {
