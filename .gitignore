@@ -9,3 +9,5 @@ build/
 # Custom Ignores
 CLAUDE.md
 /figma_design/
+SRS.md
+TODO.md
