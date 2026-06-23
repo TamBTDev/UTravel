@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Loader, Alert, Table, Badge } from "@mantine/core";
 import { IconCheck, IconX, IconAlertCircle, IconCertificate } from "@tabler/icons-react";
 import { adminService, PendingVendor } from "../services/adminService";
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
 import dayjs from "dayjs";
 
 export const AdminPendingVendors = () => {
@@ -30,20 +32,27 @@ export const AdminPendingVendors = () => {
     fetchVendors();
   }, []);
 
-  const handleStatusUpdate = async (vendorId: number, status: "APPROVED" | "REJECTED") => {
-    if (!window.confirm(`Bạn có chắc chắn muốn ${status === "APPROVED" ? "Phê duyệt" : "Từ chối"} đối tác này?`)) return;
-
-    setActionId(vendorId);
-    try {
-      const res = await adminService.updateVendorStatus(vendorId, status);
-      if (res.success) {
-        setVendors((prev) => prev.filter((v) => v.id !== vendorId));
+  const handleStatusUpdate = (vendorId: number, status: "APPROVED" | "REJECTED") => {
+    modals.openConfirmModal({
+      title: 'Xác nhận',
+      children: `Bạn có chắc chắn muốn ${status === "APPROVED" ? "Phê duyệt" : "Từ chối"} đối tác này?`,
+      labels: { confirm: 'Đồng ý', cancel: 'Hủy' },
+      confirmProps: { color: status === "APPROVED" ? 'green' : 'red' },
+      onConfirm: async () => {
+        setActionId(vendorId);
+        try {
+          const res = await adminService.updateVendorStatus(vendorId, status);
+          if (res.success) {
+            setVendors((prev) => prev.filter((v) => v.id !== vendorId));
+            notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái thành công', color: 'green' });
+          }
+        } catch (err: any) {
+          notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi cập nhật trạng thái", color: 'red' });
+        } finally {
+          setActionId(null);
+        }
       }
-    } catch (err: any) {
-      alert(err.message || "Lỗi khi cập nhật trạng thái");
-    } finally {
-      setActionId(null);
-    }
+    });
   };
 
   return (

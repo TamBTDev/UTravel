@@ -7,6 +7,8 @@ import { IconStar, IconUpload, IconX, IconCalendarEvent, IconBed, IconCircleChec
 import { uploadImagesToCloudinary } from "@/lib/cloudinary";
 import { AppLayout } from "@/components/layout";
 import dayjs from "dayjs";
+import { useAppDispatch } from "@/hooks/useAppStore";
+import { fetchCurrentUser } from "@/app/store/authSlice";
 
 const HIGH_LIGHT_OPTIONS = [
   { label: "Nhân viên thân thiện", value: "Friendly Staff" },
@@ -38,6 +40,7 @@ const parseImg = (val: any): string => {
 export default function CreateReview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -141,6 +144,8 @@ export default function CreateReview() {
         images: imageUrls.length > 0 ? imageUrls : undefined,
       });
       notifications.show({ title: 'Thành công', message: "Đánh giá của bạn đã được gửi thành công!", color: 'green' });
+      // Cập nhật lại thông tin user để hiển thị điểm thưởng mới
+      dispatch(fetchCurrentUser());
       navigate("/bookings");
     } catch (error: any) {
       notifications.show({ title: 'Lỗi', message: error.response?.data?.error || "Không thể gửi đánh giá", color: 'red' });

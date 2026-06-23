@@ -136,4 +136,32 @@ export const adminService = {
       throw error.response?.data || error;
     }
   },
+
+  getWithdrawRequests: async (status?: string): Promise<{ success: boolean; data: any[] }> => {
+    try {
+      const params = status ? `?status=${status}` : "";
+      const res = await apiClient.get(`/admin/withdraw-requests${params}`);
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  approveWithdrawRequest: async (id: number): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await apiClient.patch(`/admin/withdraw-requests/${id}/approve`);
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  rejectWithdrawRequest: async (id: number, adminNote: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await apiClient.patch(`/admin/withdraw-requests/${id}/reject`, { adminNote });
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
 };

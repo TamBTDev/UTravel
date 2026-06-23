@@ -12,7 +12,10 @@ import {
   updateUserRole,
   getAllAdminHotels,
   toggleHotelActive,
-  getAdminDashboardStats
+  getAdminDashboardStats,
+  getWithdrawRequests,
+  approveWithdrawRequest,
+  rejectWithdrawRequest,
 } from "./admin.controller";
 
 const router = Router();
@@ -58,7 +61,11 @@ router.get("/hotels", getAllAdminHotels);
 router.patch("/hotels/:id/active", toggleHotelActive);
 
 // --- Dashboard Tổng quan ---
-// Lấy thống kê chung cho trang chủ Admin
 router.get("/dashboard", getAdminDashboardStats);
+
+// --- Duyệt Yêu cầu Rút tiền ---
+router.get("/withdraw-requests", getWithdrawRequests);
+router.patch("/withdraw-requests/:id/approve", approveWithdrawRequest);
+router.patch("/withdraw-requests/:id/reject", rejectWithdrawRequest);
 
 export default router;

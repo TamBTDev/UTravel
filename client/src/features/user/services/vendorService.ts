@@ -29,6 +29,7 @@ export interface VendorProfile {
 }
 
 export interface VendorDashboardStats {
+  walletBalance: number;
   availableRooms: number;
   newBookingsCount: number;
   averageRating: number;
@@ -132,6 +133,15 @@ export const vendorService = {
     }
   },
 
+  updateVendorProfile: async (data: Partial<RegisterVendorPayload>): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.patch("/vendors/profile", data);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
   getVendorBookings: async (): Promise<{ success: boolean; data: VendorBooking[] }> => {
     try {
       const response = await apiClient.get("/vendors/bookings");
@@ -193,5 +203,72 @@ export const vendorService = {
     } catch (error: any) {
       throw error.response?.data || error;
     }
+  },
+
+  // Hotels
+  getVendorHotels: async () => {
+    const response = await apiClient.get("/vendors/hotels");
+    return response.data.data;
+  },
+  createVendorHotel: async (data: any) => {
+    const response = await apiClient.post("/vendors/hotels", data);
+    return response.data;
+  },
+  updateVendorHotel: async (id: number, data: any) => {
+    const response = await apiClient.put(`/vendors/hotels/${id}`, data);
+    return response.data;
+  },
+  deleteVendorHotel: async (id: number) => {
+    const response = await apiClient.delete(`/vendors/hotels/${id}`);
+    return response.data;
+  },
+
+  // Rooms
+  getVendorRooms: async (hotelId: number) => {
+    const response = await apiClient.get(`/vendors/hotels/${hotelId}/rooms`);
+    return response.data.data;
+  },
+  createVendorRoom: async (hotelId: number, data: any) => {
+    const response = await apiClient.post(`/vendors/hotels/${hotelId}/rooms`, data);
+    return response.data;
+  },
+  updateVendorRoom: async (hotelId: number, roomId: number, data: any) => {
+    const response = await apiClient.put(`/vendors/hotels/${hotelId}/rooms/${roomId}`, data);
+    return response.data;
+  },
+  deleteVendorRoom: async (hotelId: number, roomId: number) => {
+    const response = await apiClient.delete(`/vendors/hotels/${hotelId}/rooms/${roomId}`);
+    return response.data;
+  },
+
+  // Withdraw
+  createWithdrawRequest: async (amount: number, note?: string) => {
+    const response = await apiClient.post("/vendors/wallet/withdraw", { amount, note });
+    return response.data;
+  },
+  getVendorWithdrawRequests: async () => {
+    const response = await apiClient.get("/vendors/withdrawals");
+    return response.data.data;
+  },
+
+  // === KHUYẾN MÃI ===
+  getVendorPromotions: async () => {
+    const response = await apiClient.get("/vendors/promotions");
+    return response.data;
+  },
+
+  createVendorPromotion: async (data: any) => {
+    const response = await apiClient.post("/vendors/promotions", data);
+    return response.data;
+  },
+
+  updateVendorPromotion: async (id: number, data: any) => {
+    const response = await apiClient.put(`/vendors/promotions/${id}`, data);
+    return response.data;
+  },
+
+  deleteVendorPromotion: async (id: number) => {
+    const response = await apiClient.delete(`/vendors/promotions/${id}`);
+    return response.data;
   },
 };

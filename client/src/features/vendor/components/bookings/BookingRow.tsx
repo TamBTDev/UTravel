@@ -126,6 +126,16 @@ export const BookingRow = ({ booking, actionLoadingId, onUpdateStatus }: Booking
               {translateStatus(booking.status)}
             </Badge>
           </div>
+          {booking.status === "CONFIRMED" && (
+            <span className="text-xs text-amber-600 font-medium mt-1 hidden md:block">
+              ⏳ Chờ khách xác nhận
+            </span>
+          )}
+          {booking.status === "COMPLETED" && (
+            <span className="text-xs text-green-600 font-medium mt-1 hidden md:block">
+              ✓ Doanh thu đã về ví
+            </span>
+          )}
         </div>
 
         {/* Actions Column */}
@@ -141,7 +151,7 @@ export const BookingRow = ({ booking, actionLoadingId, onUpdateStatus }: Booking
               </Menu.Target>
 
               <Menu.Dropdown>
-                <Menu.Label>Trạng thái đơn</Menu.Label>
+                <Menu.Label>Thao tác đơn hàng</Menu.Label>
                 {booking.status === "PENDING" && (
                   <>
                     <Menu.Item
@@ -149,7 +159,7 @@ export const BookingRow = ({ booking, actionLoadingId, onUpdateStatus }: Booking
                       leftSection={<IconCheck size={14} />}
                       onClick={() => onUpdateStatus(booking.id, "CONFIRMED")}
                     >
-                      Xác nhận đơn
+                      Xác nhận nhận phòng
                     </Menu.Item>
                     <Menu.Item
                       color="red"
@@ -162,12 +172,8 @@ export const BookingRow = ({ booking, actionLoadingId, onUpdateStatus }: Booking
                 )}
                 {booking.status === "CONFIRMED" && (
                   <>
-                    <Menu.Item
-                      color="blue"
-                      leftSection={<IconCheck size={14} />}
-                      onClick={() => onUpdateStatus(booking.id, "COMPLETED")}
-                    >
-                      Hoàn thành đặt phòng
+                    <Menu.Item disabled leftSection={<IconCheck size={14} />}>
+                      ⏳ Chờ khách xác nhận hoàn thành
                     </Menu.Item>
                     <Menu.Item
                       color="red"

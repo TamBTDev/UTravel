@@ -7,6 +7,7 @@ import { AdminStats } from "../features/admin/components/AdminStats";
 import { AdminPendingVendors } from "../features/admin/components/AdminPendingVendors";
 import { AdminPendingHotels } from "../features/admin/components/AdminPendingHotels";
 import { AdminUsersView } from "../features/admin/components/AdminUsersView";
+import { AdminWithdrawRequests } from "../features/admin/components/AdminWithdrawRequests";
 
 export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -23,6 +24,8 @@ export const AdminDashboard = () => {
         return "Duyệt tin đăng khách sạn";
       case "users":
         return "Quản lý người dùng";
+      case "withdraw-requests":
+        return "Yêu cầu rút tiền";
       default:
         return "Chi tiết";
     }
@@ -112,6 +115,7 @@ export const AdminDashboard = () => {
           {activeTab === "vendors" && <AdminPendingVendors />}
           {activeTab === "hotels" && <AdminPendingHotels />}
           {activeTab === "users" && <AdminUsersView />}
+          {activeTab === "withdraw-requests" && <AdminWithdrawRequests />}
         </div>
       </main>
     </div>

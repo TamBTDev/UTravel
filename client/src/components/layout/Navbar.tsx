@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { logout } from "@/app/store/authSlice";
 import { USER_ROLES } from "@shared/constants/roles";
 import { userService } from "@/features/user/services/userService";
+import { vendorService } from "@/features/user/services/vendorService";
 import { useState, useEffect } from "react";
 import logo from "@/assets/logo.svg";
 
@@ -21,12 +22,20 @@ export const Navbar = () => {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      userService.getWallet().then((w) => setWalletBalance(w?.balance ?? 0)).catch(() => {});
+    if (isAuthenticated && user) {
+      if (user.role === 'VENDOR') {
+        vendorService.getVendorDashboardStats()
+          .then((res) => setWalletBalance(res.data?.walletBalance ?? 0))
+          .catch(() => setWalletBalance(0));
+      } else {
+        userService.getWallet()
+          .then((w) => setWalletBalance(w?.balance ?? 0))
+          .catch(() => setWalletBalance(0));
+      }
     } else {
       setWalletBalance(null);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -90,6 +99,18 @@ export const Navbar = () => {
                 }`}
               >
                 Đặt phòng
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                to="/favorites"
+                className={`transition-colors cursor-pointer ${
+                  isActive("/favorites")
+                    ? "text-primary text-body-bold border-b-2 border-primary pb-1"
+                    : "text-on-surface-variant font-semibold hover:text-primary pb-1 border-b-2 border-transparent"
+                }`}
+              >
+                Yêu thích & Đã xem
               </Link>
             )}
           </nav>
@@ -251,6 +272,13 @@ export const Navbar = () => {
                 onClick={close}
               >
                 Đặt phòng
+              </Link>
+              <Link
+                to="/favorites"
+                className={`text-title p-2 rounded-md ${isActive("/favorites") ? "bg-primary/10 text-primary" : "text-on-surface"}`}
+                onClick={close}
+              >
+                Yêu thích & Đã xem
               </Link>
               <Divider my="sm" color="#eaecf0" />
               <Link

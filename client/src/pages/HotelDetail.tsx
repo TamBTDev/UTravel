@@ -245,7 +245,7 @@ export const HotelDetailPage: React.FC = () => {
                <Group bg="green.0" px={12} py={8} style={{ borderRadius: 8, border: '1px solid #d1fae5' }} gap={6}>
                  <IconStar size={16} color="#10b981" fill="#10b981" />
                  <Text fw={700} size="md" c="green.8">{hotel.rating.toFixed(1)}</Text>
-                 <Text size="sm" c="dimmed">({hotel.reviews?.length || 0} đánh giá)</Text>
+                 <Text size="sm" c="dimmed">({(hotel as any)._count?.reviews || hotel.reviews?.length || 0} đánh giá)</Text>
                </Group>
              </Group>
            </Group>

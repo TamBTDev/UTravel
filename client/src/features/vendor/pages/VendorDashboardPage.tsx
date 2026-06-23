@@ -16,6 +16,9 @@ import { VendorBookingsView } from "../components/VendorBookingsView";
 import { VendorRevenueView } from "../components/VendorRevenueView";
 import { VendorReviewsView } from "../components/VendorReviewsView";
 import { vendorService, VendorDashboardStats } from "../../user/services/vendorService";
+import { VendorListingsView } from "../components/VendorListingsView";
+import { VendorSettingsView } from "../components/VendorSettingsView";
+import { VendorPromotionsView } from "../components/VendorPromotionsView";
 
 export const VendorDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -59,6 +62,8 @@ export const VendorDashboardPage = () => {
         return "Báo cáo doanh thu";
       case "reviews":
         return "Quản lý bình luận";
+      case "promotions":
+        return "Quản lý khuyến mãi";
       case "settings":
         return "Cài đặt hệ thống";
       default:
@@ -190,11 +195,17 @@ export const VendorDashboardPage = () => {
 
           {activeTab === "bookings" && <VendorBookingsView />}
 
+          {activeTab === "listings" && <VendorListingsView />}
+
           {activeTab === "earnings" && <VendorRevenueView />}
 
           {activeTab === "reviews" && <VendorReviewsView />}
 
-          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && activeTab !== "reviews" && (
+          {activeTab === "promotions" && <VendorPromotionsView />}
+
+          {activeTab === "settings" && <VendorSettingsView />}
+
+          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && activeTab !== "reviews" && activeTab !== "listings" && activeTab !== "promotions" && activeTab !== "settings" && (
             <div className="bg-white p-12 rounded-xl border border-hairline text-center flex flex-col items-center justify-center min-h-[300px]">
               <h3 className="text-lg font-bold text-on-surface mb-2">
                 Tính năng "{getTabTitle(activeTab)}" đang được phát triển

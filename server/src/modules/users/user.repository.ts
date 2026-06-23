@@ -14,6 +14,7 @@ export const findById = async (id: number) => {
       avatar: true,
       role: true,
       status: true,
+      rewardPoints: true,
       createdAt: true,
       updatedAt: true,
     },
