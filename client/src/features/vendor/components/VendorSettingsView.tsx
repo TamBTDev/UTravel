@@ -1,207 +1,116 @@
 import { useState, useEffect } from "react";
-import { useForm } from "@mantine/form";
-import {
-  TextInput,
-  Textarea,
-  Button,
-  Paper,
-  Title,
-  Divider,
-  Loader,
-} from "@mantine/core";
+import { TextInput, Textarea, Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconCheck, IconX, IconDeviceFloppy } from "@tabler/icons-react";
+import { IconBuilding, IconBuildingBank, IconCheck } from "@tabler/icons-react";
 import { vendorService } from "../../user/services/vendorService";
 
 export const VendorSettingsView = () => {
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-
-  const form = useForm({
-    initialValues: {
-      shopName: "",
-      description: "",
-      bankName: "",
-      bankAccount: "",
-      bankOwner: "",
-      logo: "",
-    },
-    validate: {
-      shopName: (value) =>
-        value.length < 3 ? "Tên gian hàng phải từ 3 ký tự" : null,
-      bankName: (value) => (!value ? "Vui lòng nhập tên ngân hàng" : null),
-      bankAccount: (value) => (!value ? "Vui lòng nhập số tài khoản" : null),
-      bankOwner: (value) => (!value ? "Vui lòng nhập tên chủ tài khoản" : null),
-    },
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    description: "",
+    bankName: "",
+    bankOwner: "",
+    bankAccount: "",
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const load = async () => {
       try {
-        setInitialLoading(true);
         const res = await vendorService.getVendorProfile();
-        if (res.success && res.data) {
-          form.setValues({
-            shopName: res.data.shopName || "",
+        if (res.data) {
+          setProfile(res.data);
+          setForm({
             description: res.data.description || "",
             bankName: res.data.bankName || "",
-            bankAccount: res.data.bankAccount || "",
             bankOwner: res.data.bankOwner || "",
-            logo: res.data.logo || "",
+            bankAccount: res.data.bankAccount || "",
           });
         }
-      } catch (err: any) {
-        notifications.show({
-          title: "Lỗi tải dữ liệu",
-          message: err.message || "Không thể lấy thông tin Shop",
-          color: "red",
-          icon: <IconX size={16} />,
-        });
+      } catch (e: any) {
+        notifications.show({ title: "Lỗi", message: e.message, color: "red" });
       } finally {
-        setInitialLoading(false);
+        setLoading(false);
       }
     };
-    fetchProfile();
+    load();
   }, []);
 
-  const handleSubmit = async (values: typeof form.values) => {
-    setLoading(true);
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const res = await vendorService.updateVendorProfile(values);
-      if (res.success) {
-        notifications.show({
-          title: "Thành công",
-          message: "Cập nhật thông tin Shop thành công",
-          color: "green",
-          icon: <IconCheck size={16} />,
-        });
-      }
-    } catch (err: any) {
-      notifications.show({
-        title: "Lỗi cập nhật",
-        message: err.message || "Có lỗi xảy ra khi cập nhật thông tin Shop",
-        color: "red",
-        icon: <IconX size={16} />,
-      });
+      await vendorService.updateVendorProfile(form);
+      notifications.show({ title: "Đã lưu!", message: "Thông tin hồ sơ đã được cập nhật.", color: "green" });
+    } catch (e: any) {
+      notifications.show({ title: "Lỗi", message: e.message || "Có lỗi xảy ra", color: "red" });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (initialLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader size="lg" color="var(--color-primary)" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #e5e7eb", padding: 48, display: "flex", justifyContent: "center" }}>
+      <Loader size="sm" />
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl w-full">
-      <Paper radius="md" p="xl" withBorder className="shadow-sm">
-        <Title order={2} className="text-2xl font-bold text-primary mb-1">
-          Cấu hình Shop (Settings)
-        </Title>
-        <p className="text-on-surface-variant text-sm mb-6">
-          Quản lý thông tin hiển thị gian hàng và phương thức nhận thanh toán
-          của bạn.
-        </p>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 640 }}>
+      {/* Shop Info */}
+      <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #e5e7eb", padding: 24, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700, color: "#111827", display: "flex", alignItems: "center", gap: 8 }}>
+          <IconBuilding size={18} color="#0b63d6" /> Thông tin thương hiệu
+        </h3>
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>Thông tin hiển thị trên sàn UTravel</p>
 
-        <Divider mb="xl" color="var(--color-outline-variant)" />
-
-        <form onSubmit={form.onSubmit(handleSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <Title
-                order={4}
-                className="text-lg font-semibold text-on-surface"
-              >
-                Thông tin cơ bản
-              </Title>
-              <TextInput
-                label="Tên gian hàng / Khách sạn"
-                placeholder="Nhập tên hiển thị"
-                required
-                {...form.getInputProps("shopName")}
-                classNames={{
-                  input: "border-outline-variant focus:border-primary",
-                }}
-              />
-
-              <TextInput
-                label="Đường dẫn Logo"
-                placeholder="https://example.com/logo.png"
-                {...form.getInputProps("logo")}
-                classNames={{
-                  input: "border-outline-variant focus:border-primary",
-                }}
-              />
-
-              <Textarea
-                label="Mô tả gian hàng"
-                placeholder="Giới thiệu ngắn gọn về khách sạn / chuỗi phòng của bạn"
-                minRows={4}
-                {...form.getInputProps("description")}
-                classNames={{
-                  input: "border-outline-variant focus:border-primary",
-                }}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <Title
-                order={4}
-                className="text-lg font-semibold text-on-surface"
-              >
-                Thông tin thanh toán (Ngân hàng)
-              </Title>
-
-              <TextInput
-                label="Tên ngân hàng"
-                placeholder="Ví dụ: Vietcombank, TPBank"
-                required
-                {...form.getInputProps("bankName")}
-                classNames={{
-                  input: "border-outline-variant focus:border-primary",
-                }}
-              />
-
-              <TextInput
-                label="Số tài khoản"
-                placeholder="Nhập số tài khoản ngân hàng"
-                required
-                {...form.getInputProps("bankAccount")}
-                classNames={{
-                  input: "border-outline-variant focus:border-primary",
-                }}
-              />
-
-              <TextInput
-                label="Tên chủ tài khoản"
-                placeholder="VI DU TEN CHU TAI KHOAN"
-                required
-                {...form.getInputProps("bankOwner")}
-                classNames={{
-                  input: "border-outline-variant focus:border-primary",
-                }}
-              />
-            </div>
+        {profile && (
+          <div style={{ background: "#f9fafb", borderRadius: 9, padding: "10px 14px", marginBottom: 16, fontSize: 13 }}>
+            <span style={{ color: "#6b7280" }}>Tên thương hiệu: </span>
+            <span style={{ fontWeight: 700, color: "#111827" }}>{profile.shopName}</span>
+            <span style={{ marginLeft: 12 }}>·</span>
+            <span style={{ color: "#6b7280", marginLeft: 8 }}>Trạng thái: </span>
+            <span style={{ fontWeight: 600, color: profile.status === "APPROVED" ? "#065f46" : "#d97706" }}>
+              {profile.status === "APPROVED" ? "✓ Đã phê duyệt" : profile.status}
+            </span>
+            <span style={{ marginLeft: 12 }}>·</span>
+            <span style={{ color: "#6b7280", marginLeft: 8 }}>Hoa hồng: </span>
+            <span style={{ fontWeight: 600 }}>{profile.commissionRate}%</span>
           </div>
+        )}
 
-          <Divider mt="xl" mb="md" color="var(--color-outline-variant)" />
+        <Textarea
+          label="Giới thiệu thương hiệu"
+          placeholder="Mô tả ngắn về dịch vụ của bạn..."
+          value={form.description}
+          onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+          rows={4}
+        />
+      </div>
 
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              loading={loading}
-              leftSection={<IconDeviceFloppy size={18} />}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              Lưu thay đổi
-            </Button>
-          </div>
-        </form>
-      </Paper>
+      {/* Bank Info */}
+      <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #e5e7eb", padding: 24, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700, color: "#111827", display: "flex", alignItems: "center", gap: 8 }}>
+          <IconBuildingBank size={18} color="#0b63d6" /> Thông tin ngân hàng
+        </h3>
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>Dùng để nhận tiền khi tạo yêu cầu rút tiền từ ví</p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <TextInput label="Tên ngân hàng" placeholder="VD: Techcombank, VietinBank..." value={form.bankName} onChange={e => setForm(p => ({ ...p, bankName: e.target.value }))} />
+          <TextInput label="Số tài khoản" placeholder="Nhập số tài khoản..." value={form.bankAccount} onChange={e => setForm(p => ({ ...p, bankAccount: e.target.value }))} />
+          <TextInput label="Tên chủ tài khoản" placeholder="NGUYEN VAN A" value={form.bankOwner} onChange={e => setForm(p => ({ ...p, bankOwner: e.target.value }))} />
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        style={{ alignSelf: "flex-start", background: saving ? "#9ca3af" : "#0b63d6", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", cursor: saving ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}
+      >
+        {saving ? <Loader size={16} color="white" /> : <IconCheck size={16} />}
+        {saving ? "Đang lưu..." : "Lưu thay đổi"}
+      </button>
     </div>
   );
 };

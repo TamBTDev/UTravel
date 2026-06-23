@@ -165,3 +165,38 @@ export const getAdminDashboardStats = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Lỗi lấy thống kê tổng quan", error: error.message });
   }
 };
+
+// ══════════════════════════════════════════════════════════
+// DUYỆT YÊU CẦU RÚT TIỀN
+// ══════════════════════════════════════════════════════════
+
+export const getWithdrawRequests = async (req: Request, res: Response) => {
+  try {
+    const { status } = req.query;
+    const requests = await adminService.getWithdrawRequests(status as string);
+    res.status(200).json({ success: true, data: requests });
+  } catch (error: any) {
+    res.status(500).json({ message: "Lỗi lấy danh sách yêu cầu rút tiền", error: error.message });
+  }
+};
+
+export const approveWithdrawRequest = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+    const result = await adminService.approveWithdrawRequest(id);
+    res.status(200).json({ success: true, message: "Đã duyệt và xử lý rút tiền thành công", data: result });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const rejectWithdrawRequest = async (req: Request, res: Response) => {
+  try {
+    const id = getIdParam(req.params.id);
+    const { adminNote } = req.body;
+    const result = await adminService.rejectWithdrawRequest(id, adminNote);
+    res.status(200).json({ success: true, message: "Đã từ chối yêu cầu rút tiền", data: result });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};

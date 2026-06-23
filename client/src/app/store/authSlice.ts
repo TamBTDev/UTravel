@@ -126,6 +126,27 @@ export const resetPasswordWithOtp = createAsyncThunk(
   },
 );
 
+export const fetchCurrentUser = createAsyncThunk(
+  "auth/fetchCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      // /users/profile trả về user đầy đủ kể cả rewardPoints
+      const res = await authService.getCurrentUser();
+      if (res.success && res.data) {
+        // Lưu lại localStorage để khi refresh vẫn còn điểm mới nhất
+        const stored = localStorage.getItem("user");
+        const prev = stored ? JSON.parse(stored) : {};
+        const merged = { ...prev, ...res.data };
+        localStorage.setItem("user", JSON.stringify(merged));
+        return merged;
+      }
+      return rejectWithValue("Không thể lấy dữ liệu user");
+    } catch (err: any) {
+      return rejectWithValue(err.error || err.message || "Lỗi lấy dữ liệu user");
+    }
+  }
+);
+
 // --- Slice ---
 
 const storedUser = localStorage.getItem("user");
@@ -273,6 +294,11 @@ const authSlice = createSlice({
       .addCase(resetPasswordWithOtp.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+
+      // Fetch Current User
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });

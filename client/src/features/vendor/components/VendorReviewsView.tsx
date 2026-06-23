@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Loader, Alert, Select, SegmentedControl } from "@mantine/core";
 import { IconSearch, IconMessage2, IconAlertCircle } from "@tabler/icons-react";
 import { vendorService, VendorReview } from "../../user/services/vendorService";
+import { notifications } from "@mantine/notifications";
 import { ReviewStats } from "./reviews/ReviewStats";
 import { ReviewRow } from "./reviews/ReviewRow";
 
@@ -51,7 +52,7 @@ export const VendorReviewsView = () => {
         );
       }
     } catch (err: any) {
-      alert(err.message || "Không thể gửi phản hồi");
+      notifications.show({ title: 'Lỗi', message: err.message || "Không thể gửi phản hồi", color: 'red' });
       throw err;
     }
   };

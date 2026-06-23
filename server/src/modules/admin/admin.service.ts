@@ -105,7 +105,7 @@ export const adminService = {
       where: { id: userId },
       data: { 
         role: role as any,
-        permissions: permissions ? (permissions as any) : null
+        permissions: permissions ? permissions : undefined
       },
     });
   },
@@ -158,5 +158,67 @@ export const adminService = {
       totalBookings,
       totalRevenue: commissionTransactions._sum.amount || 0,
     };
+  },
+
+  // === DUYỆT YÊU CẦU RÚT TIỀN ===
+  getWithdrawRequests: async (status?: string) => {
+    return await prisma.withdrawRequest.findMany({
+      where: status ? { status: status as any } : {},
+      include: {
+        vendor: {
+          select: {
+            shopName: true,
+            bankName: true,
+            bankAccount: true,
+            bankOwner: true,
+            user: { select: { email: true, firstName: true, lastName: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
+  approveWithdrawRequest: async (requestId: number) => {
+    const request = await prisma.withdrawRequest.findUnique({
+      where: { id: requestId },
+      include: { wallet: true },
+    });
+    if (!request) throw new Error('Không tìm thấy yêu cầu rút tiền');
+    if (request.status !== 'PENDING') throw new Error('Yêu cầu này đã được xử lý trước đó');
+    if (request.wallet.balance < request.amount) throw new Error('Số dư ví không đủ để xử lý yêu cầu này');
+
+    return await prisma.$transaction(async (tx) => {
+      // Trừ balance thực sự
+      await tx.wallet.update({
+        where: { id: request.walletId },
+        data: { balance: { decrement: request.amount } },
+      });
+      // Ghi transaction WITHDRAWAL
+      await tx.walletTransaction.create({
+        data: {
+          walletId: request.walletId,
+          type: 'WITHDRAWAL',
+          amount: request.amount,
+          description: `Rút tiền - YC #${requestId} - ${request.bankName} ${request.bankAccount}`,
+        },
+      });
+      // Cập nhật trạng thái yêu cầu
+      return await tx.withdrawRequest.update({
+        where: { id: requestId },
+        data: { status: 'APPROVED', processedAt: new Date() },
+      });
+    });
+  },
+
+  rejectWithdrawRequest: async (requestId: number, adminNote?: string) => {
+    const request = await prisma.withdrawRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new Error('Không tìm thấy yêu cầu rút tiền');
+    if (request.status !== 'PENDING') throw new Error('Yêu cầu này đã được xử lý trước đó');
+
+    return await prisma.withdrawRequest.update({
+      where: { id: requestId },
+      data: { status: 'REJECTED', adminNote, processedAt: new Date() },
+    });
   },
 };

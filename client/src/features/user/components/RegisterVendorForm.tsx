@@ -12,6 +12,7 @@ import {
   IconUser,
   IconChevronRight,
 } from "@tabler/icons-react";
+import { modals } from '@mantine/modals';
 import { useAppDispatch } from "@/hooks/useAppStore";
 import { vendorService, VendorProfile } from "../services/vendorService";
 import { fetchProfile } from "@/app/store/profileSlice";
@@ -152,28 +153,30 @@ export const RegisterVendorForm = () => {
     fetchVendorDetails();
   }, []);
 
-  const handleResetProfile = async () => {
-    if (
-      !window.confirm(
-        "Bạn có chắc chắn muốn đặt lại hồ sơ? Thao tác này sẽ xóa hồ sơ hiện tại để bạn nộp lại từ đầu.",
-      )
-    )
-      return;
-    setSubmitting(true);
-    setApiError(null);
-    try {
-      const res = await vendorService.resetVendorProfile();
-      if (res.success) {
-        setVendorProfile(null);
-        dispatch(updateUserRole("USER"));
-        dispatch(fetchProfile());
-        form.reset();
+  const handleResetProfile = () => {
+    modals.openConfirmModal({
+      title: 'Xác nhận đặt lại',
+      children: 'Bạn có chắc chắn muốn đặt lại hồ sơ? Thao tác này sẽ xóa hồ sơ hiện tại để bạn nộp lại từ đầu.',
+      labels: { confirm: 'Đặt lại', cancel: 'Hủy' },
+      confirmProps: { color: 'red' },
+      onConfirm: async () => {
+        setSubmitting(true);
+        setApiError(null);
+        try {
+          const res = await vendorService.resetVendorProfile();
+          if (res.success) {
+            setVendorProfile(null);
+            dispatch(updateUserRole("USER"));
+            dispatch(fetchProfile());
+            form.reset();
+          }
+        } catch (err: any) {
+          setApiError(getErrorMessage(err) || "Đặt lại hồ sơ thất bại");
+        } finally {
+          setSubmitting(false);
+        }
       }
-    } catch (err: any) {
-      setApiError(getErrorMessage(err) || "Đặt lại hồ sơ thất bại");
-    } finally {
-      setSubmitting(false);
-    }
+    });
   };
 
   const form = useForm({

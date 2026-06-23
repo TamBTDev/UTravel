@@ -24,18 +24,40 @@ import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { USER_ROLES } from "@shared/constants/roles";
 import { VendorDashboardPage } from "./features/vendor/pages/VendorDashboardPage";
 import CreateReview from "./features/reviews/pages/CreateReview";
+import { FavoritesPage } from "./pages/Favorites";
+import { ModalsProvider } from '@mantine/modals';
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/carousel/styles.css";
 import "./App.css";
 
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "./hooks/useAppStore";
+import { fetchCurrentUser } from "./app/store/authSlice";
+
+// Gọi fetchCurrentUser khi app khởi động để đồng bộ điểm + ví từ server
+function AppInitializer({ children }: { children: React.ReactNode }) {
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((s) => s.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchCurrentUser());
+    }
+  }, [isAuthenticated, dispatch]);
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <Provider store={store}>
       <MantineProvider>
         <Notifications />
+        <ModalsProvider>
         <Router>
+          <AppInitializer>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
@@ -79,8 +101,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/bookings/:id/review"
+              <Route
+                path="/favorites"
+                element={
+                  <ProtectedRoute>
+                    <FavoritesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/bookings/:id/review"
               element={
                 <ProtectedRoute>
                   <CreateReview />
@@ -112,7 +142,9 @@ function App() {
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </AppInitializer>
         </Router>
+        </ModalsProvider>
       </MantineProvider>
     </Provider>
   );

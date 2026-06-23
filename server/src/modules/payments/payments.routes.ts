@@ -6,6 +6,7 @@ import {
   getPaymentByBooking,
   updatePaymentStatus,
   sePayWebhook,
+  getUserWalletBalance,
 } from './payments.controller';
 
 const router = Router();
@@ -18,6 +19,9 @@ router.use(authMiddleware);
 
 // Tạo payment
 router.post('/', createPayment);
+
+// Lấy số dư ví của user
+router.get('/wallet/balance', getUserWalletBalance);
 
 // Polling: Kiểm tra trạng thái payment theo bookingId
 router.get('/booking/:bookingId', getPaymentByBooking);

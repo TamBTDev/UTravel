@@ -50,11 +50,11 @@ export const authService = {
   },
 
   /**
-   * Lấy thông tin user hiện tại
+   * Lấy thông tin user hiện tại (bao gồm rewardPoints mới nhất)
    */
   getCurrentUser: async () => {
     try {
-      const response = await apiClient.get("/auth/me");
+      const response = await apiClient.get("/users/profile");
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;

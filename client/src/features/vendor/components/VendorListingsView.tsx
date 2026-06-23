@@ -1,441 +1,372 @@
 import { useState, useEffect } from "react";
-import { useForm } from "@mantine/form";
-import {
-  Button,
-  Modal,
-  TextInput,
-  Textarea,
-  NumberInput,
-  Loader,
-  Badge,
-  Card,
-  Image,
-  Text,
-  Group,
-  ActionIcon,
-  Menu,
-} from "@mantine/core";
+import { Modal, Loader, TextInput, Textarea, MultiSelect, NumberInput, Select, Switch } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
-  IconPlus,
-  IconMapPin,
-  IconStar,
-  IconDotsVertical,
-  IconEdit,
-  IconTrash,
+  IconBuilding, IconPlus, IconEdit, IconTrash, IconBed,
+  IconChevronDown, IconChevronRight,
+  IconCheck,
 } from "@tabler/icons-react";
-import { vendorService, VendorHotel } from "../../user/services/vendorService";
+import { vendorService } from "../../user/services/vendorService";
 
-interface VendorListingsViewProps {
-  onSelectHotel?: (hotel: VendorHotel) => void;
-}
+const formatVND = (n: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
-export const VendorListingsView = ({
-  onSelectHotel,
-}: VendorListingsViewProps) => {
-  const [hotels, setHotels] = useState<VendorHotel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpened, setModalOpened] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [editingHotel, setEditingHotel] = useState<VendorHotel | null>(null);
+const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
+  DRAFT:    { label: "Bản nháp",    bg: "#f3f4f6", color: "#6b7280" },
+  PENDING:  { label: "Chờ duyệt",   bg: "#fef3c7", color: "#d97706" },
+  APPROVED: { label: "Đã duyệt",    bg: "#d1fae5", color: "#065f46" },
+  REJECTED: { label: "Bị từ chối",  bg: "#fee2e2", color: "#991b1b" },
+};
 
-  const form = useForm({
-    initialValues: {
-      name: "",
-      description: "",
-      address: "",
-      city: "",
-      stars: 3,
-      images: "",
-      amenities: "",
-    },
-    validate: {
-      name: (val) => (val.length < 3 ? "Tên phải từ 3 ký tự" : null),
-      address: (val) => (!val ? "Vui lòng nhập địa chỉ" : null),
-      city: (val) => (!val ? "Vui lòng nhập thành phố" : null),
-      stars: (val) => (val < 1 || val > 5 ? "Số sao từ 1 đến 5" : null),
-    },
+const AMENITY_OPTIONS = ["WiFi","Hồ bơi","Gym","Spa","Nhà hàng","Bar","Điều hòa","TV","Minibar","Bãi đậu xe","Sân vườn","View biển","View núi"];
+const ROOM_AMENITY_OPTIONS = ["Điều hòa","TV","WiFi","Minibar","Bếp nhỏ","Ban công","Bồn tắm","Két sắt","Tủ lạnh","Máy pha cà phê"];
+const ROOM_TYPES = ["single","double","twin","triple","suite","deluxe","family","studio"];
+
+// ── Hotel Form Modal ──────────────────────────────────────
+const HotelFormModal = ({ opened, onClose, hotel, onSave }: any) => {
+  const [form, setForm] = useState({
+    name: "", description: "", location: "", city: "", country: "Vietnam", amenities: [] as string[],
   });
+  const [saving, setSaving] = useState(false);
 
-  const fetchHotels = async () => {
+  useEffect(() => {
+    if (hotel) {
+      setForm({
+        name: hotel.name || "",
+        description: hotel.description || "",
+        location: hotel.location || "",
+        city: hotel.city || "",
+        country: hotel.country || "Vietnam",
+        amenities: (() => { try { return JSON.parse(hotel.amenities || "[]"); } catch { return []; } })(),
+      });
+    } else {
+      setForm({ name: "", description: "", location: "", city: "", country: "Vietnam", amenities: [] });
+    }
+  }, [hotel, opened]);
+
+  const handleSave = async () => {
+    if (!form.name || !form.location || !form.city) {
+      notifications.show({ title: "Thiếu thông tin", message: "Vui lòng điền tên, địa điểm và thành phố", color: "red" });
+      return;
+    }
+    setSaving(true);
+    try {
+      if (hotel) {
+        await vendorService.updateVendorHotel(hotel.id, form);
+        notifications.show({ title: "Đã cập nhật!", message: "Thông tin khách sạn đã được lưu.", color: "green" });
+      } else {
+        await vendorService.createVendorHotel(form);
+        notifications.show({ title: "Đã tạo!", message: "Khách sạn mới đang chờ Admin phê duyệt.", color: "teal" });
+      }
+      onSave();
+      onClose();
+    } catch (e: any) {
+      notifications.show({ title: "Lỗi", message: e.message || "Có lỗi xảy ra", color: "red" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal opened={opened} onClose={onClose} title={<span style={{ fontWeight: 700, fontSize: 16 }}>{hotel ? "Sửa thông tin khách sạn" : "Thêm chỗ nghỉ mới"}</span>} size="lg" radius="lg">
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <TextInput label="Tên chỗ nghỉ *" placeholder="VD: Khách sạn Grand Hà Nội" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <TextInput label="Thành phố *" placeholder="VD: Hà Nội" value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} />
+          <TextInput label="Quốc gia" placeholder="Vietnam" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+        </div>
+        <TextInput label="Địa chỉ cụ thể *" placeholder="VD: 123 Phố Huế, Quận Hai Bà Trưng" value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
+        <Textarea label="Mô tả" placeholder="Mô tả ngắn về chỗ nghỉ..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3} />
+        <MultiSelect label="Tiện ích" data={AMENITY_OPTIONS} value={form.amenities} onChange={v => setForm(p => ({ ...p, amenities: v }))} placeholder="Chọn tiện ích..." searchable />
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+          <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>Hủy</button>
+          <button onClick={handleSave} disabled={saving} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: saving ? "#9ca3af" : "#0b63d6", color: "#fff", cursor: saving ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+            {saving ? <Loader size={14} color="white" /> : <IconCheck size={14} />}
+            {saving ? "Đang lưu..." : "Lưu"}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// ── Room Form Modal ──────────────────────────────────────
+const RoomFormModal = ({ opened, onClose, hotelId, room, onSave }: any) => {
+  const [form, setForm] = useState({ roomNumber: "", type: "double", price: 0, capacity: 2, description: "", amenities: [] as string[] });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (room) {
+      setForm({
+        roomNumber: room.roomNumber || "",
+        type: room.type || "double",
+        price: room.price || 0,
+        capacity: room.capacity || 2,
+        description: room.description || "",
+        amenities: (() => { try { return JSON.parse(room.amenities || "[]"); } catch { return []; } })(),
+      });
+    } else {
+      setForm({ roomNumber: "", type: "double", price: 0, capacity: 2, description: "", amenities: [] });
+    }
+  }, [room, opened]);
+
+  const handleSave = async () => {
+    if (!form.roomNumber || !form.type || !form.price) {
+      notifications.show({ title: "Thiếu thông tin", message: "Vui lòng điền số phòng, loại phòng và giá", color: "red" });
+      return;
+    }
+    setSaving(true);
+    try {
+      if (room) {
+        await vendorService.updateVendorRoom(hotelId, room.id, form);
+        notifications.show({ title: "Đã cập nhật!", message: "Thông tin phòng đã được lưu.", color: "green" });
+      } else {
+        await vendorService.createVendorRoom(hotelId, form);
+        notifications.show({ title: "Đã thêm!", message: "Phòng mới đã được thêm thành công.", color: "teal" });
+      }
+      onSave();
+      onClose();
+    } catch (e: any) {
+      notifications.show({ title: "Lỗi", message: e.message || "Có lỗi xảy ra", color: "red" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal opened={opened} onClose={onClose} title={<span style={{ fontWeight: 700, fontSize: 16 }}>{room ? "Sửa thông tin phòng" : "Thêm phòng mới"}</span>} size="md" radius="lg">
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <TextInput label="Số phòng *" placeholder="VD: 101" value={form.roomNumber} onChange={e => setForm(p => ({ ...p, roomNumber: e.target.value }))} />
+          <Select label="Loại phòng *" data={ROOM_TYPES.map(t => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) }))} value={form.type} onChange={v => setForm(p => ({ ...p, type: v || "double" }))} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <NumberInput label="Giá/đêm (VNĐ) *" placeholder="500000" value={form.price} onChange={v => setForm(p => ({ ...p, price: Number(v) }))} min={0} thousandSeparator="," />
+          <NumberInput label="Sức chứa (người)" value={form.capacity} onChange={v => setForm(p => ({ ...p, capacity: Number(v) }))} min={1} max={20} />
+        </div>
+        <Textarea label="Mô tả phòng" placeholder="Mô tả ngắn về phòng..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} />
+        <MultiSelect label="Tiện ích phòng" data={ROOM_AMENITY_OPTIONS} value={form.amenities} onChange={v => setForm(p => ({ ...p, amenities: v }))} placeholder="Chọn tiện ích..." searchable />
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+          <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>Hủy</button>
+          <button onClick={handleSave} disabled={saving} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: saving ? "#9ca3af" : "#0b63d6", color: "#fff", cursor: saving ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+            {saving ? <Loader size={14} color="white" /> : <IconCheck size={14} />}
+            {saving ? "Đang lưu..." : "Lưu"}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// ── Main View ──────────────────────────────────────────────
+export const VendorListingsView = () => {
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedHotel, setExpandedHotel] = useState<number | null>(null);
+  const [rooms, setRooms] = useState<Record<number, any[]>>({});
+  const [loadingRooms, setLoadingRooms] = useState<Record<number, boolean>>({});
+
+  const [hotelModal, setHotelModal] = useState(false);
+  const [editHotel, setEditHotel] = useState<any>(null);
+  const [roomModal, setRoomModal] = useState<{ opened: boolean; hotelId: number | null; room: any }>({ opened: false, hotelId: null, room: null });
+  const [deleting, setDeleting] = useState<number | null>(null);
+
+  const loadHotels = async () => {
     setLoading(true);
     try {
-      const res = await vendorService.getVendorHotels();
-      if (res.success) {
-        setHotels(res.data);
-      }
-    } catch (err: any) {
-      notifications.show({
-        title: "Lỗi tải dữ liệu",
-        message: err.message || "Không thể lấy danh sách khách sạn",
-        color: "red",
-      });
+      const data = await vendorService.getVendorHotels();
+      setHotels(data || []);
+    } catch (e: any) {
+      notifications.show({ title: "Lỗi", message: e.message || "Không thể tải danh sách chỗ nghỉ", color: "red" });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchHotels();
-  }, []);
+  useEffect(() => { loadHotels(); }, []);
 
-  const handleSubmit = async (values: typeof form.values) => {
-    setSubmitting(true);
+  const loadRooms = async (hotelId: number) => {
+    if (rooms[hotelId]) return;
+    setLoadingRooms(p => ({ ...p, [hotelId]: true }));
     try {
-      const payload = {
-        ...values,
-        images: values.images
-          ? values.images.split(",").map((i) => i.trim())
-          : [],
-        amenities: values.amenities
-          ? values.amenities.split(",").map((i) => i.trim())
-          : [],
-      };
+      const data = await vendorService.getVendorRooms(hotelId);
+      setRooms(p => ({ ...p, [hotelId]: data || [] }));
+    } catch { } finally {
+      setLoadingRooms(p => ({ ...p, [hotelId]: false }));
+    }
+  };
 
-      if (editingHotel) {
-        const res = await vendorService.updateVendorHotel(
-          editingHotel.id,
-          payload,
-        );
-        if (res.success) {
-          notifications.show({
-            title: "Thành công",
-            message: "Đã cập nhật khách sạn",
-            color: "green",
-          });
-        }
-      } else {
-        const res = await vendorService.createVendorHotel(payload);
-        if (res.success) {
-          notifications.show({
-            title: "Thành công",
-            message: "Đã thêm khách sạn mới. Vui lòng chờ duyệt.",
-            color: "green",
-          });
-        }
-      }
+  const toggleExpand = (hotelId: number) => {
+    if (expandedHotel === hotelId) { setExpandedHotel(null); }
+    else { setExpandedHotel(hotelId); loadRooms(hotelId); }
+  };
 
-      setModalOpened(false);
-      setEditingHotel(null);
-      form.reset();
-      fetchHotels();
-    } catch (err: any) {
-      notifications.show({
-        title: "Lỗi",
-        message: err.message || "Không thể lưu thông tin khách sạn",
-        color: "red",
-      });
+  const handleDeleteHotel = async (hotel: any) => {
+    if (!confirm(`Xóa khách sạn "${hotel.name}"? Hành động này không thể hoàn tác.`)) return;
+    setDeleting(hotel.id);
+    try {
+      await vendorService.deleteVendorHotel(hotel.id);
+      notifications.show({ title: "Đã xóa!", message: "Khách sạn đã được xóa thành công.", color: "green" });
+      loadHotels();
+    } catch (e: any) {
+      notifications.show({ title: "Không thể xóa", message: e.message || "Có lỗi xảy ra", color: "red" });
     } finally {
-      setSubmitting(false);
+      setDeleting(null);
     }
   };
 
-  const handleEditHotel = (hotel: VendorHotel) => {
-    setEditingHotel(hotel);
-
-    let imagesStr = "";
-    let amenitiesStr = "";
+  const handleDeleteRoom = async (hotelId: number, room: any) => {
+    if (!confirm(`Xóa phòng "${room.roomNumber}"?`)) return;
     try {
-      imagesStr = hotel.images ? JSON.parse(hotel.images).join(", ") : "";
-    } catch (e) {}
-    try {
-      amenitiesStr = hotel.amenities
-        ? JSON.parse(hotel.amenities).join(", ")
-        : "";
-    } catch (e) {}
-
-    form.setValues({
-      name: hotel.name,
-      description: hotel.description || "",
-      address: hotel.location,
-      city: hotel.city,
-      stars: hotel.rating || 3, // Assuming rating maps to stars initially
-      images: imagesStr,
-      amenities: amenitiesStr,
-    });
-    setModalOpened(true);
-  };
-
-  const handleDeleteHotel = async (hotel: VendorHotel) => {
-    if (
-      !window.confirm(
-        `Bạn có chắc chắn muốn xóa khách sạn ${hotel.name}? Mọi dữ liệu liên quan cũng sẽ bị xóa.`,
-      )
-    )
-      return;
-
-    try {
-      const res = await vendorService.deleteVendorHotel(hotel.id);
-      if (res.success) {
-        notifications.show({
-          title: "Thành công",
-          message: "Đã xóa khách sạn",
-          color: "green",
-        });
-        setHotels((prev) => prev.filter((h) => h.id !== hotel.id));
-      }
-    } catch (err: any) {
-      notifications.show({
-        title: "Lỗi",
-        message: err.message || "Không thể xóa khách sạn",
-        color: "red",
-      });
+      await vendorService.deleteVendorRoom(hotelId, room.id);
+      notifications.show({ title: "Đã xóa!", message: "Phòng đã được xóa.", color: "green" });
+      setRooms(p => ({ ...p, [hotelId]: (p[hotelId] || []).filter(r => r.id !== room.id) }));
+    } catch (e: any) {
+      notifications.show({ title: "Không thể xóa", message: e.message || "Có lỗi xảy ra", color: "red" });
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "APPROVED":
-        return <Badge color="green">Đang hoạt động</Badge>;
-      case "PENDING":
-        return <Badge color="orange">Đang chờ duyệt</Badge>;
-      case "REJECTED":
-        return <Badge color="red">Bị từ chối</Badge>;
-      case "DRAFT":
-        return <Badge color="gray">Bản nháp</Badge>;
-      default:
-        return <Badge color="gray">{status}</Badge>;
-    }
-  };
-
-  const getFirstImage = (imagesStr: string) => {
+  const handleToggleActive = async (hotel: any) => {
     try {
-      const parsed = JSON.parse(imagesStr);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
-    } catch (e) {}
-    return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+      await vendorService.updateVendorHotel(hotel.id, { isActive: !hotel.isActive });
+      setHotels(p => p.map(h => h.id === hotel.id ? { ...h, isActive: !h.isActive } : h));
+    } catch (e: any) {
+      notifications.show({ title: "Lỗi", message: e.message, color: "red" });
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-border-hairline shadow-sm">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h2 className="text-lg font-bold text-on-surface">
-            Danh sách khách sạn
-          </h2>
-          <p className="text-sm text-outline mt-0.5">
-            Quản lý các khách sạn, homestay, resort của bạn
-          </p>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#111827" }}>Danh sách chỗ nghỉ</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>{hotels.length} chỗ nghỉ đang quản lý</p>
         </div>
-        <Button
-          leftSection={<IconPlus size={18} />}
-          onClick={() => {
-            setEditingHotel(null);
-            form.reset();
-            setModalOpened(true);
-          }}
-          className="bg-primary hover:bg-primary-hover"
+        <button
+          onClick={() => { setEditHotel(null); setHotelModal(true); }}
+          style={{ background: "#0b63d6", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", cursor: "pointer", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}
         >
-          Thêm khách sạn mới
-        </Button>
+          <IconPlus size={16} /> Thêm chỗ nghỉ
+        </button>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 bg-white rounded-xl border border-border-hairline">
-          <Loader color="var(--color-primary)" />
+        <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #e5e7eb", padding: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <Loader size="sm" />
+          <span style={{ color: "#6b7280", fontSize: 13 }}>Đang tải danh sách...</span>
         </div>
       ) : hotels.length === 0 ? (
-        <div className="bg-white p-12 rounded-xl border border-border-hairline text-center flex flex-col items-center justify-center shadow-sm">
-          <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-outline mb-4">
-            <IconPlus size={32} />
-          </div>
-          <h3 className="text-lg font-bold text-on-surface mb-2">
-            Bạn chưa có khách sạn nào
-          </h3>
-          <p className="text-on-surface-variant max-w-sm mb-6">
-            Hãy đăng tin khách sạn đầu tiên của bạn để bắt đầu đón khách trên
-            UTravel.
-          </p>
-          <Button
-            onClick={() => setModalOpened(true)}
-            variant="outline"
-            className="border-primary text-primary"
-          >
-            Đăng khách sạn ngay
-          </Button>
+        <div style={{ background: "#fff", borderRadius: 14, border: "2px dashed #e5e7eb", padding: 64, textAlign: "center" }}>
+          <IconBuilding size={48} color="#d1d5db" style={{ marginBottom: 16 }} />
+          <h3 style={{ color: "#374151", margin: "0 0 8px", fontWeight: 700 }}>Chưa có chỗ nghỉ nào</h3>
+          <p style={{ color: "#9ca3af", fontSize: 14, marginBottom: 20 }}>Bắt đầu bằng cách thêm chỗ nghỉ đầu tiên của bạn</p>
+          <button onClick={() => { setEditHotel(null); setHotelModal(true); }} style={{ background: "#0b63d6", color: "#fff", border: "none", borderRadius: 9, padding: "10px 24px", cursor: "pointer", fontWeight: 700, display: "flex", alignItems: "center", gap: 6, margin: "0 auto" }}>
+            <IconPlus size={16} /> Thêm chỗ nghỉ đầu tiên
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {hotels.map((hotel) => (
-            <Card
-              key={hotel.id}
-              padding="lg"
-              radius="md"
-              withBorder
-              className="shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onSelectHotel?.(hotel)}
-            >
-              <Card.Section className="relative">
-                <Image
-                  src={getFirstImage(hotel.images)}
-                  fallbackSrc="https://placehold.co/600x400?text=No+Image"
-                  alt={hotel.name}
-                  className="w-full h-[200px] object-cover"
-                />
-                <div className="absolute top-3 right-3">
-                  {getStatusBadge(hotel.approvalStatus)}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {hotels.map(hotel => {
+            const st = STATUS_MAP[hotel.approvalStatus] || STATUS_MAP.DRAFT;
+            const isExpanded = expandedHotel === hotel.id;
+            return (
+              <div key={hotel.id} style={{ background: "#fff", borderRadius: 14, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                {/* Hotel row */}
+                <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+                  {/* Expand toggle */}
+                  <button onClick={() => toggleExpand(hotel.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", padding: 4, borderRadius: 6, display: "flex" }}>
+                    {isExpanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                  </button>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{hotel.name}</span>
+                      <span style={{ background: st.bg, color: st.color, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>{st.label}</span>
+                      {!hotel.isActive && <span style={{ background: "#fee2e2", color: "#991b1b", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>Đã ẩn</span>}
+                    </div>
+                    <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
+                      📍 {hotel.city} · {hotel._count?.rooms || 0} phòng · {hotel._count?.reviews || 0} đánh giá
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Switch size="sm" checked={hotel.isActive} onChange={() => handleToggleActive(hotel)} label={hotel.isActive ? "Hiển thị" : "Ẩn"} styles={{ label: { fontSize: 12, color: "#6b7280" } }} />
+                    <button onClick={() => { setEditHotel(hotel); setHotelModal(true); }} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 7, padding: "6px 12px", cursor: "pointer", color: "#1d4ed8", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                      <IconEdit size={13} /> Sửa
+                    </button>
+                    {hotel.approvalStatus !== "APPROVED" && (
+                      <button onClick={() => handleDeleteHotel(hotel)} disabled={deleting === hotel.id} style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 7, padding: "6px 12px", cursor: "pointer", color: "#dc2626", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                        <IconTrash size={13} /> Xóa
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </Card.Section>
 
-              <Group justify="space-between" mt="md" mb="xs">
-                <Text
-                  fw={700}
-                  className="text-lg truncate max-w-[200px]"
-                  title={hotel.name}
-                >
-                  {hotel.name}
-                </Text>
-                <Menu withinPortal position="bottom-end" shadow="sm">
-                  <Menu.Target>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <IconDotsVertical size={16} />
-                    </ActionIcon>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      leftSection={<IconEdit size={14} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditHotel(hotel);
-                      }}
-                    >
-                      Chỉnh sửa
-                    </Menu.Item>
-                    <Menu.Item
-                      color="red"
-                      leftSection={<IconTrash size={14} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteHotel(hotel);
-                      }}
-                    >
-                      Xóa khách sạn
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </Group>
+                {/* Rooms panel */}
+                {isExpanded && (
+                  <div style={{ borderTop: "1px solid #f3f4f6", background: "#f9fafb", padding: "16px 20px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Danh sách phòng</span>
+                      <button onClick={() => setRoomModal({ opened: true, hotelId: hotel.id, room: null })} style={{ background: "#0b63d6", color: "#fff", border: "none", borderRadius: 7, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                        <IconPlus size={13} /> Thêm phòng
+                      </button>
+                    </div>
 
-              <Text
-                size="sm"
-                c="dimmed"
-                className="flex items-center gap-1 mb-2 line-clamp-1"
-              >
-                <IconMapPin size={14} /> {hotel.location}, {hotel.city}
-              </Text>
-
-              <div className="flex items-center gap-1 mb-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <IconStar
-                    key={i}
-                    size={14}
-                    className={
-                      i < hotel.rating
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-300"
-                    }
-                  />
-                ))}
+                    {loadingRooms[hotel.id] ? (
+                      <div style={{ display: "flex", justifyContent: "center", padding: "20px 0" }}><Loader size="xs" /></div>
+                    ) : (rooms[hotel.id] || []).length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "20px 0", color: "#9ca3af", fontSize: 13 }}>
+                        <IconBed size={28} color="#d1d5db" style={{ marginBottom: 6 }} />
+                        <p style={{ margin: 0 }}>Chưa có phòng nào. Nhấn "Thêm phòng" để bắt đầu.</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 10 }}>
+                        {(rooms[hotel.id] || []).map(room => (
+                          <div key={room.id} style={{ background: "#fff", borderRadius: 10, border: "1px solid #e5e7eb", padding: "12px 14px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                              <div>
+                                <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>Phòng {room.roomNumber}</span>
+                                <span style={{ marginLeft: 6, background: "#eff6ff", color: "#1d4ed8", fontSize: 11, padding: "1px 7px", borderRadius: 20, fontWeight: 600 }}>{room.type}</span>
+                              </div>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <button onClick={() => setRoomModal({ opened: true, hotelId: hotel.id, room })} style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 7px", cursor: "pointer", color: "#374151" }}><IconEdit size={12} /></button>
+                                <button onClick={() => handleDeleteRoom(hotel.id, room)} style={{ background: "none", border: "1px solid #fca5a5", borderRadius: 6, padding: "3px 7px", cursor: "pointer", color: "#dc2626" }}><IconTrash size={12} /></button>
+                              </div>
+                            </div>
+                            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: "#0b63d6" }}>{formatVND(room.price)}<span style={{ fontWeight: 400, fontSize: 12, color: "#9ca3af" }}>/đêm</span></p>
+                            <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>👥 {room.capacity} người · {room.isAvailable ? "✅ Còn trống" : "🔴 Đã đặt"}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-
-              <div className="flex gap-4 border-t border-border-hairline pt-4 mt-auto">
-                <div className="text-center flex-1">
-                  <Text fw={700} className="text-primary">
-                    {hotel._count.rooms}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    Phòng
-                  </Text>
-                </div>
-                <div className="text-center flex-1 border-l border-border-hairline">
-                  <Text fw={700} className="text-primary">
-                    {hotel._count.reviews}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    Đánh giá
-                  </Text>
-                </div>
-              </div>
-            </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      <Modal
-        opened={modalOpened}
-        onClose={() => {
-          setModalOpened(false);
-          setEditingHotel(null);
-          form.reset();
+      {/* Modals */}
+      <HotelFormModal
+        opened={hotelModal}
+        onClose={() => setHotelModal(false)}
+        hotel={editHotel}
+        onSave={() => { loadHotels(); setRooms({}); }}
+      />
+      <RoomFormModal
+        opened={roomModal.opened}
+        onClose={() => setRoomModal({ opened: false, hotelId: null, room: null })}
+        hotelId={roomModal.hotelId}
+        room={roomModal.room}
+        onSave={() => {
+          if (roomModal.hotelId) {
+            setRooms(p => { const n = { ...p }; delete n[roomModal.hotelId!]; return n; });
+            loadRooms(roomModal.hotelId);
+          }
         }}
-        title={
-          <Text fw={700} size="lg">
-            {editingHotel ? "Chỉnh sửa khách sạn" : "Thêm khách sạn mới"}
-          </Text>
-        }
-        size="lg"
-      >
-        <form onSubmit={form.onSubmit(handleSubmit)} className="space-y-4">
-          <TextInput
-            label="Tên khách sạn"
-            placeholder="Ví dụ: UTravel Resort & Spa"
-            required
-            {...form.getInputProps("name")}
-          />
-          <Textarea
-            label="Mô tả"
-            placeholder="Mô tả ngắn gọn về khách sạn..."
-            minRows={3}
-            {...form.getInputProps("description")}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <TextInput
-              label="Địa chỉ"
-              placeholder="Số nhà, tên đường..."
-              required
-              {...form.getInputProps("address")}
-            />
-            <TextInput
-              label="Thành phố"
-              placeholder="Ví dụ: Đà Nẵng"
-              required
-              {...form.getInputProps("city")}
-            />
-          </div>
-          <NumberInput
-            label="Tiêu chuẩn sao"
-            min={1}
-            max={5}
-            required
-            {...form.getInputProps("stars")}
-          />
-          <TextInput
-            label="Hình ảnh (URLs)"
-            placeholder="Nhập các đường link ảnh, phân cách bằng dấu phẩy"
-            {...form.getInputProps("images")}
-          />
-          <TextInput
-            label="Tiện ích"
-            placeholder="Wifi, Hồ bơi, Spa (phân cách bằng dấu phẩy)"
-            {...form.getInputProps("amenities")}
-          />
-          <div className="flex justify-end gap-3 mt-6">
-            <Button variant="default" onClick={() => setModalOpened(false)}>
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              loading={submitting}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              Lưu & Gửi duyệt
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      />
     </div>
   );
 };

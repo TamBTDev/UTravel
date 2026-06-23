@@ -2,14 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Progress } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { createPayment, getBookingDetail, getPaymentByBooking } from '@/features/booking/services/bookingService';
+import { createPayment, getBookingDetail, getPaymentByBooking, getUserWalletBalance } from '@/features/booking/services/bookingService';
 import {
   IconConfetti, IconCircleCheck, IconLock, IconClock,
   IconShieldCheck, IconAlertCircle, IconCash, IconBuildingBank,
   IconBulb, IconMapPin, IconArrowLeft, IconRefresh,
-  IconCalendarEvent, IconBed, IconCopy, IconCheck,
+  IconCalendarEvent, IconBed, IconCopy, IconCheck, IconWallet,
 } from '@tabler/icons-react';
 import dayjs from 'dayjs';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
+import { fetchCurrentUser } from '@/app/store/authSlice';
 
 interface BankInfo {
   bankCode: string;
@@ -53,14 +55,24 @@ const CopyButton: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
+import { validatePromotion } from '@/features/booking/services/bookingService';
+
 export const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bookingId = searchParams.get('bookingId');
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state: any) => state.auth.user);
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [promoCode, setPromoCode] = useState('');
+  const [validatedPromo, setValidatedPromo] = useState<any | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const [usePointsToggle, setUsePointsToggle] = useState(false);
 
   const [selectedMethod, setSelectedMethod] = useState<'CASH' | 'BANK_TRANSFER' | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -77,11 +89,18 @@ export const PaymentPage: React.FC = () => {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       if (!bookingId) { setError('Thiếu thông tin đặt phòng'); setLoading(false); return; }
       try {
-        const data = await getBookingDetail(bookingId);
+        // Tải song song: booking detail + refresh user (lấy điểm thưởng mới nhất)
+        const [data] = await Promise.all([
+          getBookingDetail(bookingId),
+          dispatch(fetchCurrentUser()),
+        ]);
         setBooking(data);
       } catch (e: any) {
         setError(e.message || 'Không thể tải thông tin đặt phòng');
@@ -91,6 +110,12 @@ export const PaymentPage: React.FC = () => {
     };
     load();
   }, [bookingId]);
+
+  useEffect(() => {
+    getUserWalletBalance().then(w => {
+      setWalletBalance(w.balance);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => () => {
     if (pollingRef.current) clearInterval(pollingRef.current);
@@ -120,6 +145,7 @@ export const PaymentPage: React.FC = () => {
             message: 'Đặt phòng của bạn đã được xác nhận.',
             color: 'green',
           });
+          dispatch(fetchCurrentUser());
           setTimeout(() => navigate('/bookings'), 3000);
         }
       } catch { /* ignore poll errors */ }
@@ -133,17 +159,89 @@ export const PaymentPage: React.FC = () => {
     }, PAYMENT_TIMEOUT);
   }, [bookingId, navigate]);
 
+  const totalPrice = booking?.totalPrice || 0;
+
+  // Calculate discounts
+  let discountAmount = 0;
+  if (validatedPromo && totalPrice >= validatedPromo.minOrderValue) {
+    if (validatedPromo.discountType === 'percentage') {
+      discountAmount = (totalPrice * validatedPromo.discountValue) / 100;
+      if (validatedPromo.maxDiscount && discountAmount > validatedPromo.maxDiscount) {
+        discountAmount = validatedPromo.maxDiscount;
+      }
+    } else {
+      discountAmount = validatedPromo.discountValue;
+    }
+  }
+
+  // Calculate points
+  let pointsDiscount = 0;
+  let pointsToUse = 0;
+  if (usePointsToggle && user && user.rewardPoints > 0) {
+    const maxPointsAllowed = Math.floor(Math.max(0, totalPrice - discountAmount));
+    pointsToUse = Math.min(user.rewardPoints, maxPointsAllowed);
+    pointsDiscount = pointsToUse; // 1 điểm = 1 VNĐ
+  }
+
+  const finalPrice = Math.max(0, totalPrice - discountAmount - pointsDiscount);
+  const deductWallet = useWallet && walletBalance > 0;
+  const walletAmount = deductWallet ? Math.min(walletBalance, finalPrice) : 0;
+  const remainingAmount = Math.max(0, finalPrice - walletAmount);
+
+  const handleValidatePromo = async () => {
+    if (!promoCode.trim()) { setPromoError('Vui lòng nhập mã khuyến mãi'); return; }
+    setPromoError(null);
+    try {
+      const hotelId = booking?.room?.hotel?.id;
+      const data = await validatePromotion(promoCode.trim(), hotelId);
+      setValidatedPromo(data);
+      notifications.show({ title: 'Thành công', message: 'Áp dụng mã khuyến mãi thành công', color: 'green' });
+    } catch (err: any) {
+      setValidatedPromo(null);
+      setPromoError(err.message || 'Mã khuyến mãi không hợp lệ');
+    }
+  };
+
   const handlePayment = async () => {
-    if (!bookingId || !selectedMethod) { setPaymentError('Vui lòng chọn phương thức thanh toán'); return; }
+    if (!bookingId) return;
+    if (remainingAmount > 0 && !selectedMethod) {
+      setPaymentError('Vui lòng chọn phương thức thanh toán');
+      return;
+    }
+    
     setProcessing(true); setPaymentError(null);
     try {
-      const result = await createPayment({ bookingId, method: selectedMethod });
+      if (remainingAmount === 0) {
+        await createPayment({
+          bookingId,
+          method: 'WALLET', // Hoặc CASH để bypass, trên backend sẽ chốt status
+          useWallet: deductWallet,
+          walletAmount,
+          usePoints: usePointsToggle ? pointsToUse : 0,
+          promotionCode: validatedPromo?.code,
+        } as any);
+        notifications.show({ title: 'Thanh toán thành công! 🎉', message: 'Đã hoàn tất thanh toán.', color: 'green' });
+        setBankTransferPaid(true); // Tái sử dụng state này để show màn hình Success
+        dispatch(fetchCurrentUser());
+        setTimeout(() => navigate('/bookings'), 3000);
+        return;
+      }
+
+      const result = await createPayment({
+        bookingId,
+        method: selectedMethod,
+        useWallet: deductWallet,
+        walletAmount,
+        usePoints: usePointsToggle ? pointsToUse : 0,
+        promotionCode: validatedPromo?.code,
+      } as any);
+
       if (selectedMethod === 'CASH') {
         setCashSuccess(true);
         notifications.show({ title: 'Đặt phòng thành công!', message: 'Vui lòng thanh toán tiền mặt khi nhận phòng.', color: 'teal' });
         setTimeout(() => navigate('/bookings'), 3000);
       } else {
-        setBankInfo(result.data.bankInfo);
+        setBankInfo(result.data?.bankInfo || result.bankInfo);
         setTimeLeft(PAYMENT_TIMEOUT);
         startPolling();
       }
@@ -428,21 +526,108 @@ export const PaymentPage: React.FC = () => {
                 </div>
               </label>
 
+              {/* Promo Code Input */}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #f3f4f6' }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>Mã khuyến mãi</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Nhập mã giảm giá"
+                    style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
+                  />
+                  <button
+                    onClick={handleValidatePromo}
+                    style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 8, padding: '0 16px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+                {promoError && <p style={{ fontSize: 12, color: '#ef4444', marginTop: 6 }}>{promoError}</p>}
+                {validatedPromo && <p style={{ fontSize: 12, color: '#10b981', marginTop: 6 }}>Đã áp dụng mã giảm giá!</p>}
+              </div>
+
+              {/* Points Toggle */}
+              {user && user.rewardPoints > 0 && (
+                <div style={{ marginTop: 16, padding: '12px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Điểm thưởng UTravel
+                    </p>
+                    <p style={{ fontSize: 12, color: '#15803d', marginTop: 2 }}>
+                      Bạn có {user.rewardPoints} điểm (={formatVND(user.rewardPoints)})
+                    </p>
+                  </div>
+                  <label style={{ position: 'relative', display: 'inline-block', width: 44, height: 24 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={usePointsToggle} 
+                      onChange={e => setUsePointsToggle(e.target.checked)}
+                      style={{ opacity: 0, width: 0, height: 0 }} 
+                    />
+                    <span style={{
+                      position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, 
+                      backgroundColor: usePointsToggle ? '#10b981' : '#cbd5e1', 
+                      transition: '.4s', borderRadius: 24 
+                    }}>
+                      <span style={{
+                        position: 'absolute', content: '""', height: 18, width: 18, left: 3, bottom: 3, 
+                        backgroundColor: 'white', transition: '.4s', borderRadius: '50%',
+                        transform: usePointsToggle ? 'translateX(20px)' : 'translateX(0)'
+                      }}></span>
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* ── Ví UTravel Section ── */}
+              <div style={{ marginTop: 16, border: `2px solid ${useWallet ? '#0b63d6' : '#e5e7eb'}`, borderRadius: 12, padding: 16, background: useWallet ? '#eff6ff' : '#fafafa', transition: 'all 0.15s', opacity: walletBalance > 0 ? 1 : 0.6 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: walletBalance > 0 ? 'pointer' : 'not-allowed' }}>
+                  <div
+                    onClick={() => { if (walletBalance > 0) setUseWallet(p => !p); }}
+                    style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${useWallet ? '#0b63d6' : '#d1d5db'}`, background: useWallet ? '#0b63d6' : (walletBalance > 0 ? '#fff' : '#e5e7eb'), display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 }}
+                  >
+                    {useWallet && <IconCheck size={12} color="#fff" strokeWidth={3} />}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                    <div style={{ width: 38, height: 38, background: useWallet ? '#dbeafe' : '#f3f4f6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <IconWallet size={20} color={useWallet ? '#0b63d6' : '#6b7280'} />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, color: '#111827', margin: 0, fontSize: 14 }}>Dùng Ví UTravel</p>
+                      <p style={{ color: walletBalance > 0 ? '#6b7280' : '#ef4444', margin: '2px 0 0', fontSize: 12 }}>
+                        Số dư: <strong style={{ color: walletBalance > 0 ? '#0b63d6' : '#ef4444' }}>{formatVND(walletBalance)}</strong>
+                        {walletBalance === 0 && ' (Không đủ số dư)'}
+                        {useWallet && booking && walletBalance > 0 && (
+                          <> → Khấu trừ: <strong style={{ color: '#16a34a' }}>{formatVND(walletAmount)}</strong></>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </label>
+                {useWallet && booking && remainingAmount === 0 && (
+                  <div style={{ marginTop: 10, background: '#d1fae5', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#065f46', fontWeight: 600 }}>
+                    ✅ Đã thanh toán toàn bộ — không cần chọn phương thức khác!
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={handlePayment}
-                disabled={!selectedMethod || processing}
+                disabled={(remainingAmount > 0 && !selectedMethod) || processing}
                 style={{
                   width: '100%', marginTop: 20, padding: '14px',
-                  background: !selectedMethod || processing ? '#9ca3af' : '#1a56db',
+                  background: ((remainingAmount > 0 && !selectedMethod) || processing) ? '#9ca3af' : '#1a56db',
                   color: '#fff', border: 'none', borderRadius: 12,
-                  fontSize: 16, fontWeight: 700, cursor: !selectedMethod || processing ? 'not-allowed' : 'pointer',
+                  fontSize: 16, fontWeight: 700, cursor: ((remainingAmount > 0 && !selectedMethod) || processing) ? 'not-allowed' : 'pointer',
                   transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
                 {processing ? (
                   <><div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Đang xử lý...</>
                 ) : (
-                  <><IconLock size={16} /> {selectedMethod === 'CASH' ? 'Xác nhận đặt phòng' : selectedMethod === 'BANK_TRANSFER' ? 'Thanh toán ngay' : 'Chọn phương thức thanh toán'}</>
+                  <><IconLock size={16} /> {remainingAmount === 0 ? 'Xác nhận thanh toán' : selectedMethod === 'CASH' ? 'Xác nhận đặt phòng' : selectedMethod === 'BANK_TRANSFER' ? 'Thanh toán ngay' : 'Chọn phương thức thanh toán'}</>
                 )}
               </button>
 
@@ -498,18 +683,36 @@ export const PaymentPage: React.FC = () => {
                   <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                       <span style={{ color: '#374151' }}>{formatVND(booking.room?.price || 0)} × {nights} đêm</span>
-                      <span style={{ fontWeight: 500 }}>{formatVND(booking.totalPrice)}</span>
+                      <span style={{ fontWeight: 500 }}>{formatVND(totalPrice)}</span>
                     </div>
-                    {booking.discountAmount > 0 && (
+                    {discountAmount > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                        <span style={{ color: '#16a34a' }}>Giảm giá</span>
-                        <span style={{ fontWeight: 600, color: '#16a34a' }}>-{formatVND(booking.discountAmount)}</span>
+                        <span style={{ color: '#16a34a' }}>Khuyến mãi ({validatedPromo?.code})</span>
+                        <span style={{ fontWeight: 600, color: '#16a34a' }}>-{formatVND(discountAmount)}</span>
+                      </div>
+                    )}
+                    {pointsDiscount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                        <span style={{ color: '#16a34a' }}>Dùng điểm ({pointsToUse})</span>
+                        <span style={{ fontWeight: 600, color: '#16a34a' }}>-{formatVND(pointsDiscount)}</span>
                       </div>
                     )}
                     <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
                       <span style={{ fontWeight: 700, fontSize: 15 }}>Tổng cộng</span>
-                      <span style={{ fontWeight: 800, fontSize: 22, color: '#0b63d6' }}>{formatVND(booking.finalPrice)}</span>
+                      <span style={{ fontWeight: 800, fontSize: 20, color: '#0b63d6' }}>{formatVND(finalPrice)}</span>
                     </div>
+                    {walletAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                        <span style={{ color: '#ea580c' }}>Trừ qua Ví UTravel</span>
+                        <span style={{ fontWeight: 600, color: '#ea580c' }}>-{formatVND(walletAmount)}</span>
+                      </div>
+                    )}
+                    {walletAmount > 0 && (
+                      <div style={{ borderTop: '1px dashed #e5e7eb', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                        <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>Cần thanh toán</span>
+                        <span style={{ fontWeight: 800, fontSize: 22, color: remainingAmount === 0 ? '#16a34a' : '#111827' }}>{formatVND(remainingAmount)}</span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Loader, Alert } from "@mantine/core";
 import { IconAlertCircle, IconUsers } from "@tabler/icons-react";
 import { adminService, AdminUser } from "../services/adminService";
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
 import { UserTable } from "./users/UserTable";
 import { UserFilters } from "./users/UserFilters";
 import { RoleConfigModal } from "./users/RoleConfigModal";
@@ -46,21 +48,28 @@ export const AdminUsersView = () => {
       ? "Bạn có muốn Mở khóa tài khoản này?" 
       : "Bạn có chắc chắn muốn Khóa tài khoản này? Người dùng sẽ không thể đăng nhập.";
       
-    if (!window.confirm(promptMessage)) return;
-
-    setActionId(userId);
-    try {
-      const res = await adminService.updateUserStatus(userId, nextStatus);
-      if (res.success) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, status: nextStatus } : u))
-        );
+    modals.openConfirmModal({
+      title: 'Xác nhận trạng thái',
+      children: promptMessage,
+      labels: { confirm: 'Đồng ý', cancel: 'Hủy' },
+      confirmProps: { color: currentStatus === "SUSPENDED" ? 'green' : 'red' },
+      onConfirm: async () => {
+        setActionId(userId);
+        try {
+          const res = await adminService.updateUserStatus(userId, nextStatus);
+          if (res.success) {
+            setUsers((prev) =>
+              prev.map((u) => (u.id === userId ? { ...u, status: nextStatus } : u))
+            );
+            notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái thành công', color: 'green' });
+          }
+        } catch (err: any) {
+          notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi cập nhật trạng thái tài khoản", color: 'red' });
+        } finally {
+          setActionId(null);
+        }
       }
-    } catch (err: any) {
-      alert(err.error || err.message || "Lỗi khi cập nhật trạng thái tài khoản");
-    } finally {
-      setActionId(null);
-    }
+    });
   };
 
   const handleOpenRoleModal = (user: AdminUser) => {
@@ -75,10 +84,10 @@ export const AdminUsersView = () => {
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, role, permissions } : u))
         );
-        alert("Cập nhật quyền thành công!");
+        notifications.show({ title: 'Thành công', message: 'Cập nhật quyền thành công!', color: 'green' });
       }
     } catch (err: any) {
-      alert(err.error || err.message || "Lỗi khi phân quyền");
+      notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi phân quyền", color: 'red' });
       throw err;
     }
   };

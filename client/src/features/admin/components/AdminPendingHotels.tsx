@@ -10,6 +10,9 @@ import {
   IconStar,
 } from "@tabler/icons-react";
 import { adminService, PendingHotel } from "../services/adminService";
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
+import { TextInput, Button } from '@mantine/core';
 import dayjs from "dayjs";
 
 export const AdminPendingHotels = () => {
@@ -40,26 +43,59 @@ export const AdminPendingHotels = () => {
     fetchHotels();
   }, [filterStatus]);
 
-  const handleStatusUpdate = async (hotelId: number, status: "APPROVED" | "REJECTED") => {
-    let rejectReason = "";
+  const handleStatusUpdate = (hotelId: number, status: "APPROVED" | "REJECTED") => {
     if (status === "REJECTED") {
-      const reason = window.prompt("Nhập lý do từ chối khách sạn này:");
-      if (reason === null) return; // Cancelled
-      rejectReason = reason.trim() || "Không đạt tiêu chuẩn duyệt của hệ thống";
+      modals.open({
+        title: 'Từ chối khách sạn',
+        children: (
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const reason = formData.get('reason') as string;
+            const finalReason = reason.trim() || "Không đạt tiêu chuẩn duyệt của hệ thống";
+            modals.closeAll();
+            setActionId(hotelId);
+            try {
+              const res = await adminService.updateHotelStatus(hotelId, status, finalReason);
+              if (res.success) {
+                setHotels((prev) => prev.filter((h) => h.id !== hotelId));
+                notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái thành công', color: 'green' });
+              }
+            } catch (err: any) {
+              notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi cập nhật trạng thái khách sạn", color: 'red' });
+            } finally {
+              setActionId(null);
+            }
+          }}>
+            <TextInput name="reason" label="Lý do từ chối" placeholder="Nhập lý do..." data-autofocus />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="default" onClick={() => modals.closeAll()}>Hủy</Button>
+              <Button color="red" type="submit">Từ chối</Button>
+            </div>
+          </form>
+        ),
+      });
     } else {
-      if (!window.confirm("Bạn có chắc chắn muốn Duyệt khách sạn này lên sàn?")) return;
-    }
-
-    setActionId(hotelId);
-    try {
-      const res = await adminService.updateHotelStatus(hotelId, status, rejectReason);
-      if (res.success) {
-        setHotels((prev) => prev.filter((h) => h.id !== hotelId));
-      }
-    } catch (err: any) {
-      alert(err.error || err.message || "Lỗi khi cập nhật trạng thái khách sạn");
-    } finally {
-      setActionId(null);
+      modals.openConfirmModal({
+        title: 'Xác nhận duyệt',
+        children: 'Bạn có chắc chắn muốn Duyệt khách sạn này lên sàn?',
+        labels: { confirm: 'Duyệt', cancel: 'Hủy' },
+        confirmProps: { color: 'green' },
+        onConfirm: async () => {
+          setActionId(hotelId);
+          try {
+            const res = await adminService.updateHotelStatus(hotelId, status, "");
+            if (res.success) {
+              setHotels((prev) => prev.filter((h) => h.id !== hotelId));
+              notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái thành công', color: 'green' });
+            }
+          } catch (err: any) {
+            notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi cập nhật trạng thái khách sạn", color: 'red' });
+          } finally {
+            setActionId(null);
+          }
+        }
+      });
     }
   };
 

@@ -16,6 +16,9 @@ import {
   PendingVendor,
 } from "../services/adminService";
 
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
+
 export const AdminStats = () => {
   const [stats, setStats] = useState<StatsType | null>(null);
   const [pendingVendors, setPendingVendors] = useState<PendingVendor[]>([]);
@@ -50,31 +53,33 @@ export const AdminStats = () => {
     fetchData();
   }, []);
 
-  const handleVendorStatusUpdate = async (
+  const handleVendorStatusUpdate = (
     vendorId: number,
     status: "APPROVED" | "REJECTED",
   ) => {
-    if (
-      !window.confirm(
-        `Bạn có chắc chắn muốn ${status === "APPROVED" ? "Phê duyệt" : "Từ chối"} đối tác này?`,
-      )
-    )
-      return;
-
-    setActionId(vendorId);
-    try {
-      const res = await adminService.updateVendorStatus(vendorId, status);
-      if (res.success) {
-        setPendingVendors((prev) => prev.filter((v) => v.id !== vendorId));
-        // Refresh stats since vendor count changes
-        const statsRes = await adminService.getAdminStats();
-        if (statsRes.success) setStats(statsRes.data);
+    modals.openConfirmModal({
+      title: 'Xác nhận',
+      children: `Bạn có chắc chắn muốn ${status === "APPROVED" ? "Phê duyệt" : "Từ chối"} đối tác này?`,
+      labels: { confirm: 'Đồng ý', cancel: 'Hủy' },
+      confirmProps: { color: status === "APPROVED" ? 'green' : 'red' },
+      onConfirm: async () => {
+        setActionId(vendorId);
+        try {
+          const res = await adminService.updateVendorStatus(vendorId, status);
+          if (res.success) {
+            setPendingVendors((prev) => prev.filter((v) => v.id !== vendorId));
+            // Refresh stats since vendor count changes
+            const statsRes = await adminService.getAdminStats();
+            if (statsRes.success) setStats(statsRes.data);
+            notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái thành công', color: 'green' });
+          }
+        } catch (err: any) {
+          notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi cập nhật trạng thái", color: 'red' });
+        } finally {
+          setActionId(null);
+        }
       }
-    } catch (err: any) {
-      alert(err.error || err.message || "Lỗi khi cập nhật trạng thái");
-    } finally {
-      setActionId(null);
-    }
+    });
   };
 
   if (loading) {

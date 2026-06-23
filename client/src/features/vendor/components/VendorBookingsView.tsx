@@ -5,7 +5,9 @@ import {
   IconSearch,
   IconDownload,
   IconAlertCircle,
+  IconX,
 } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
 import { vendorService, VendorBooking } from "../../user/services/vendorService";
 import { BookingFilterSidebar } from "./bookings/BookingFilterSidebar";
 import { BookingRow } from "./bookings/BookingRow";
@@ -54,9 +56,10 @@ export const VendorBookingsView = () => {
         setBookings((prev) =>
           prev.map((b) => (b.id === bookingId ? { ...b, status: status as any } : b))
         );
+        notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái thành công', color: 'green' });
       }
     } catch (err: any) {
-      alert(err.message || "Không thể cập nhật trạng thái đơn đặt phòng");
+      notifications.show({ title: 'Lỗi', message: err.message || "Không thể cập nhật trạng thái đơn đặt phòng", color: 'red' });
     } finally {
       setActionLoadingId(null);
     }
@@ -160,7 +163,7 @@ export const VendorBookingsView = () => {
   // Export Filtered Bookings to CSV
   const handleExportCSV = () => {
     if (filteredBookings.length === 0) {
-      alert("Không có đơn hàng nào để xuất!");
+      notifications.show({ title: 'Cảnh báo', message: 'Không có đơn hàng nào để xuất!', color: 'yellow' });
       return;
     }
 

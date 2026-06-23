@@ -8,9 +8,11 @@ import {
   IconClockHour4, IconArrowRight,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { getMyBookings, cancelBooking } from '@/features/booking/services/bookingService';
+import { getMyBookings, cancelBooking, completeBookingAction } from '@/features/booking/services/bookingService';
 import dayjs from 'dayjs';
 import { AppLayout } from '../components/layout';
+import { useAppDispatch } from '@/hooks/useAppStore';
+import { fetchCurrentUser } from '@/app/store/authSlice';
 
 const formatVND = (amount: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -37,6 +39,7 @@ const parseImg = (val: any): string => {
 };
 
 export const Bookings = () => {
+  const dispatch = useAppDispatch();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -422,14 +425,70 @@ export const Bookings = () => {
 
               {/* Action buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
-                {(s.status === 'PENDING' || s.status === 'CONFIRMED') && (
-                  <Button
-                    fullWidth color="red" variant="light" size="md"
-                    leftSection={<IconX size={16} />}
-                    onClick={() => { setSelected(null); setTimeout(() => setCancelTarget(s), 200); }}
-                  >
-                    Hủy đặt phòng
-                  </Button>
+                {/* Nút hủy — hiển thị theo quy tắc thời gian */}
+                {(s.status === 'PENDING' || s.status === 'CONFIRMED') && (() => {
+                  const now = new Date();
+                  const checkIn = new Date(s.checkInDate);
+                  const hoursLeft = (checkIn.getTime() - now.getTime()) / (1000 * 60 * 60);
+                  const isPastCheckIn = now >= checkIn;
+                  const isWithin24h = s.status === 'CONFIRMED' && hoursLeft < 24 && !isPastCheckIn;
+
+                  if (isPastCheckIn) {
+                    // Đã qua ngày check-in → không hiện nút hủy
+                    return null;
+                  }
+                  if (isWithin24h) {
+                    // Trong vòng 24h trước check-in → disable với cảnh báo
+                    return (
+                      <div style={{ background: '#fef3c7', borderRadius: 10, padding: '10px 14px', border: '1px solid #fcd34d' }}>
+                        <p style={{ margin: 0, fontSize: 12, color: '#92400e', fontWeight: 600 }}>
+                          🔒 Không thể hủy trong vòng 24 giờ trước nhận phòng
+                        </p>
+                        <p style={{ margin: '4px 0 0', fontSize: 11, color: '#b45309' }}>
+                          Còn {Math.floor(hoursLeft)} giờ trước khi nhận phòng. Liên hệ hỗ trợ nếu cần.
+                        </p>
+                      </div>
+                    );
+                  }
+                  // Có thể hủy bình thường
+                  return (
+                    <Button
+                      fullWidth color="red" variant="light" size="md"
+                      leftSection={<IconX size={16} />}
+                      onClick={() => { setSelected(null); setTimeout(() => setCancelTarget(s), 200); }}
+                    >
+                      Hủy đặt phòng
+                    </Button>
+                  );
+                })()}
+                {s.status === 'CONFIRMED' && (
+                  <>
+                    {s.payment && s.payment.method !== 'CASH' && s.payment.status !== 'COMPLETED' ? (
+                      <Button fullWidth color="gray" size="md" disabled>
+                        Chưa thanh toán - Không thể hoàn thành
+                      </Button>
+                    ) : (
+                      <Button
+                        fullWidth color="teal" size="md"
+                        onClick={async () => {
+                          if (confirm("Xác nhận bạn đã hoàn thành kỳ nghỉ và hài lòng với dịch vụ?")) {
+                            try {
+                              await completeBookingAction(s.id);
+                              // Cập nhật điểm thưởng trong Redux
+                              dispatch(fetchCurrentUser());
+                              notifications.show({ title: 'Thành công', message: 'Cảm ơn bạn đã xác nhận! Điểm thưởng đã được cộng vào tài khoản.', color: 'green' });
+                              loadBookings();
+                              setSelected(null);
+                            } catch (e: any) {
+                              notifications.show({ title: 'Lỗi', message: e.response?.data?.message || e.message, color: 'red' });
+                            }
+                          }
+                        }}
+                      >
+                        Xác nhận hoàn thành kỳ nghỉ
+                      </Button>
+                    )}
+                  </>
                 )}
                 {s.status === 'COMPLETED' && !s.review && (
                   <Button

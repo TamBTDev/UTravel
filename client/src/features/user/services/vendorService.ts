@@ -30,6 +30,7 @@ export interface VendorProfile {
 }
 
 export interface VendorDashboardStats {
+  walletBalance: number;
   availableRooms: number;
   newBookingsCount: number;
   averageRating: number;
@@ -214,15 +215,14 @@ export const vendorService = {
     }
   },
 
-  updateVendorProfile: async (payload: Partial<RegisterVendorPayload> & { logo?: string }): Promise<{ success: boolean; message: string; data: VendorProfile }> => {
+  updateVendorProfile: async (data: Partial<RegisterVendorPayload>): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await apiClient.patch("/vendors/profile", payload);
+      const response = await apiClient.patch("/vendors/profile", data);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
     }
   },
-
 
   getVendorBookings: async (): Promise<{ success: boolean; data: VendorBooking[] }> => {
     try {
@@ -287,75 +287,70 @@ export const vendorService = {
     }
   },
 
-  getVendorHotels: async (): Promise<{ success: boolean; data: VendorHotel[] }> => {
-    try {
-      const response = await apiClient.get("/vendors/hotels");
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  // Hotels
+  getVendorHotels: async () => {
+    const response = await apiClient.get("/vendors/hotels");
+    return response.data.data;
+  },
+  createVendorHotel: async (data: any) => {
+    const response = await apiClient.post("/vendors/hotels", data);
+    return response.data;
+  },
+  updateVendorHotel: async (id: number, data: any) => {
+    const response = await apiClient.put(`/vendors/hotels/${id}`, data);
+    return response.data;
+  },
+  deleteVendorHotel: async (id: number) => {
+    const response = await apiClient.delete(`/vendors/hotels/${id}`);
+    return response.data;
   },
 
-  createVendorHotel: async (payload: CreateHotelPayload): Promise<{ success: boolean; message: string; data: VendorHotel }> => {
-    try {
-      const response = await apiClient.post("/vendors/hotels", payload);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  // Rooms
+  getVendorRooms: async (hotelId: number) => {
+    const response = await apiClient.get(`/vendors/hotels/${hotelId}/rooms`);
+    return response.data.data;
+  },
+  createVendorRoom: async (hotelId: number, data: any) => {
+    const response = await apiClient.post(`/vendors/hotels/${hotelId}/rooms`, data);
+    return response.data;
+  },
+  updateVendorRoom: async (hotelId: number, roomId: number, data: any) => {
+    const response = await apiClient.put(`/vendors/hotels/${hotelId}/rooms/${roomId}`, data);
+    return response.data;
+  },
+  deleteVendorRoom: async (hotelId: number, roomId: number) => {
+    const response = await apiClient.delete(`/vendors/hotels/${hotelId}/rooms/${roomId}`);
+    return response.data;
   },
 
-  updateVendorHotel: async (hotelId: number, payload: UpdateHotelPayload): Promise<{ success: boolean; message: string; data: VendorHotel }> => {
-    try {
-      const response = await apiClient.patch(`/vendors/hotels/${hotelId}`, payload);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  // Withdraw
+  createWithdrawRequest: async (amount: number, note?: string) => {
+    const response = await apiClient.post("/vendors/wallet/withdraw", { amount, note });
+    return response.data;
+  },
+  getVendorWithdrawRequests: async () => {
+    const response = await apiClient.get("/vendors/withdrawals");
+    return response.data.data;
   },
 
-  deleteVendorHotel: async (hotelId: number): Promise<{ success: boolean; message: string }> => {
-    try {
-      const response = await apiClient.delete(`/vendors/hotels/${hotelId}`);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  // === KHUYẾN MÃI ===
+  getVendorPromotions: async () => {
+    const response = await apiClient.get("/vendors/promotions");
+    return response.data;
   },
 
-  getVendorHotelRooms: async (hotelId: number): Promise<{ success: boolean; data: VendorRoom[] }> => {
-    try {
-      const response = await apiClient.get(`/vendors/hotels/${hotelId}/rooms`);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  createVendorPromotion: async (data: any) => {
+    const response = await apiClient.post("/vendors/promotions", data);
+    return response.data;
   },
 
-  createVendorHotelRoom: async (hotelId: number, payload: CreateRoomPayload): Promise<{ success: boolean; message: string; data: VendorRoom }> => {
-    try {
-      const response = await apiClient.post(`/vendors/hotels/${hotelId}/rooms`, payload);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  updateVendorPromotion: async (id: number, data: any) => {
+    const response = await apiClient.put(`/vendors/promotions/${id}`, data);
+    return response.data;
   },
 
-  updateVendorHotelRoom: async (hotelId: number, roomId: number, payload: UpdateRoomPayload): Promise<{ success: boolean; message: string; data: VendorRoom }> => {
-    try {
-      const response = await apiClient.patch(`/vendors/hotels/${hotelId}/rooms/${roomId}`, payload);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
-  },
-
-  deleteVendorHotelRoom: async (hotelId: number, roomId: number): Promise<{ success: boolean; message: string }> => {
-    try {
-      const response = await apiClient.delete(`/vendors/hotels/${hotelId}/rooms/${roomId}`);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+  deleteVendorPromotion: async (id: number) => {
+    const response = await apiClient.delete(`/vendors/promotions/${id}`);
+    return response.data;
   },
 };

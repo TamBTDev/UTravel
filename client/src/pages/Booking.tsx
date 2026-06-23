@@ -7,6 +7,7 @@ import { getRoomDetail } from '@/features/hotel/services/hotelService';
 import dayjs from 'dayjs';
 import { AppLayout } from '@/components/layout';
 import { IconMoodSad, IconX, IconCircleCheck, IconStarFilled, IconMapPin, IconLock } from '@tabler/icons-react';
+import { validatePromotion } from '@/features/booking/services/bookingService';
 
 const parseJsonField = (val: any): string[] => {
   if (Array.isArray(val)) return val;
@@ -59,6 +60,8 @@ export const BookingPage: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+
+  const user = useSelector((state: any) => state.auth.user);
 
   useEffect(() => {
     const loadRoom = async () => {

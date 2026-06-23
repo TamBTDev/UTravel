@@ -16,10 +16,16 @@ import {
   createVendorHotel,
   updateVendorHotel,
   deleteVendorHotel,
-  getVendorHotelRooms,
-  createVendorHotelRoom,
-  updateVendorHotelRoom,
-  deleteVendorHotelRoom
+  getVendorRooms,
+  createVendorRoom,
+  updateVendorRoom,
+  deleteVendorRoom,
+  createWithdrawRequest,
+  getVendorWithdrawRequests,
+  getVendorPromotions,
+  createVendorPromotion,
+  updateVendorPromotion,
+  deleteVendorPromotion,
 } from './vendors.controller';
 
 const router = Router();
@@ -33,13 +39,13 @@ router.post('/register', registerVendor);
 // DELETE /api/vendors/profile/reset - Reset hồ sơ đối tác bị từ chối
 router.delete('/profile/reset', resetVendorProfile);
 
-// GET /api/vendors/profile - Lấy thông tin Vendor của chính mình (chỉ VENDOR mới gọi được)
+// GET /api/vendors/profile - Lấy thông tin Vendor của chính mình
 router.get('/profile', requireRole(USER_ROLES.VENDOR), getVendorProfile);
 
-// GET /api/vendors/dashboard-stats - Lấy thống kê bảng điều khiển đối tác
+// GET /api/vendors/dashboard-stats - Lấy thống kê bảng điều khiển
 router.get('/dashboard-stats', requireRole(USER_ROLES.VENDOR), getVendorDashboardStats);
 
-// PATCH /api/vendors/profile - Cập nhật thông tin ngân hàng/mô tả
+// PATCH /api/vendors/profile - Cập nhật thông tin
 router.patch('/profile', requireRole(USER_ROLES.VENDOR), updateVendorProfile);
 
 // === QUẢN LÝ KHÁCH SẠN (CHỖ NGHỈ) ===
@@ -68,21 +74,36 @@ router.patch('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), u
 router.delete('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), deleteVendorHotelRoom);
 
 // === QUẢN LÝ ĐƠN HÀNG ===
-// GET /api/vendors/bookings - Lấy danh sách đơn đặt phòng của các khách sạn thuộc vendor
 router.get('/bookings', requireRole(USER_ROLES.VENDOR), getVendorBookings);
-
-// PATCH /api/vendors/bookings/:id/status - Duyệt/Từ chối đơn hàng
 router.patch('/bookings/:id/status', requireRole(USER_ROLES.VENDOR), updateVendorBookingStatus);
 
 // === BÁO CÁO DOANH THU ===
-// GET /api/vendors/revenue-report - Lấy báo cáo doanh thu và giao dịch ví
 router.get('/revenue-report', requireRole(USER_ROLES.VENDOR), getVendorRevenueReport);
 
 // === QUẢN LÝ BÌNH LUẬN ===
-// GET /api/vendors/reviews - Lấy danh sách bình luận của khách sạn
 router.get('/reviews', requireRole(USER_ROLES.VENDOR), getVendorReviews);
-
-// PATCH /api/vendors/reviews/:id/reply - Chủ shop phản hồi bình luận
 router.patch('/reviews/:id/reply', requireRole(USER_ROLES.VENDOR), replyToReview);
+
+// === QUẢN LÝ CHỖ NGHỈ ===
+router.get('/hotels', requireRole(USER_ROLES.VENDOR), getVendorHotels);
+router.post('/hotels', requireRole(USER_ROLES.VENDOR), createVendorHotel);
+router.put('/hotels/:id', requireRole(USER_ROLES.VENDOR), updateVendorHotel);
+router.delete('/hotels/:id', requireRole(USER_ROLES.VENDOR), deleteVendorHotel);
+
+// Quản lý phòng trong khách sạn
+router.get('/hotels/:hotelId/rooms', requireRole(USER_ROLES.VENDOR), getVendorRooms);
+router.post('/hotels/:hotelId/rooms', requireRole(USER_ROLES.VENDOR), createVendorRoom);
+router.put('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), updateVendorRoom);
+router.delete('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), deleteVendorRoom);
+
+// === YÊU CẦU RÚT TIỀN ===
+router.post('/wallet/withdraw', requireRole(USER_ROLES.VENDOR), createWithdrawRequest);
+router.get('/wallet/withdraws', requireRole(USER_ROLES.VENDOR), getVendorWithdrawRequests);
+
+// === QUẢN LÝ KHUYẾN MÃI ===
+router.get('/promotions', requireRole(USER_ROLES.VENDOR), getVendorPromotions);
+router.post('/promotions', requireRole(USER_ROLES.VENDOR), createVendorPromotion);
+router.put('/promotions/:id', requireRole(USER_ROLES.VENDOR), updateVendorPromotion);
+router.delete('/promotions/:id', requireRole(USER_ROLES.VENDOR), deleteVendorPromotion);
 
 export default router;

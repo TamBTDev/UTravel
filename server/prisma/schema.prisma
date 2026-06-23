@@ -55,6 +55,7 @@ enum PaymentMethod {
   MOMO
   VNPAY
   ZALOPAY
+  WALLET
 }
 
 enum PaymentStatus {
@@ -196,9 +197,10 @@ model VendorProfile {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hotels Hotel[]
-  wallet Wallet?
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotels           Hotel[]
+  wallet           Wallet?
+  withdrawRequests WithdrawRequest[]
 
   @@map("vendor_profiles")
 }
@@ -210,8 +212,9 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  vendor       VendorProfile       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
+  vendor           VendorProfile       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  transactions     WalletTransaction[]
+  withdrawRequests WithdrawRequest[]
 
   @@map("wallets")
 }
@@ -231,6 +234,39 @@ model WalletTransaction {
   @@index([walletId])
   @@index([bookingId])
   @@map("wallet_transactions")
+}
+
+// ══════════════════════════════════════════════════════════
+// YÊU CẦU RÚT TIỀN — Vendor gửi, Admin duyệt
+// ══════════════════════════════════════════════════════════
+
+enum WithdrawStatus {
+  PENDING   // Chờ Admin duyệt
+  APPROVED  // Đã duyệt, tiền đã trừ
+  REJECTED  // Từ chối
+}
+
+model WithdrawRequest {
+  id          Int            @id @default(autoincrement())
+  vendorId    Int            // VendorProfile.id
+  walletId    Int            // Wallet.id
+  amount      Float          // Số tiền muốn rút (VND)
+  bankName    String         // Ngân hàng nhận
+  bankAccount String         // Số tài khoản nhận
+  bankOwner   String         // Tên chủ tài khoản
+  note        String?        @db.Text // Ghi chú của vendor
+  status      WithdrawStatus @default(PENDING)
+  adminNote   String?        @db.Text // Lý do từ chối / ghi chú admin
+  processedAt DateTime?      // Thời điểm admin xử lý
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  wallet Wallet        @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([status])
+  @@map("withdraw_requests")
 }
 
 // ══════════════════════════════════════════════════════════
@@ -331,15 +367,16 @@ model Booking {
 }
 
 model Payment {
-  id            Int           @id @default(autoincrement())
-  bookingId     Int           @unique
-  amount        Float
-  method        PaymentMethod
-  transactionId String? // Mã giao dịch từ cổng thanh toán
-  status        PaymentStatus @default(PENDING)
-  paidAt        DateTime? // Thời điểm thanh toán thành công
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id              Int           @id @default(autoincrement())
+  bookingId       Int           @unique
+  amount          Float
+  method          PaymentMethod
+  transactionId   String?       // Mã giao dịch nội bộ
+  transferContent String?       // Nội dung chuyển khoản (UTRAVEL{bookingId}) - dùng để match với SePay
+  status          PaymentStatus @default(PENDING)
+  paidAt          DateTime?     // Thời điểm thanh toán thành công
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
