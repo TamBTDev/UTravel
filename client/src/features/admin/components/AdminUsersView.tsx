@@ -32,7 +32,7 @@ export const AdminUsersView = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Lỗi khi tải danh sách người dùng");
+      setError(err.error || err.message || "Lỗi khi tải danh sách người dùng");
     } finally {
       setLoading(false);
     }

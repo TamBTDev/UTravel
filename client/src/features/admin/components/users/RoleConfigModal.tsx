@@ -24,7 +24,19 @@ export const RoleConfigModal = ({ opened, onClose, user, onSave }: RoleConfigMod
   useEffect(() => {
     if (user && opened) {
       setRole(user.role);
-      setPermissions(user.permissions || []);
+      let initialPerms: string[] = [];
+      if (user.permissions) {
+        if (typeof user.permissions === "string") {
+          try {
+            initialPerms = JSON.parse(user.permissions);
+          } catch (e) {
+            initialPerms = [];
+          }
+        } else if (Array.isArray(user.permissions)) {
+          initialPerms = user.permissions;
+        }
+      }
+      setPermissions(initialPerms);
     }
   }, [user, opened]);
 

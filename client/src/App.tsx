@@ -123,7 +123,7 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requiredRole={USER_ROLES.ADMIN}>
+                <ProtectedRoute requiredRole={[USER_ROLES.ADMIN, USER_ROLES.MANAGER]}>
                   <AdminDashboard />
                 </ProtectedRoute>
               }

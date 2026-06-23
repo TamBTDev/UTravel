@@ -22,7 +22,7 @@ export const AdminPendingVendors = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Lỗi khi tải danh sách đối tác chờ duyệt");
+      setError(err.error || err.message || "Lỗi khi tải danh sách đối tác chờ duyệt");
     } finally {
       setLoading(false);
     }

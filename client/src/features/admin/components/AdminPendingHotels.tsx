@@ -21,17 +21,19 @@ export const AdminPendingHotels = () => {
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<number | null>(null);
 
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+
   const fetchHotels = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await adminService.getPendingHotels();
+      const res = await adminService.getAllAdminHotels(undefined, filterStatus === "ALL" ? undefined : filterStatus, undefined);
       if (res.success) {
         setHotels(res.data);
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Lỗi khi tải danh sách khách sạn chờ duyệt");
+      setError(err.error || err.message || "Lỗi khi tải danh sách khách sạn chờ duyệt");
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,7 @@ export const AdminPendingHotels = () => {
 
   useEffect(() => {
     fetchHotels();
-  }, []);
+  }, [filterStatus]);
 
   const handleStatusUpdate = (hotelId: number, status: "APPROVED" | "REJECTED") => {
     if (status === "REJECTED") {
@@ -110,11 +112,39 @@ export const AdminPendingHotels = () => {
     return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <div className="absolute top-3 left-3 px-2.5 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-bold tracking-wider uppercase rounded-md shadow-sm border border-yellow-200">CHỜ DUYỆT</div>;
+      case "APPROVED":
+        return <div className="absolute top-3 left-3 px-2.5 py-1 bg-green-100 text-green-800 text-[10px] font-bold tracking-wider uppercase rounded-md shadow-sm border border-green-200">ĐÃ DUYỆT</div>;
+      case "REJECTED":
+        return <div className="absolute top-3 left-3 px-2.5 py-1 bg-red-100 text-red-800 text-[10px] font-bold tracking-wider uppercase rounded-md shadow-sm border border-red-200">BỊ TỪ CHỐI</div>;
+      case "DRAFT":
+        return <div className="absolute top-3 left-3 px-2.5 py-1 bg-gray-100 text-gray-800 text-[10px] font-bold tracking-wider uppercase rounded-md shadow-sm border border-gray-200">BẢN NHÁP</div>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-border-hairline rounded-xl p-5 shadow-sm">
-        <h3 className="text-lg font-bold text-on-surface">Duyệt tin đăng khách sạn</h3>
-        <p className="text-sm text-outline mt-0.5 font-medium">Kiểm tra kỹ thông tin chi tiết, hình ảnh và vị trí khách sạn trước khi đưa lên sàn UTravel.</p>
+      <div className="bg-white border border-border-hairline rounded-xl p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 className="text-lg font-bold text-on-surface">Quản lý Khách sạn Toàn sàn</h3>
+          <p className="text-sm text-outline mt-0.5 font-medium">Theo dõi, kiểm duyệt và quản lý tất cả các khách sạn trên hệ thống UTravel.</p>
+        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border border-border-hairline rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        >
+          <option value="ALL">Tất cả khách sạn</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="APPROVED">Đã duyệt (Đang hoạt động)</option>
+          <option value="REJECTED">Bị từ chối</option>
+          <option value="DRAFT">Bản nháp</option>
+        </select>
       </div>
 
       {loading ? (
@@ -158,9 +188,7 @@ export const AdminPendingHotels = () => {
                     className="w-full h-full object-cover"
                     src={getHotelImage(hotel.images)}
                   />
-                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-bold tracking-wider uppercase rounded-md shadow-sm border border-yellow-200">
-                    CHỜ DUYỆT
-                  </div>
+                  {getStatusBadge(hotel.approvalStatus)}
                   <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[11px] text-white font-semibold">
                     Đăng ngày: {dayjs(hotel.createdAt).format("DD/MM/YYYY")}
                   </div>
@@ -220,24 +248,26 @@ export const AdminPendingHotels = () => {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="pt-4 border-t border-border-hairline flex gap-2">
-                    <button
-                      disabled={actionId === hotel.id}
-                      onClick={() => handleStatusUpdate(hotel.id, "APPROVED")}
-                      className="flex-1 flex items-center justify-center gap-1 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white text-xs font-bold rounded-lg transition-colors shadow-sm disabled:cursor-not-allowed"
-                    >
-                      <IconCheck size={14} />
-                      Phê duyệt
-                    </button>
-                    <button
-                      disabled={actionId === hotel.id}
-                      onClick={() => handleStatusUpdate(hotel.id, "REJECTED")}
-                      className="px-3 flex items-center justify-center bg-red-50 hover:bg-red-100 disabled:bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition-colors shadow-sm disabled:cursor-not-allowed"
-                      title="Từ chối duyệt"
-                    >
-                      <IconX size={15} />
-                    </button>
-                  </div>
+                  {hotel.approvalStatus === "PENDING" && (
+                    <div className="pt-4 border-t border-border-hairline flex gap-2">
+                      <button
+                        disabled={actionId === hotel.id}
+                        onClick={() => handleStatusUpdate(hotel.id, "APPROVED")}
+                        className="flex-1 flex items-center justify-center gap-1 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white text-xs font-bold rounded-lg transition-colors shadow-sm disabled:cursor-not-allowed"
+                      >
+                        <IconCheck size={14} />
+                        Phê duyệt
+                      </button>
+                      <button
+                        disabled={actionId === hotel.id}
+                        onClick={() => handleStatusUpdate(hotel.id, "REJECTED")}
+                        className="px-3 flex items-center justify-center bg-red-50 hover:bg-red-100 disabled:bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition-colors shadow-sm disabled:cursor-not-allowed"
+                        title="Từ chối duyệt"
+                      >
+                        <IconX size={15} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );

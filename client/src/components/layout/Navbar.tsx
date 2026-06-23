@@ -176,7 +176,7 @@ export const Navbar = () => {
                     Ví UTravel
                   </Menu.Item>
 
-                  {user.role === USER_ROLES.ADMIN && (
+                  {(user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.MANAGER) && (
                     <Menu.Item
                       leftSection={
                         <IconDashboard size={16} className="text-outline" />
@@ -288,7 +288,7 @@ export const Navbar = () => {
               >
                 Hồ sơ
               </Link>
-              {user?.role === USER_ROLES.ADMIN && (
+              {(user?.role === USER_ROLES.ADMIN || user?.role === USER_ROLES.MANAGER) && (
                 <Link
                   to="/admin"
                   className="text-title text-on-surface p-2"

@@ -48,6 +48,31 @@ router.get('/dashboard-stats', requireRole(USER_ROLES.VENDOR), getVendorDashboar
 // PATCH /api/vendors/profile - Cập nhật thông tin
 router.patch('/profile', requireRole(USER_ROLES.VENDOR), updateVendorProfile);
 
+// === QUẢN LÝ KHÁCH SẠN (CHỖ NGHỈ) ===
+// GET /api/vendors/hotels - Lấy danh sách khách sạn của vendor
+router.get('/hotels', requireRole(USER_ROLES.VENDOR), getVendorHotels);
+
+// POST /api/vendors/hotels - Tạo khách sạn mới
+router.post('/hotels', requireRole(USER_ROLES.VENDOR), createVendorHotel);
+
+// PATCH /api/vendors/hotels/:hotelId - Cập nhật khách sạn
+router.patch('/hotels/:hotelId', requireRole(USER_ROLES.VENDOR), updateVendorHotel);
+
+// DELETE /api/vendors/hotels/:hotelId - Xóa khách sạn
+router.delete('/hotels/:hotelId', requireRole(USER_ROLES.VENDOR), deleteVendorHotel);
+
+// GET /api/vendors/hotels/:hotelId/rooms - Lấy danh sách phòng
+router.get('/hotels/:hotelId/rooms', requireRole(USER_ROLES.VENDOR), getVendorHotelRooms);
+
+// POST /api/vendors/hotels/:hotelId/rooms - Thêm phòng mới
+router.post('/hotels/:hotelId/rooms', requireRole(USER_ROLES.VENDOR), createVendorHotelRoom);
+
+// PATCH /api/vendors/hotels/:hotelId/rooms/:roomId - Cập nhật phòng
+router.patch('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), updateVendorHotelRoom);
+
+// DELETE /api/vendors/hotels/:hotelId/rooms/:roomId - Xóa phòng
+router.delete('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), deleteVendorHotelRoom);
+
 // === QUẢN LÝ ĐƠN HÀNG ===
 router.get('/bookings', requireRole(USER_ROLES.VENDOR), getVendorBookings);
 router.patch('/bookings/:id/status', requireRole(USER_ROLES.VENDOR), updateVendorBookingStatus);

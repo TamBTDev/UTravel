@@ -8,7 +8,7 @@ type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: UserRole;
+  requiredRole?: UserRole | UserRole[];
 }
 
 export const ProtectedRoute = ({
@@ -33,8 +33,14 @@ export const ProtectedRoute = ({
   }
 
   // Kiểm tra quyền hạn
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/" replace />;
+  if (requiredRole) {
+    if (Array.isArray(requiredRole)) {
+      if (!requiredRole.includes(user?.role as UserRole)) {
+        return <Navigate to="/" replace />;
+      }
+    } else if (user?.role !== requiredRole) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <>{children}</>;

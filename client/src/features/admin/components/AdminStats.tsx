@@ -43,7 +43,7 @@ export const AdminStats = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Lỗi khi tải thông tin bảng điều khiển");
+      setError(err.error || err.message || "Lỗi khi tải thông tin bảng điều khiển");
     } finally {
       setLoading(false);
     }
@@ -183,10 +183,10 @@ export const AdminStats = () => {
         </div>
       </section>
 
-      {/* Main Content Layout Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Partner Approvals */}
-        <section className="lg:col-span-2 bg-white border border-border-hairline rounded-xl overflow-hidden shadow-sm flex flex-col">
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Partner Approvals */}
+        <section className="bg-white border border-border-hairline rounded-xl overflow-hidden shadow-sm flex flex-col">
           <div className="p-5 border-b border-border-hairline flex justify-between items-center bg-surface-container-low/30">
             <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider">
               Yêu cầu đối tác đang chờ duyệt
@@ -263,107 +263,6 @@ export const AdminStats = () => {
             )}
           </div>
         </section>
-
-        {/* Right Column: Recent Activity & System Health */}
-        <div className="space-y-6">
-          {/* System Health */}
-          <section className="bg-white border border-border-hairline rounded-xl p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider mb-4">
-              Trạng thái hệ thống
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span className="text-outline">Thời gian hoạt động API</span>
-                  <span className="font-bold text-green-600">99.9%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                  <div
-                    className="bg-green-600 h-1.5 rounded-full"
-                    style={{ width: "99.9%" }}
-                  ></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span className="text-outline">Tải máy chủ</span>
-                  <span className="font-bold text-orange-600">42%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                  <div
-                    className="bg-orange-500 h-1.5 rounded-full"
-                    style={{ width: "42%" }}
-                  ></div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-4 p-3 bg-green-50/50 rounded-lg border border-green-100">
-                <IconCheck size={16} className="text-green-600 shrink-0" />
-                <span className="text-[11px] text-green-800 font-bold">
-                  Tất cả các dịch vụ đang hoạt động bình thường.
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Recent Activity Log */}
-          <section className="bg-white border border-border-hairline rounded-xl overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-border-hairline bg-surface-container-low/30">
-              <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider">
-                Hoạt động gần đây
-              </h3>
-            </div>
-            <div className="p-5">
-              <div className="relative border-l-2 border-slate-100 ml-2 space-y-5">
-                {/* Log Item 1 */}
-                <div className="relative pl-5">
-                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-blue-600 border border-white"></div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-bold text-on-surface">
-                      Quản trị viên
-                    </span>
-                    <span className="text-[10px] text-outline font-medium">
-                      2 phút trước
-                    </span>
-                  </div>
-                  <p className="text-xs text-outline font-medium">
-                    Đã cập nhật cài đặt chính sách hoàn hủy toàn hệ thống.
-                  </p>
-                </div>
-                {/* Log Item 2 */}
-                <div className="relative pl-5">
-                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-green-600 border border-white"></div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-bold text-on-surface">
-                      Hệ thống
-                    </span>
-                    <span className="text-[10px] text-outline font-medium">
-                      15 phút trước
-                    </span>
-                  </div>
-                  <p className="text-xs text-outline font-medium">
-                    Đồng bộ doanh thu hàng ngày thành công với cổng thanh toán
-                    Stripe.
-                  </p>
-                </div>
-                {/* Log Item 3 */}
-                <div className="relative pl-5">
-                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-orange-600 border border-white"></div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-bold text-on-surface">
-                      Nguyễn Văn A
-                    </span>
-                    <span className="text-[10px] text-outline font-medium">
-                      1 giờ trước
-                    </span>
-                  </div>
-                  <p className="text-xs text-outline font-medium">
-                    Đã phê duyệt hồ sơ đối tác mới: "Saigon Stays".
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ export interface VendorProfile {
   bankName: string;
   bankOwner: string;
   bankAccount: string;
+  logo: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
   commissionRate: number;
   createdAt: string;
@@ -35,6 +36,86 @@ export interface VendorDashboardStats {
   averageRating: number;
   recentBookings: any[];
   revenueData: { name: string; revenue: number }[];
+}
+
+export interface VendorHotel {
+  id: number;
+  name: string;
+  description: string | null;
+  location: string;
+  city: string;
+  rating: number;
+  images: string;
+  amenities: string;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED" | "DRAFT";
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    rooms: number;
+    reviews: number;
+  };
+}
+
+export interface CreateHotelPayload {
+  name: string;
+  description: string;
+  address: string;
+  city: string;
+  stars: number;
+  latitude?: number;
+  longitude?: number;
+  images?: string[];
+  amenities?: string[];
+}
+
+export interface UpdateHotelPayload {
+  name?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  stars?: number;
+  latitude?: number;
+  longitude?: number;
+  images?: string[];
+  amenities?: string[];
+  isActive?: boolean;
+}
+
+export interface VendorRoom {
+  id: number;
+  hotelId: number;
+  roomNumber: string;
+  type: string;
+  price: number;
+  capacity: number;
+  description: string | null;
+  amenities: string | null;
+  images: string | null;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRoomPayload {
+  roomNumber: string;
+  type: string;
+  price: number;
+  capacity: number;
+  description?: string;
+  images?: string[];
+  amenities?: string[];
+}
+
+export interface UpdateRoomPayload {
+  roomNumber?: string;
+  type?: string;
+  price?: number;
+  capacity?: number;
+  description?: string;
+  images?: string[];
+  amenities?: string[];
+  isAvailable?: boolean;
 }
 
 export interface VendorBooking {
@@ -81,6 +162,7 @@ export interface WalletTransaction {
     checkOutDate: string;
     room: {
       hotel: {
+        id: number;
         name: string;
       };
     };

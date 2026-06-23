@@ -82,6 +82,7 @@ export const adminService = {
         lastName: true,
         phone: true,
         role: true,
+        permissions: true,
         status: true,
         createdAt: true,
         _count: {
