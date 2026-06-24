@@ -34,6 +34,7 @@
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^22.13.10",
     "@types/nodemailer": "^6.4.17",
+    "tsc-alias": "^1.8.17",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
