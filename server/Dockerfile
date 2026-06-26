@@ -39,7 +39,6 @@ RUN npm ci --omit=dev
 # Copy generated Prisma schema and generate client
 COPY --from=builder /app/server/prisma ./prisma
 RUN npx prisma generate
-
 # Copy built output
 COPY --from=builder /app/server/dist ./dist
 
