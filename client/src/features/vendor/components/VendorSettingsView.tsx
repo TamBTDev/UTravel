@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { TextInput, Textarea, Loader } from "@mantine/core";
+import { TextInput, Textarea, Loader, Select } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconBuilding, IconBuildingBank, IconCheck } from "@tabler/icons-react";
 import { vendorService } from "../../user/services/vendorService";
@@ -14,6 +14,23 @@ export const VendorSettingsView = () => {
     bankOwner: "",
     bankAccount: "",
   });
+  const [bankList, setBankList] = useState<{value: string, label: string}[]>([]);
+
+  useEffect(() => {
+    fetch("https://api.vietqr.io/v2/banks")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "00") {
+          setBankList(
+            data.data.map((b: any) => ({
+              value: b.shortName,
+              label: `${b.shortName} - ${b.name}`,
+            }))
+          );
+        }
+      })
+      .catch((err) => console.error("Error fetching banks:", err));
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -96,7 +113,14 @@ export const VendorSettingsView = () => {
         <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>Dùng để nhận tiền khi tạo yêu cầu rút tiền từ ví</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <TextInput label="Tên ngân hàng" placeholder="VD: Techcombank, VietinBank..." value={form.bankName} onChange={e => setForm(p => ({ ...p, bankName: e.target.value }))} />
+          <Select 
+            label="Tên ngân hàng" 
+            placeholder="Chọn ngân hàng" 
+            data={bankList}
+            searchable
+            value={form.bankName} 
+            onChange={val => setForm(p => ({ ...p, bankName: val || "" }))} 
+          />
           <TextInput label="Số tài khoản" placeholder="Nhập số tài khoản..." value={form.bankAccount} onChange={e => setForm(p => ({ ...p, bankAccount: e.target.value }))} />
           <TextInput label="Tên chủ tài khoản" placeholder="NGUYEN VAN A" value={form.bankOwner} onChange={e => setForm(p => ({ ...p, bankOwner: e.target.value }))} />
         </div>

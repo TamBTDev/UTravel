@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { reviewService } from './reviews.service';
 import { createReviewSchema } from '../../../../shared/schemas/review.schema';
+import { sendReviewNotification } from '../../services/email.service';
+import prisma from '../../config/database';
 
 export const createReview = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -8,6 +10,25 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
     const validatedData = createReviewSchema.parse(req.body);
 
     const result = await reviewService.createReview(userId, validatedData);
+
+    // Send real-time email to Vendor
+    try {
+      const hotel = await prisma.hotel.findUnique({
+        where: { id: validatedData.hotelId },
+        include: { vendor: { include: { user: true } } }
+      });
+      if (hotel?.vendor?.user?.email) {
+        sendReviewNotification(
+          hotel.vendor.user.email,
+          hotel.name,
+          req.user!.firstName || 'Khách hàng',
+          validatedData.rating,
+          validatedData.comment || ''
+        ).catch(err => console.error("Error sending review email:", err));
+      }
+    } catch (e) {
+      console.error("Failed to notify vendor about review:", e);
+    }
 
     res.status(201).json({
       success: true,

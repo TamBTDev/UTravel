@@ -4,6 +4,7 @@ import {
   BOOKING_STATUS,
   PAYMENT_STATUS,
 } from "../../../../shared/constants/roles";
+import { sendBookingNotification } from "../../services/email.service";
 
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
@@ -13,7 +14,8 @@ const getIdParam = (val: any): number => {
 export const createBooking = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    const { checkInDate, checkOutDate, adults, children, specialNote } = req.body;
+    const { checkInDate, checkOutDate, adults, children, specialNote } =
+      req.body;
     const roomId = Number(req.body.roomId);
 
     if (!roomId || !checkInDate || !checkOutDate) {
@@ -85,6 +87,22 @@ export const createBooking = async (req: Request, res: Response) => {
         },
       });
 
+      // Send Real-time Email Notification in background
+      if (req.user && req.user.email) {
+        sendBookingNotification(
+          req.user.email,
+          req.user.firstName || "Khách hàng",
+          {
+            hotelName: booking.room.hotel.name,
+            roomType: booking.room.type,
+            checkIn: checkInDt.toLocaleDateString("vi-VN"),
+            checkOut: checkOutDt.toLocaleDateString("vi-VN"),
+            totalPrice,
+            bookingId: booking.id,
+          },
+        ).catch((err) => console.error("Error sending booking email:", err));
+      }
+
       res.status(201).json({ data: booking });
     });
   } catch (error: any) {
@@ -98,22 +116,40 @@ export const createBooking = async (req: Request, res: Response) => {
 export const validatePromotion = async (req: Request, res: Response) => {
   try {
     const { code, hotelId } = req.query;
-    if (!code) return res.status(400).json({ message: "Vui lòng cung cấp mã khuyến mãi" });
+    if (!code)
+      return res
+        .status(400)
+        .json({ message: "Vui lòng cung cấp mã khuyến mãi" });
 
     // Lấy vendorId của khách sạn để check xem promo này có phải của vendor đó ko
     // Nếu hotelId ko truyền thì bỏ qua bước check vendor (nhưng thực tế nên truyền để lấy đúng mã)
     let vendorId = null;
     if (hotelId) {
-      const hotel = await prisma.hotel.findUnique({ where: { id: Number(hotelId) } });
+      const hotel = await prisma.hotel.findUnique({
+        where: { id: Number(hotelId) },
+      });
       if (hotel) vendorId = hotel.vendorId;
     }
 
-    const promo = await prisma.promotion.findUnique({ where: { code: String(code) } });
-    if (!promo) return res.status(404).json({ message: "Mã khuyến mãi không tồn tại" });
-    if (!promo.isActive) return res.status(400).json({ message: "Mã khuyến mãi đã bị vô hiệu hóa" });
-    if (new Date(promo.endDate) < new Date()) return res.status(400).json({ message: "Mã khuyến mãi đã hết hạn" });
-    if (promo.usageLimit && promo.usedCount >= promo.usageLimit) return res.status(400).json({ message: "Mã khuyến mãi đã hết lượt sử dụng" });
-    if (vendorId && promo.vendorId !== vendorId) return res.status(400).json({ message: "Mã khuyến mãi không áp dụng cho khách sạn này" });
+    const promo = await prisma.promotion.findUnique({
+      where: { code: String(code) },
+    });
+    if (!promo)
+      return res.status(404).json({ message: "Mã khuyến mãi không tồn tại" });
+    if (!promo.isActive)
+      return res
+        .status(400)
+        .json({ message: "Mã khuyến mãi đã bị vô hiệu hóa" });
+    if (new Date(promo.endDate) < new Date())
+      return res.status(400).json({ message: "Mã khuyến mãi đã hết hạn" });
+    if (promo.usageLimit && promo.usedCount >= promo.usageLimit)
+      return res
+        .status(400)
+        .json({ message: "Mã khuyến mãi đã hết lượt sử dụng" });
+    if (vendorId && promo.vendorId !== vendorId)
+      return res
+        .status(400)
+        .json({ message: "Mã khuyến mãi không áp dụng cho khách sạn này" });
 
     res.status(200).json({ data: promo });
   } catch (error: any) {
@@ -187,17 +223,22 @@ export const updateBooking = async (req: Request, res: Response) => {
 
       const now = new Date();
       const checkIn = new Date(booking.checkInDate);
-      const hoursUntilCheckIn = (checkIn.getTime() - now.getTime()) / (1000 * 60 * 60);
+      const hoursUntilCheckIn =
+        (checkIn.getTime() - now.getTime()) / (1000 * 60 * 60);
 
       // Nếu đã qua ngày check-in → không thể hủy, chỉ có thể hoàn thành
       if (now >= checkIn) {
         return res.status(400).json({
-          message: 'Không thể hủy đặt phòng sau ngày nhận phòng. Vui lòng xác nhận hoàn thành kỳ nghỉ.',
+          message:
+            "Không thể hủy đặt phòng sau ngày nhận phòng. Vui lòng xác nhận hoàn thành kỳ nghỉ.",
         });
       }
 
       // Nếu booking đã CONFIRMED và còn < 24h trước check-in → không được hủy
-      if (booking.status === BOOKING_STATUS.CONFIRMED && hoursUntilCheckIn < 24) {
+      if (
+        booking.status === BOOKING_STATUS.CONFIRMED &&
+        hoursUntilCheckIn < 24
+      ) {
         return res.status(400).json({
           message: `Không thể hủy đặt phòng trong vòng 24 giờ trước ngày nhận phòng (${Math.floor(hoursUntilCheckIn)} giờ còn lại). Liên hệ hỗ trợ nếu cần trợ giúp.`,
         });
@@ -223,7 +264,7 @@ export const updateBooking = async (req: Request, res: Response) => {
         // ── Hoàn tiền vào ví nếu đã TT qua BANK_TRANSFER và payment COMPLETED ──
         if (
           booking.payment &&
-          booking.payment.method === 'BANK_TRANSFER' &&
+          booking.payment.method === "BANK_TRANSFER" &&
           booking.payment.status === PAYMENT_STATUS.COMPLETED
         ) {
           const refundAmount = booking.finalPrice;
@@ -246,7 +287,7 @@ export const updateBooking = async (req: Request, res: Response) => {
             data: {
               walletId: wallet.id,
               bookingId: id,
-              type: 'REFUND',
+              type: "REFUND",
               amount: refundAmount,
               description: `Hoàn tiền đặt phòng #${id} tại ${booking.room.hotel.name}`,
             },
@@ -254,7 +295,7 @@ export const updateBooking = async (req: Request, res: Response) => {
 
           return res.status(200).json({
             success: true,
-            message: `Hủy đặt phòng thành công. ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(refundAmount)} đã được hoàn vào ví UTravel của bạn.`,
+            message: `Hủy đặt phòng thành công. ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(refundAmount)} đã được hoàn vào ví UTravel của bạn.`,
             refunded: true,
             refundAmount,
             data: updated,
@@ -264,7 +305,7 @@ export const updateBooking = async (req: Request, res: Response) => {
         // Không hoàn tiền (CASH hoặc chưa thanh toán)
         return res.status(200).json({
           success: true,
-          message: 'Hủy đặt phòng thành công.',
+          message: "Hủy đặt phòng thành công.",
           refunded: false,
           data: updated,
         });
@@ -281,7 +322,10 @@ export const updateBooking = async (req: Request, res: Response) => {
       },
     });
 
-    if (status === BOOKING_STATUS.COMPLETED && booking.status !== BOOKING_STATUS.COMPLETED) {
+    if (
+      status === BOOKING_STATUS.COMPLETED &&
+      booking.status !== BOOKING_STATUS.COMPLETED
+    ) {
       await prisma.hotel.update({
         where: { id: booking.room.hotelId },
         data: { bookingCount: { increment: 1 } },
@@ -291,7 +335,9 @@ export const updateBooking = async (req: Request, res: Response) => {
     res.status(200).json({ success: true, data: updated });
   } catch (error: any) {
     console.error("Error updating booking:", error);
-    res.status(500).json({ message: "Lỗi cập nhật đặt phòng", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi cập nhật đặt phòng", error: error.message });
   }
 };
 
@@ -313,7 +359,7 @@ export const getBookingDetail = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    if (booking.userId !== userId && (req as any).user?.role !== 'ADMIN') {
+    if (booking.userId !== userId && (req as any).user?.role !== "ADMIN") {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -340,18 +386,32 @@ export const completeBooking = async (req: Request, res: Response) => {
       },
     });
 
-    if (!booking) return res.status(404).json({ message: "Booking không tồn tại" });
-    if (booking.userId !== userId && (req as any).user?.role !== 'ADMIN') {
+    if (!booking)
+      return res.status(404).json({ message: "Booking không tồn tại" });
+    if (booking.userId !== userId && (req as any).user?.role !== "ADMIN") {
       return res.status(403).json({ message: "Không có quyền thao tác" });
     }
 
     if (booking.status !== BOOKING_STATUS.CONFIRMED) {
-      return res.status(400).json({ message: "Chỉ có thể hoàn thành đơn hàng ở trạng thái Đã xác nhận (CONFIRMED)" });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Chỉ có thể hoàn thành đơn hàng ở trạng thái Đã xác nhận (CONFIRMED)",
+        });
     }
 
     const payment = booking.payment;
-    if (payment && payment.method !== 'CASH' && payment.status !== 'COMPLETED') {
-      return res.status(400).json({ message: "Đơn hàng chưa được thanh toán, không thể hoàn thành." });
+    if (
+      payment &&
+      payment.method !== "CASH" &&
+      payment.status !== "COMPLETED"
+    ) {
+      return res
+        .status(400)
+        .json({
+          message: "Đơn hàng chưa được thanh toán, không thể hoàn thành.",
+        });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -366,12 +426,12 @@ export const completeBooking = async (req: Request, res: Response) => {
       // 2. Xử lý theo phương thức thanh toán
       const payment = booking.payment;
 
-      if (payment && payment.method === 'CASH') {
+      if (payment && payment.method === "CASH") {
         // CASH: đánh dấu COMPLETED nếu chưa (trường hợp vendor chưa update)
-        if (payment.status !== 'COMPLETED') {
+        if (payment.status !== "COMPLETED") {
           await tx.payment.update({
             where: { id: payment.id },
-            data: { status: 'COMPLETED', paidAt: new Date() },
+            data: { status: "COMPLETED", paidAt: new Date() },
           });
         }
         await tx.booking.update({
@@ -384,7 +444,7 @@ export const completeBooking = async (req: Request, res: Response) => {
           where: { id: booking.userId },
           data: { rewardPoints: { increment: earnedPoints } },
         });
-      } else if (payment && payment.status === 'COMPLETED') {
+      } else if (payment && payment.status === "COMPLETED") {
         // BANK_TRANSFER / WALLET đã thanh toán → cập nhật paymentStatus booking
         // Điểm đã tặng khi payment hoàn thành trước đó (nếu BANK_TRANSFER)
         await tx.booking.update({
@@ -393,7 +453,9 @@ export const completeBooking = async (req: Request, res: Response) => {
         });
       } else if (!payment) {
         // Không có payment record (edge case) — bỏ qua, vẫn cho complete
-        console.warn(`[completeBooking] Booking #${bookingId} không có payment record`);
+        console.warn(
+          `[completeBooking] Booking #${bookingId} không có payment record`,
+        );
       }
 
       // 3. Tăng bookingCount cho hotel
@@ -409,12 +471,16 @@ export const completeBooking = async (req: Request, res: Response) => {
       const commissionRate = vendor.commissionRate || 10;
       const commissionFee = (booking.finalPrice * commissionRate) / 100;
 
-      let wallet = await tx.wallet.findUnique({ where: { vendorId: vendor.id } });
+      let wallet = await tx.wallet.findUnique({
+        where: { vendorId: vendor.id },
+      });
       if (!wallet) {
-        wallet = await tx.wallet.create({ data: { vendorId: vendor.id, balance: 0 } });
+        wallet = await tx.wallet.create({
+          data: { vendorId: vendor.id, balance: 0 },
+        });
       }
 
-      if (payment && payment.method === 'CASH') {
+      if (payment && payment.method === "CASH") {
         // CASH: Vendor đã nhận toàn bộ tiền mặt từ khách
         // Do đó, ví ảo của vendor sẽ bị trừ tiền hoa hồng thay vì cộng doanh thu
         await tx.wallet.update({
@@ -426,7 +492,7 @@ export const completeBooking = async (req: Request, res: Response) => {
           data: {
             walletId: wallet.id,
             bookingId: booking.id,
-            type: 'COMMISSION_FEE',
+            type: "COMMISSION_FEE",
             amount: -commissionFee,
             description: `Trừ phí hoa hồng sàn (${commissionRate}%) cho đơn tiền mặt #${booking.id}`,
           },
@@ -446,14 +512,14 @@ export const completeBooking = async (req: Request, res: Response) => {
             {
               walletId: wallet.id,
               bookingId: booking.id,
-              type: 'BOOKING_INCOME',
+              type: "BOOKING_INCOME",
               amount: booking.finalPrice,
               description: `Doanh thu từ đơn đặt phòng #${booking.id}`,
             },
             {
               walletId: wallet.id,
               bookingId: booking.id,
-              type: 'COMMISSION_FEE',
+              type: "COMMISSION_FEE",
               amount: -commissionFee,
               description: `Phí hoa hồng sàn (${commissionRate}%) cho đơn #${booking.id}`,
             },
@@ -462,9 +528,13 @@ export const completeBooking = async (req: Request, res: Response) => {
       }
     });
 
-    res.status(200).json({ success: true, message: "Hoàn thành kỳ nghỉ thành công" });
+    res
+      .status(200)
+      .json({ success: true, message: "Hoàn thành kỳ nghỉ thành công" });
   } catch (error: any) {
     console.error("Error completing booking:", error);
-    res.status(500).json({ message: "Lỗi khi hoàn thành kỳ nghỉ", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi khi hoàn thành kỳ nghỉ", error: error.message });
   }
 };

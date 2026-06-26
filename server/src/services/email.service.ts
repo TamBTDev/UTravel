@@ -165,3 +165,92 @@ export const sendRegistrationSuccess = async (
     html,
   });
 };
+
+/**
+ * Gửi Email Thông báo Đặt phòng thành công (Realtime Event)
+ */
+export const sendBookingNotification = async (
+  email: string,
+  userName: string,
+  bookingDetails: {
+    hotelName: string;
+    roomType: string;
+    checkIn: string;
+    checkOut: string;
+    totalPrice: number;
+    bookingId: number;
+  },
+) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0b63d6; color: white; padding: 20px; text-align: center;">
+        <h2 style="margin: 0;">Đặt Phòng Thành Công</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Chào <strong>${userName}</strong>,</p>
+        <p>Cảm ơn bạn đã đặt phòng tại UTravel. Đơn đặt phòng <strong>#UT-${bookingDetails.bookingId}</strong> của bạn đã được ghi nhận thành công.</p>
+        
+        <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #111827;">Chi tiết Đặt phòng</h3>
+          <p style="margin: 5px 0;"><strong>Khách sạn:</strong> ${bookingDetails.hotelName}</p>
+          <p style="margin: 5px 0;"><strong>Hạng phòng:</strong> ${bookingDetails.roomType}</p>
+          <p style="margin: 5px 0;"><strong>Nhận phòng:</strong> ${bookingDetails.checkIn}</p>
+          <p style="margin: 5px 0;"><strong>Trả phòng:</strong> ${bookingDetails.checkOut}</p>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0;">
+          <p style="margin: 5px 0; font-size: 16px; color: #0b63d6;"><strong>Tổng tiền:</strong> ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(bookingDetails.totalPrice)}</p>
+        </div>
+        
+        <p>Vui lòng theo dõi trạng thái đơn hàng trong mục Lịch sử đặt phòng.</p>
+        <p>Chúc bạn có một kỳ nghỉ thật tuyệt vời!</p>
+      </div>
+      <div style="background-color: #f9fafb; padding: 15px; text-align: center; color: #6b7280; font-size: 12px;">
+        © UTravel - Nền tảng đặt phòng trực tuyến
+      </div>
+    </div>
+  `;
+
+  return send({
+    to: email,
+    subject: `Xác nhận đặt phòng #${bookingDetails.bookingId} tại ${bookingDetails.hotelName}`,
+    html,
+  });
+};
+
+/**
+ * Gửi Email Thông báo có Đánh giá mới (Realtime Event)
+ */
+export const sendReviewNotification = async (
+  vendorEmail: string,
+  hotelName: string,
+  reviewerName: string,
+  rating: number,
+  comment: string,
+) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #f59e0b; color: white; padding: 20px; text-align: center;">
+        <h2 style="margin: 0;">Đánh Giá Mới</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Chào Đối tác,</p>
+        <p>Khách sạn <strong>${hotelName}</strong> của bạn vừa nhận được một đánh giá mới từ khách hàng <strong>${reviewerName}</strong>.</p>
+        
+        <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 5px 0; font-size: 18px; color: #f59e0b;"><strong>${rating} Sao</strong></p>
+          <p style="margin: 10px 0 5px; color: #374151;">"${comment || "Khách hàng không để lại bình luận"}"</p>
+        </div>
+        
+        <p>Hãy truy cập vào Dashboard Đối tác để xem và phản hồi khách hàng nhé!</p>
+      </div>
+      <div style="background-color: #f9fafb; padding: 15px; text-align: center; color: #6b7280; font-size: 12px;">
+        © UTravel - Nền tảng đặt phòng trực tuyến
+      </div>
+    </div>
+  `;
+
+  return send({
+    to: vendorEmail,
+    subject: `[UTravel] Khách sạn ${hotelName} nhận được đánh giá ${rating} sao`,
+    html,
+  });
+};

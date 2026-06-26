@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import { Alert, Loader, Badge } from "@mantine/core";
+import { Alert, Loader, Badge, Select } from "@mantine/core";
 import {
   IconAlertCircle,
   IconCheck,
@@ -133,6 +133,23 @@ export const RegisterVendorForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [bankList, setBankList] = useState<{value: string, label: string}[]>([]);
+
+  useEffect(() => {
+    fetch("https://api.vietqr.io/v2/banks")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "00") {
+          setBankList(
+            data.data.map((b: any) => ({
+              value: b.shortName,
+              label: `${b.shortName} - ${b.name}`,
+            }))
+          );
+        }
+      })
+      .catch((err) => console.error("Error fetching banks:", err));
+  }, []);
 
   const fetchVendorDetails = async () => {
     setLoadingProfile(true);
@@ -445,15 +462,29 @@ export const RegisterVendorForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <form.Field name="bankName">
-              {(field) => (
-                <FormInput
-                  label="Tên Ngân hàng"
-                  placeholder="Ví dụ: Vietcombank, Techcombank..."
-                  field={field}
-                  disabled={isFormDisabled}
-                  icon={<IconBuildingStore size={20} />}
-                />
-              )}
+              {(field) => {
+                const rawError = field.state.meta.errors?.[0];
+                const errorMsg = rawError ? getErrorMessage(rawError) : null;
+                return (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5 ml-1">
+                      Tên Ngân hàng
+                    </label>
+                    <Select
+                      placeholder="Chọn ngân hàng"
+                      data={bankList}
+                      searchable
+                      value={field.state.value}
+                      onChange={(val) => field.handleChange(val || "")}
+                      disabled={isFormDisabled}
+                      error={errorMsg}
+                      classNames={{
+                        input: `w-full px-4 py-[22px] bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-primary/20 rounded-lg text-body text-on-surface placeholder:text-outline outline-none transition-all shadow-sm`,
+                      }}
+                    />
+                  </div>
+                );
+              }}
             </form.Field>
 
             <form.Field name="bankOwner">
