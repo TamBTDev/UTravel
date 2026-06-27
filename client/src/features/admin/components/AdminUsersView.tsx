@@ -43,8 +43,8 @@ export const AdminUsersView = () => {
   }, [roleFilter, statusFilter]);
 
   const handleToggleStatus = async (userId: number, currentStatus: string) => {
-    const nextStatus = currentStatus === "SUSPENDED" ? "VERIFIED" : "SUSPENDED";
-    const promptMessage = currentStatus === "SUSPENDED" 
+    const nextStatus = currentStatus === "LOCKED" ? "VERIFIED" : "LOCKED";
+    const promptMessage = currentStatus === "LOCKED" 
       ? "Bạn có muốn Mở khóa tài khoản này?" 
       : "Bạn có chắc chắn muốn Khóa tài khoản này? Người dùng sẽ không thể đăng nhập.";
       
@@ -52,7 +52,7 @@ export const AdminUsersView = () => {
       title: 'Xác nhận trạng thái',
       children: promptMessage,
       labels: { confirm: 'Đồng ý', cancel: 'Hủy' },
-      confirmProps: { color: currentStatus === "SUSPENDED" ? 'green' : 'red' },
+      confirmProps: { color: currentStatus === "LOCKED" ? 'green' : 'red' },
       onConfirm: async () => {
         setActionId(userId);
         try {

@@ -111,6 +111,12 @@ export const verifyRegisterOtp = async (userId: number, otpCode: string) => {
     user.firstName || "Khách hàng",
   );
 
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+
   return {
     success: true,
     message: "Xác thực email thành công. Bạn có thể đăng nhập ngay.",
@@ -119,6 +125,7 @@ export const verifyRegisterOtp = async (userId: number, otpCode: string) => {
       email: user.email,
       status: user.status,
     },
+    token,
   };
 };
 

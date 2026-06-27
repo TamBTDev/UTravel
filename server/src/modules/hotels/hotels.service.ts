@@ -38,7 +38,10 @@ export const hotelsService = {
     } = filters;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.HotelWhereInput = {};
+    const where: Prisma.HotelWhereInput = {
+      isActive: true,
+      approvalStatus: "APPROVED",
+    };
 
     if (search) {
       where.name = { contains: search };
@@ -156,6 +159,10 @@ export const hotelsService = {
    */
   getFeaturedHotels: async (limit: number = 6) => {
     const data = await prisma.hotel.findMany({
+      where: {
+        isActive: true,
+        approvalStatus: "APPROVED",
+      },
       take: limit,
       orderBy: [{ rating: "desc" }, { createdAt: "desc" }],
       include: {
@@ -175,6 +182,10 @@ export const hotelsService = {
   getDestinations: async (limit: number = 4) => {
     const grouped = await prisma.hotel.groupBy({
       by: ["city"],
+      where: {
+        isActive: true,
+        approvalStatus: "APPROVED",
+      },
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
       take: limit,
@@ -218,8 +229,12 @@ export const hotelsService = {
     // Tăng số lượt xem (nếu gọi từ web mà k cần auth cũng được, hoặc nếu auth thì gọi API addViewed)
     // Tạm thời ở đây k đổi db nếu ko rõ ngữ cảnh người dùng gọi.
 
-    const hotel = await prisma.hotel.findUnique({
-      where: { id },
+    const hotel = await prisma.hotel.findFirst({
+      where: { 
+        id,
+        isActive: true,
+        approvalStatus: "APPROVED",
+      },
       include: {
         rooms: {
           include: {
@@ -282,6 +297,8 @@ export const hotelsService = {
     const relatedHotels = await prisma.hotel.findMany({
       where: {
         city: hotel.city,
+        isActive: true,
+        approvalStatus: "APPROVED",
         NOT: { id: hotel.id },
       },
       take: limit,

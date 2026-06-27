@@ -297,7 +297,7 @@ export const vendorService = {
     return response.data;
   },
   updateVendorHotel: async (id: number, data: any) => {
-    const response = await apiClient.put(`/vendors/hotels/${id}`, data);
+    const response = await apiClient.patch(`/vendors/hotels/${id}`, data);
     return response.data;
   },
   deleteVendorHotel: async (id: number) => {
@@ -315,7 +315,7 @@ export const vendorService = {
     return response.data;
   },
   updateVendorRoom: async (hotelId: number, roomId: number, data: any) => {
-    const response = await apiClient.put(`/vendors/hotels/${hotelId}/rooms/${roomId}`, data);
+    const response = await apiClient.patch(`/vendors/hotels/${hotelId}/rooms/${roomId}`, data);
     return response.data;
   },
   deleteVendorRoom: async (hotelId: number, roomId: number) => {

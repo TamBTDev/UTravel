@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Drawer } from "@mantine/core";
 import { IconMenu2 } from "@tabler/icons-react";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -11,7 +12,12 @@ import { AdminWithdrawRequests } from "../features/admin/components/AdminWithdra
 import { AdminFinanceView } from "../features/admin/components/AdminFinanceView";
 
 export const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "dashboard";
+
+  const setActiveTab = (tab: string) => {
+    setSearchParams({ tab });
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = useAppSelector((s) => s.auth.user);
 

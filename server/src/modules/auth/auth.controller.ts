@@ -102,6 +102,7 @@ export const verifyRegisterOtp = async (req: Request, res: Response) => {
       success: true,
       message: result.message,
       user: result.user,
+      token: result.token,
     });
   } catch (error: any) {
     console.error("[VERIFY_OTP_CONTROLLER] OTP verification error:", {

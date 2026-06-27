@@ -239,6 +239,18 @@ export const vendorsService = {
 
     return await prisma.room.findMany({
       where: { hotelId: hotel.id },
+      include: {
+        bookings: {
+          where: {
+            status: { in: ["PENDING", "CONFIRMED"] }
+          },
+          select: {
+            checkInDate: true,
+            checkOutDate: true,
+            status: true,
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
     });
   },

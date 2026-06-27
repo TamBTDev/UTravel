@@ -59,6 +59,7 @@ export const verifyOtp = createAsyncThunk(
     try {
       const res = await authService.verifyOtp(data);
       localStorage.setItem("user", JSON.stringify(res.user));
+      localStorage.setItem("token", res.token);
       return res;
     } catch (err: any) {
       return rejectWithValue(err.error || err.message || "Xác thực thất bại");
@@ -232,6 +233,7 @@ const authSlice = createSlice({
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        state.token = action.payload.token;
         state.isAuthenticated = true;
         state.tempUserId = null; // Clear tempUserId after successful verification
       })

@@ -90,7 +90,7 @@ export const authService = {
   verifyOtp: async (data: {
     userId: number;
     otpCode: string;
-  }): Promise<{ user: any; message: string }> => {
+  }): Promise<{ user: any; message: string; token: string }> => {
     try {
       const response = await apiClient.post("/auth/register/verify-otp", data);
       return response.data;

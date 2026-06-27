@@ -28,10 +28,19 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Bỏ qua interceptor tự động văng ra ngoài đối với request đăng nhập
+      if (error.config && error.config.url && error.config.url.includes('/auth/login')) {
+        return Promise.reject(error);
+      }
+
       // Xóa token nếu hết hạn
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+
+      // Chỉ redirect nếu không phải đang ở trang login
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

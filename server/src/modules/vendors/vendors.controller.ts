@@ -139,26 +139,29 @@ export const createVendorHotel = async (req: Request, res: Response) => {
       name,
       description,
       address,
+      location,
       city,
-      stars,
+      stars = 0,
       latitude,
       longitude,
       images,
       amenities,
     } = req.body;
 
-    if (!name || !description || !address || !city || stars === undefined) {
+    const actualAddress = address || location;
+
+    if (!name || !description || !actualAddress || !city) {
       return res
         .status(400)
         .json({
-          message: "Vui lòng cung cấp đủ thông tin bắt buộc của khách sạn",
+          message: "Vui lòng cung cấp đủ thông tin bắt buộc của khách sạn (tên, mô tả, địa chỉ, thành phố)",
         });
     }
 
     const hotel = await vendorsService.createVendorHotel(userId, {
       name,
       description,
-      address,
+      address: actualAddress,
       city,
       stars: Number(stars),
       latitude: latitude ? Number(latitude) : undefined,
@@ -191,6 +194,7 @@ export const updateVendorHotel = async (req: Request, res: Response) => {
       name,
       description,
       address,
+      location,
       city,
       stars,
       latitude,
@@ -200,10 +204,12 @@ export const updateVendorHotel = async (req: Request, res: Response) => {
       isActive,
     } = req.body;
 
+    const actualAddress = address || location;
+
     const hotel = await vendorsService.updateVendorHotel(userId, hotelId, {
       name,
       description,
-      address,
+      address: actualAddress,
       city,
       stars: stars !== undefined ? Number(stars) : undefined,
       latitude: latitude !== undefined ? Number(latitude) : undefined,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal, Loader, TextInput, Textarea, MultiSelect, NumberInput, Select, Switch } from "@mantine/core";
+import { Modal, Loader, TextInput, Textarea, MultiSelect, NumberInput, Select, Switch, FileInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
   IconBuilding, IconPlus, IconEdit, IconTrash, IconBed,
@@ -7,6 +7,10 @@ import {
   IconCheck,
 } from "@tabler/icons-react";
 import { vendorService } from "../../user/services/vendorService";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { DatePicker } from "@mantine/dates";
+import dayjs from "dayjs";
+import { IconCalendarEvent } from "@tabler/icons-react";
 
 const formatVND = (n: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
@@ -24,11 +28,13 @@ const ROOM_TYPES = ["single","double","twin","triple","suite","deluxe","family",
 // ── Hotel Form Modal ──────────────────────────────────────
 const HotelFormModal = ({ opened, onClose, hotel, onSave }: any) => {
   const [form, setForm] = useState({
-    name: "", description: "", location: "", city: "", country: "Vietnam", amenities: [] as string[],
+    name: "", description: "", location: "", city: "", country: "Vietnam", amenities: [] as string[], imageLink: "",
   });
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
+    setImageFile(null);
     if (hotel) {
       setForm({
         name: hotel.name || "",
@@ -37,9 +43,10 @@ const HotelFormModal = ({ opened, onClose, hotel, onSave }: any) => {
         city: hotel.city || "",
         country: hotel.country || "Vietnam",
         amenities: (() => { try { return JSON.parse(hotel.amenities || "[]"); } catch { return []; } })(),
+        imageLink: (() => { try { const imgs = JSON.parse(hotel.images || "[]"); return Array.isArray(imgs) ? imgs[0] || "" : ""; } catch { return ""; } })(),
       });
     } else {
-      setForm({ name: "", description: "", location: "", city: "", country: "Vietnam", amenities: [] });
+      setForm({ name: "", description: "", location: "", city: "", country: "Vietnam", amenities: [], imageLink: "" });
     }
   }, [hotel, opened]);
 
@@ -50,11 +57,17 @@ const HotelFormModal = ({ opened, onClose, hotel, onSave }: any) => {
     }
     setSaving(true);
     try {
+      let finalImageUrl = form.imageLink;
+      if (imageFile) {
+        finalImageUrl = await uploadImageToCloudinary(imageFile);
+      }
+      
+      const payload = { ...form, images: finalImageUrl ? [finalImageUrl] : [] };
       if (hotel) {
-        await vendorService.updateVendorHotel(hotel.id, form);
+        await vendorService.updateVendorHotel(hotel.id, payload);
         notifications.show({ title: "Đã cập nhật!", message: "Thông tin khách sạn đã được lưu.", color: "green" });
       } else {
-        await vendorService.createVendorHotel(form);
+        await vendorService.createVendorHotel(payload);
         notifications.show({ title: "Đã tạo!", message: "Khách sạn mới đang chờ Admin phê duyệt.", color: "teal" });
       }
       onSave();
@@ -75,6 +88,21 @@ const HotelFormModal = ({ opened, onClose, hotel, onSave }: any) => {
           <TextInput label="Quốc gia" placeholder="Vietnam" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
         </div>
         <TextInput label="Địa chỉ cụ thể *" placeholder="VD: 123 Phố Huế, Quận Hai Bà Trưng" value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
+        
+        <FileInput 
+          label="Ảnh khách sạn" 
+          placeholder={form.imageLink ? "Đã có ảnh. Bấm để chọn ảnh mới..." : "Chọn ảnh để tải lên..."}
+          accept="image/png,image/jpeg,image/webp" 
+          value={imageFile} 
+          onChange={setImageFile} 
+          clearable 
+        />
+        {form.imageLink && !imageFile && (
+          <div style={{ marginTop: -8, fontSize: 12, color: "#6b7280" }}>
+            Ảnh hiện tại: <a href={form.imageLink} target="_blank" rel="noreferrer" className="text-primary hover:underline">Xem ảnh</a>
+          </div>
+        )}
+
         <Textarea label="Mô tả" placeholder="Mô tả ngắn về chỗ nghỉ..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3} />
         <MultiSelect label="Tiện ích" data={AMENITY_OPTIONS} value={form.amenities} onChange={v => setForm(p => ({ ...p, amenities: v }))} placeholder="Chọn tiện ích..." searchable />
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
@@ -157,6 +185,54 @@ const RoomFormModal = ({ opened, onClose, hotelId, room, onSave }: any) => {
   );
 };
 
+// ── Room Calendar Modal ──────────────────────────────────
+const RoomCalendarModal = ({ opened, onClose, room }: any) => {
+  if (!room) return null;
+
+  const isBooked = (date: any) => {
+    if (!room.bookings || room.bookings.length === 0) return false;
+    const current = dayjs(date).startOf("day").valueOf();
+    return room.bookings.some((b: any) => {
+      const start = dayjs(b.checkInDate).startOf("day").valueOf();
+      const end = dayjs(b.checkOutDate).startOf("day").valueOf();
+      return current >= start && current < end;
+    });
+  };
+
+  return (
+    <Modal opened={opened} onClose={onClose} title={<span style={{ fontWeight: 700, fontSize: 16 }}>Lịch phòng {room.roomNumber}</span>} centered>
+      <div style={{ display: "flex", justifyContent: "center", padding: "10px 0" }}>
+        <DatePicker
+          renderDay={(date: any) => {
+            const booked = isBooked(date);
+            return (
+              <div
+                style={{
+                  width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                  backgroundColor: booked ? "#fee2e2" : "transparent",
+                  color: booked ? "#dc2626" : "inherit",
+                  borderRadius: 4, fontWeight: booked ? 600 : 400
+                }}
+                title={booked ? "Đã được đặt" : "Còn trống"}
+              >
+                {dayjs(date).date()}
+              </div>
+            );
+          }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#6b7280" }}>
+          <div style={{ width: 14, height: 14, background: "#fee2e2", borderRadius: 3 }}></div> Đã đặt
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#6b7280" }}>
+          <div style={{ width: 14, height: 14, border: "1px solid #e5e7eb", borderRadius: 3 }}></div> Còn trống
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 // ── Main View ──────────────────────────────────────────────
 export const VendorListingsView = () => {
   const [hotels, setHotels] = useState<any[]>([]);
@@ -168,6 +244,7 @@ export const VendorListingsView = () => {
   const [hotelModal, setHotelModal] = useState(false);
   const [editHotel, setEditHotel] = useState<any>(null);
   const [roomModal, setRoomModal] = useState<{ opened: boolean; hotelId: number | null; room: any }>({ opened: false, hotelId: null, room: null });
+  const [calendarModal, setCalendarModal] = useState<{ opened: boolean; room: any }>({ opened: false, room: null });
   const [deleting, setDeleting] = useState<number | null>(null);
 
   const loadHotels = async () => {
@@ -184,8 +261,8 @@ export const VendorListingsView = () => {
 
   useEffect(() => { loadHotels(); }, []);
 
-  const loadRooms = async (hotelId: number) => {
-    if (rooms[hotelId]) return;
+  const loadRooms = async (hotelId: number, force = false) => {
+    if (!force && rooms[hotelId]) return;
     setLoadingRooms(p => ({ ...p, [hotelId]: true }));
     try {
       const data = await vendorService.getVendorRooms(hotelId);
@@ -335,7 +412,16 @@ export const VendorListingsView = () => {
                               </div>
                             </div>
                             <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: "#0b63d6" }}>{formatVND(room.price)}<span style={{ fontWeight: 400, fontSize: 12, color: "#9ca3af" }}>/đêm</span></p>
-                            <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>👥 {room.capacity} người · {room.isAvailable ? "✅ Còn trống" : "🔴 Đã đặt"}</p>
+                            
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                              <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>👥 {room.capacity} người</p>
+                              <button 
+                                onClick={() => setCalendarModal({ opened: true, room })}
+                                style={{ background: "#f3f4f6", border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#374151", display: "flex", alignItems: "center", gap: 4 }}
+                              >
+                                <IconCalendarEvent size={14} /> Xem lịch
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -362,10 +448,14 @@ export const VendorListingsView = () => {
         room={roomModal.room}
         onSave={() => {
           if (roomModal.hotelId) {
-            setRooms(p => { const n = { ...p }; delete n[roomModal.hotelId!]; return n; });
-            loadRooms(roomModal.hotelId);
+            loadRooms(roomModal.hotelId, true);
           }
         }}
+      />
+      <RoomCalendarModal
+        opened={calendarModal.opened}
+        onClose={() => setCalendarModal({ opened: false, room: null })}
+        room={calendarModal.room}
       />
     </div>
   );

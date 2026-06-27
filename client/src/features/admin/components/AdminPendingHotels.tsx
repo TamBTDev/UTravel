@@ -99,6 +99,30 @@ export const AdminPendingHotels = () => {
     }
   };
 
+  const handleToggleActive = async (hotel: PendingHotel) => {
+    const isCurrentlyActive = hotel.isActive;
+    modals.openConfirmModal({
+      title: isCurrentlyActive ? 'Xác nhận Khóa' : 'Xác nhận Mở khóa',
+      children: `Bạn có chắc chắn muốn ${isCurrentlyActive ? 'Khóa' : 'Mở khóa'} khách sạn "${hotel.name}"?`,
+      labels: { confirm: 'Đồng ý', cancel: 'Hủy' },
+      confirmProps: { color: isCurrentlyActive ? 'red' : 'green' },
+      onConfirm: async () => {
+        setActionId(hotel.id);
+        try {
+          const res = await adminService.toggleHotelActive(hotel.id, !isCurrentlyActive);
+          if (res.success) {
+            setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, isActive: !isCurrentlyActive } : h));
+            notifications.show({ title: 'Thành công', message: 'Cập nhật trạng thái hiển thị thành công', color: 'green' });
+          }
+        } catch (err: any) {
+          notifications.show({ title: 'Lỗi', message: err.message || "Lỗi khi cập nhật trạng thái hiển thị", color: 'red' });
+        } finally {
+          setActionId(null);
+        }
+      }
+    });
+  };
+
   const getHotelImage = (imagesStr: string) => {
     try {
       const parsed = JSON.parse(imagesStr);
@@ -265,6 +289,22 @@ export const AdminPendingHotels = () => {
                         title="Từ chối duyệt"
                       >
                         <IconX size={15} />
+                      </button>
+                    </div>
+                  )}
+                  {hotel.approvalStatus === "APPROVED" && (
+                    <div className="pt-4 border-t border-border-hairline flex gap-2">
+                      <button
+                        disabled={actionId === hotel.id}
+                        onClick={() => handleToggleActive(hotel)}
+                        className={`flex-1 flex items-center justify-center gap-1 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-sm disabled:cursor-not-allowed ${
+                          hotel.isActive 
+                            ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-600/50' 
+                            : 'bg-green-600 hover:bg-green-700 disabled:bg-green-600/50'
+                        }`}
+                      >
+                        {hotel.isActive ? <IconX size={14} /> : <IconCheck size={14} />}
+                        {hotel.isActive ? "Khóa khách sạn" : "Mở khóa"}
                       </button>
                     </div>
                   )}

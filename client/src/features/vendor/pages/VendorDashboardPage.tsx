@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Drawer, Loader } from "@mantine/core";
 import {
   IconMenu2,
-  IconDownload,
   IconBed,
   IconBookmark,
   IconStar,
@@ -13,7 +13,6 @@ import { useAppSelector } from "@/hooks/useAppStore";
 import { VendorSidebar } from "../components/VendorSidebar";
 import { KpiCard } from "../components/KpiCard";
 import { RevenueChart } from "../components/RevenueChart";
-import { RecentBookings } from "../components/RecentBookings";
 import { VendorBookingsView } from "../components/VendorBookingsView";
 import { VendorRevenueView } from "../components/VendorRevenueView";
 import { VendorReviewsView } from "../components/VendorReviewsView";
@@ -27,7 +26,12 @@ import { VendorSettingsView } from "../components/VendorSettingsView";
 import { VendorPromotionsView } from "../components/VendorPromotionsView";
 
 export const VendorDashboardPage = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "dashboard";
+
+  const setActiveTab = (tab: string) => {
+    setSearchParams({ tab });
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = useAppSelector((s) => s.auth.user);
 
@@ -195,13 +199,6 @@ export const VendorDashboardPage = () => {
                 là tình hình hoạt động của các khách sạn hôm nay.
               </p>
             </div>
-            {activeTab === "dashboard" && (
-              <div className="flex items-center gap-3">
-                <button className="bg-white border border-outline-variant hover:bg-surface-container-low text-on-surface font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2 text-sm">
-                  <IconDownload size={16} /> Xuất báo cáo
-                </button>
-              </div>
-            )}
           </header>
 
           {activeTab === "dashboard" && (
@@ -248,14 +245,10 @@ export const VendorDashboardPage = () => {
               )}
 
               {/* Data & Analytics Section */}
-              <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <section className="mt-6">
                 {/* Revenue Overview Chart */}
-                <div className="lg:col-span-2">
+                <div className="w-full">
                   <RevenueChart />
-                </div>
-                {/* Recent Bookings List */}
-                <div>
-                  <RecentBookings onViewAll={() => setActiveTab("bookings")} />
                 </div>
               </section>
             </>

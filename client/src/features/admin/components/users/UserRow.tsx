@@ -11,7 +11,7 @@ interface UserRowProps {
 }
 
 export const UserRow = ({ user, onToggleStatus, onOpenRoleModal, isProcessing }: UserRowProps) => {
-  const isSuspended = user.status === "SUSPENDED";
+  const isSuspended = user.status === "LOCKED";
 
   return (
     <Table.Tr className="hover:bg-surface-low/30 transition-colors">

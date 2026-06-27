@@ -38,6 +38,7 @@ export interface PendingHotel {
   images: string;
   amenities: string;
   approvalStatus: string;
+  isActive: boolean;
   createdAt: string;
   vendor: {
     shopName: string;
@@ -138,6 +139,15 @@ export const adminService = {
     }
   },
 
+  toggleHotelActive: async (hotelId: number, isActive: boolean): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await apiClient.patch(`/admin/hotels/${hotelId}/active`, { isActive });
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
   getAllUsers: async (search?: string, role?: string, status?: string): Promise<{ success: boolean; data: AdminUser[] }> => {
     try {
       const params = new URLSearchParams();
@@ -151,7 +161,7 @@ export const adminService = {
     }
   },
 
-  updateUserStatus: async (userId: number, status: "VERIFIED" | "SUSPENDED"): Promise<{ success: boolean; message: string }> => {
+  updateUserStatus: async (userId: number, status: "VERIFIED" | "LOCKED"): Promise<{ success: boolean; message: string }> => {
     try {
       const res = await apiClient.patch(`/admin/users/${userId}/status`, { status });
       return res.data;

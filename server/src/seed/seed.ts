@@ -22,6 +22,7 @@ async function main() {
   await prisma.review.deleteMany();
   await prisma.room.deleteMany();
   await prisma.hotel.deleteMany();
+  await prisma.withdrawRequest.deleteMany();
   await prisma.vendorProfile.deleteMany();
 
   // Create admin account
@@ -141,7 +142,57 @@ async function main() {
     },
   });
 
-  console.log("Created vendor, profile and wallet");
+  // Create Pending Withdraw Request
+  await prisma.withdrawRequest.create({
+    data: {
+      vendorId: vendorProfile.id,
+      walletId: wallet.id,
+      amount: 5000000,
+      bankName: "Techcombank",
+      bankAccount: "1903123456789",
+      bankOwner: "NGUYEN VAN VENDOR",
+      status: "PENDING",
+      note: "Rút tiền hoa hồng tháng này",
+    },
+  });
+
+  // Create a Pending Vendor
+  const pendingVendorUserPasswordHash = await bcrypt.hash("123456", 10);
+  const pendingVendorUser = await prisma.user.upsert({
+    where: { email: "pendingvendor@gmail.com" },
+    update: {
+      password: pendingVendorUserPasswordHash,
+      role: USER_ROLES.VENDOR,
+      firstName: "Đối tác",
+      lastName: "Chờ duyệt",
+      phone: "0777777777",
+      status: USER_STATUS.VERIFIED,
+    },
+    create: {
+      email: "pendingvendor@gmail.com",
+      password: pendingVendorUserPasswordHash,
+      firstName: "Đối tác",
+      lastName: "Chờ duyệt",
+      phone: "0777777777",
+      role: USER_ROLES.VENDOR,
+      status: USER_STATUS.VERIFIED,
+    },
+  });
+  const pendingVendorProfile = await prisma.vendorProfile.create({
+    data: {
+      userId: pendingVendorUser.id,
+      shopName: "Khách sạn Chờ Duyệt",
+      description: "Khách sạn này mới đăng ký, đang chờ Admin duyệt",
+      businessLicense: "099999999",
+      bankName: "Vietcombank",
+      bankOwner: "DOI TAC CHO DUYET",
+      bankAccount: "0123456789",
+      status: "PENDING",
+      commissionRate: 10.0,
+    },
+  });
+
+  console.log("Created vendor, pending vendor, profile, wallet, and pending withdraw request");
 
   console.log("Creating sample hotels and rooms...");
   const cities = [
@@ -217,7 +268,8 @@ async function main() {
         images: JSON.stringify([images[i % images.length]]),
         amenities: JSON.stringify(amenitiesList[i % amenitiesList.length]),
         vendorId: vendorProfile.id,
-        approvalStatus: "APPROVED",
+        approvalStatus: i === 1 ? "PENDING" : "APPROVED",
+        isActive: true,
       },
     });
     hotels.push(hotel);

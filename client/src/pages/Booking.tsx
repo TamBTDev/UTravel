@@ -56,12 +56,20 @@ export const BookingPage: React.FC = () => {
 
   const [checkInDate, setCheckInDate] = useState<string>(initCheckIn);
   const [checkOutDate, setCheckOutDate] = useState<string>(initCheckOut);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const user = useSelector((state: any) => state.auth.user);
+
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [specialRequests, setSpecialRequests] = useState('');
 
-  const user = useSelector((state: any) => state.auth.user);
+  useEffect(() => {
+    if (user) {
+      if (!firstName && user.firstName) setFirstName(user.firstName);
+      if (!lastName && user.lastName) setLastName(user.lastName);
+      if (!email && user.email) setEmail(user.email);
+    }
+  }, [user]);
 
   useEffect(() => {
     const loadRoom = async () => {
@@ -154,13 +162,13 @@ export const BookingPage: React.FC = () => {
             onClick={() => navigate(-1)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#374151', fontWeight: 500, fontSize: 14 }}
           >
-            <IconX size={16} /> Cancel Booking
+            <IconX size={16} /> Hủy đặt phòng
           </button>
         </div>
       </div>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#111827', marginBottom: 32 }}>Review your trip</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#111827', marginBottom: 32 }}>Kiểm tra thông tin đặt phòng</h1>
 
         {/* Success banner */}
         {success && currentBooking && (
@@ -187,7 +195,7 @@ export const BookingPage: React.FC = () => {
 
               {/* Hotel info */}
               <div style={{ padding: '20px 24px' }}>
-                <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: '#9ca3af', marginBottom: 4, fontWeight: 600 }}>HOTEL STAY</p>
+                <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: '#9ca3af', marginBottom: 4, fontWeight: 600 }}>LƯU TRÚ TẠI KHÁCH SẠN</p>
                 <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 6 }}>{room.hotel?.name || room.type}</h2>
                 {room.hotel && (
                   <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -209,14 +217,14 @@ export const BookingPage: React.FC = () => {
                 {/* Check-in / Check-out */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, paddingTop: 16, borderTop: '1px solid #f3f4f6' }}>
                   <div>
-                    <p style={{ fontSize: 11, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 6 }}>CHECK-IN</p>
-                    <p style={{ fontWeight: 700, color: '#111827', marginBottom: 2 }}>{dayjs(checkInDate).format('ddd, MMM D')}</p>
-                    <p style={{ fontSize: 13, color: '#6b7280' }}>3:00 PM</p>
+                    <p style={{ fontSize: 11, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 6 }}>NHẬN PHÒNG</p>
+                    <p style={{ fontWeight: 700, color: '#111827', marginBottom: 2 }}>{dayjs(checkInDate).format('DD/MM/YYYY')}</p>
+                    <p style={{ fontSize: 13, color: '#6b7280' }}>14:00</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: 11, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 6 }}>CHECK-OUT</p>
-                    <p style={{ fontWeight: 700, color: '#111827', marginBottom: 2 }}>{dayjs(checkOutDate).format('ddd, MMM D')}</p>
-                    <p style={{ fontSize: 13, color: '#6b7280' }}>11:00 AM</p>
+                    <p style={{ fontSize: 11, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 6 }}>TRẢ PHÒNG</p>
+                    <p style={{ fontWeight: 700, color: '#111827', marginBottom: 2 }}>{dayjs(checkOutDate).format('DD/MM/YYYY')}</p>
+                    <p style={{ fontSize: 13, color: '#6b7280' }}>12:00</p>
                   </div>
                 </div>
 
@@ -248,46 +256,46 @@ export const BookingPage: React.FC = () => {
 
             {/* Guest Information */}
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '24px' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 20 }}>Guest Information</h3>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 20 }}>Thông tin khách hàng</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>First Name</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Tên</label>
                   <input
                     type="text"
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
-                    placeholder="Jane"
+                    placeholder="VD: Nam"
                     style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Last Name</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Họ</label>
                   <input
                     type="text"
                     value={lastName}
                     onChange={e => setLastName(e.target.value)}
-                    placeholder="Doe"
+                    placeholder="VD: Nguyễn"
                     style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Email Address</label>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Địa chỉ Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="jane.doe@example.com"
+                  placeholder="nam.nguyen@example.com"
                   style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                 />
-                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>Confirmation will be sent to this address.</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>Thông tin xác nhận sẽ được gửi đến địa chỉ này.</p>
               </div>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Special Requests <span style={{ color: '#9ca3af', fontWeight: 400 }}>(Optional)</span></label>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Yêu cầu đặc biệt <span style={{ color: '#9ca3af', fontWeight: 400 }}>(Không bắt buộc)</span></label>
                 <textarea
                   value={specialRequests}
                   onChange={e => setSpecialRequests(e.target.value)}
-                  placeholder="Any special requests? (e.g., high floor, crib for baby, etc.)"
+                  placeholder="Bất kỳ yêu cầu đặc biệt nào? (VD: tầng cao, nôi cho em bé, v.v.)"
                   rows={3}
                   style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
@@ -296,15 +304,15 @@ export const BookingPage: React.FC = () => {
 
             {/* Cancellation Policy */}
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '24px' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Cancellation Policy</h3>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Chính sách hủy phòng</h3>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <IconCircleCheck size={24} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
                 <div>
                   <p style={{ fontWeight: 600, color: '#065f46', marginBottom: 4 }}>
-                    Free cancellation until {dayjs(checkInDate).subtract(2, 'day').format('MMM D')}, 3:00 PM.
+                    Hủy miễn phí trước 15:00, ngày {dayjs(checkInDate).subtract(2, 'day').format('DD/MM/YYYY')}.
                   </p>
                   <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-                    Cancel before this date for a full refund. After this date, a fee of 1 night's stay will apply.
+                    Hủy trước thời gian này để được hoàn tiền toàn bộ. Sau thời gian này, phí hủy sẽ bằng 1 đêm lưu trú.
                   </p>
                 </div>
               </div>
@@ -314,7 +322,7 @@ export const BookingPage: React.FC = () => {
           {/* ── RIGHT COLUMN – Price Card ── */}
           <div style={{ position: 'sticky', top: 100 }}>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 20 }}>Price Details</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 20 }}>Chi tiết giá</h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
@@ -324,17 +332,17 @@ export const BookingPage: React.FC = () => {
                   <span style={{ fontWeight: 500 }}>{formatVND(totalPrice)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                  <span style={{ color: '#374151' }}>Taxes & Fees</span>
+                  <span style={{ color: '#374151' }}>Thuế & Phí</span>
                   <span style={{ fontWeight: 500 }}>0 ₫</span>
                 </div>
               </div>
 
               <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 16, paddingTop: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: 16 }}>Total</span>
+                  <span style={{ fontWeight: 700, fontSize: 16 }}>Tổng cộng</span>
                   <span style={{ fontWeight: 800, fontSize: 22, color: '#111827' }}>{formatVND(totalPrice)}</span>
                 </div>
-                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Includes all taxes and fees</p>
+                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Đã bao gồm tất cả các loại thuế và phí</p>
               </div>
 
               <button
@@ -354,12 +362,12 @@ export const BookingPage: React.FC = () => {
                   transition: 'background 0.2s',
                 }}
               >
-                {isLoading ? 'Đang xử lý...' : <span style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}><IconLock size={16} /> Proceed to Payment</span>}
+                {isLoading ? 'Đang xử lý...' : <span style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}><IconLock size={16} /> Tiến hành thanh toán</span>}
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 12 }}>
                 <IconLock size={16} color="#9ca3af" />
-                <span style={{ fontSize: 12, color: '#9ca3af' }}>Secure encrypted checkout</span>
+                <span style={{ fontSize: 12, color: '#9ca3af' }}>Thanh toán bảo mật an toàn</span>
               </div>
 
               {/* Room details summary */}

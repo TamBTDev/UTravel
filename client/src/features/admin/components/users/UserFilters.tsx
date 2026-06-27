@@ -54,7 +54,7 @@ export const UserFilters = ({
           data={[
             { value: "ALL", label: "Tất cả trạng thái" },
             { value: "VERIFIED", label: "Hoạt động" },
-            { value: "SUSPENDED", label: "Bị khóa" },
+            { value: "LOCKED", label: "Bị khóa" },
           ]}
           placeholder="Trạng thái"
           className="w-full sm:w-48"
