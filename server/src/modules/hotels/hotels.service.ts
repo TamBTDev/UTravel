@@ -53,8 +53,8 @@ export const hotelsService = {
     }
 
     if (amenities && amenities.length > 0) {
-      where.AND = amenities.map(amenity => ({
-        amenities: { string_contains: amenity }
+      where.AND = amenities.map((amenity: string) => ({
+        amenities: { array_contains: amenity }
       }));
     }
 

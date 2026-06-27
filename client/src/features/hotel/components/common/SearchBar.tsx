@@ -16,6 +16,24 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
   const navigate = useNavigate();
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [destination, setDestination] = useState("");
+  const [guests, setGuests] = useState("");
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (destination) params.append("search", destination);
+    if (checkIn) {
+      const d = new Date(checkIn);
+      if (!isNaN(d.getTime())) params.append("checkIn", d.toISOString());
+    }
+    if (checkOut) {
+      const d = new Date(checkOut);
+      if (!isNaN(d.getTime())) params.append("checkOut", d.toISOString());
+    }
+    
+    // For simplicity, we just navigate to /hotels with search params
+    navigate(`/hotels?${params.toString()}`);
+  };
 
   const handleCheckInChange = (date: Date | null) => {
     setCheckIn(date);
@@ -63,6 +81,9 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
             <input
               className="absolute inset-0 w-full h-full bg-surface-low border border-hairline rounded-lg pl-9 pr-3 text-body text-on-surface placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               placeholder="Bạn muốn đi đâu?"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
         </div>
@@ -119,13 +140,16 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
             <input
               className="absolute inset-0 w-full h-full bg-surface-low border border-hairline rounded-lg pl-9 pr-3 text-body text-on-surface placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               placeholder="2 Người lớn, 1 Phòng"
+              value={guests}
+              onChange={(e) => setGuests(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
         </div>
 
         {/* Search btn */}
         <button
-          onClick={() => navigate("/hotels")}
+          onClick={handleSearch}
           className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-7 h-12 rounded-lg transition-colors shadow-md shrink-0 w-full md:w-auto"
         >
           <IconSearch size={16} />

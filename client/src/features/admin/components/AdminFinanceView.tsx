@@ -16,7 +16,11 @@ export const AdminFinanceView = () => {
       try {
         const res = await adminService.getAdminFinanceReport();
         if (res.success) {
-          setReport(res.data);
+          const reportData = res.data;
+          if (reportData.transactions) {
+            reportData.transactions.sort((a: any, b: any) => b.id - a.id);
+          }
+          setReport(reportData);
         }
       } catch (err: any) {
         console.error(err);

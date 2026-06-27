@@ -34,7 +34,8 @@ export const VendorBookingsView = () => {
     try {
       const res = await vendorService.getVendorBookings();
       if (res.success) {
-        setBookings(res.data);
+        const sortedData = (res.data || []).sort((a: any, b: any) => b.id - a.id);
+        setBookings(sortedData);
       }
     } catch (err: any) {
       console.error(err);

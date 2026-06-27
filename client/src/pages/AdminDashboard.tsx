@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Drawer } from "@mantine/core";
-import { IconMenu2, IconBell, IconSearch } from "@tabler/icons-react";
+import { IconMenu2 } from "@tabler/icons-react";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { AdminSidebar } from "../features/admin/components/AdminSidebar";
 import { AdminStats } from "../features/admin/components/AdminStats";
@@ -77,30 +77,6 @@ export const AdminDashboard = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            {/* Search input preview matching mockup */}
-            <div className="relative hidden lg:block w-72">
-              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm nhanh..."
-                className="w-full pl-9 pr-4 py-1.5 bg-[#f8fafc] border border-border-hairline rounded-lg text-xs font-semibold placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-              />
-            </div>
-
-            {/* Notification Badge */}
-            <button className="relative text-outline hover:text-primary transition-colors p-1.5 rounded-full hover:bg-surface-container-low/60">
-              <IconBell size={20} />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-
-            {/* User Profile Avatar */}
-            <div className="flex items-center gap-2.5 pl-4 border-l border-border-hairline">
-              <img
-                alt="Admin Profile"
-                className="w-8 h-8 rounded-full object-cover border border-border-hairline shadow-sm"
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80"
-              />
-            </div>
           </div>
         </header>
 

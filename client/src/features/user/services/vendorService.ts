@@ -329,7 +329,7 @@ export const vendorService = {
     return response.data;
   },
   getVendorWithdrawRequests: async () => {
-    const response = await apiClient.get("/vendors/withdrawals");
+    const response = await apiClient.get("/vendors/wallet/withdraws");
     return response.data.data;
   },
 

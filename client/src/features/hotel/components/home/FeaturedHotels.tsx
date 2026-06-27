@@ -52,12 +52,20 @@ export const FeaturedHotels = ({ hotels, isLoading, isAuthenticated }: FeaturedH
               >
                 <Card.Section className="relative">
                   <Image
-                    src={
-                      hotel.images && Array.isArray(hotel.images) && hotel.images.length > 0
-                        ? hotel.images[0]
-                        : "https://pix8.agoda.net/hotelImages/461838/0/b8762fd588ac35fa9a96190e5c0a9711.jpeg"
-                    }
-                    height={180}
+                    src={(() => {
+                      try {
+                        const parsedImages = typeof hotel.images === 'string'
+                          ? JSON.parse(hotel.images)
+                          : hotel.images;
+                        return parsedImages && Array.isArray(parsedImages) && parsedImages.length > 0
+                          ? parsedImages[0]
+                          : "https://pix8.agoda.net/hotelImages/461838/0/b8762fd588ac35fa9a96190e5c0a9711.jpeg";
+                      } catch (e) {
+                        return "https://pix8.agoda.net/hotelImages/461838/0/b8762fd588ac35fa9a96190e5c0a9711.jpeg";
+                      }
+                    })()}
+                    h={220}
+                    fit="cover"
                     alt={hotel.name}
                   />
                   <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded flex items-center gap-1">

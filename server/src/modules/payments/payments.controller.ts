@@ -2,6 +2,27 @@ import { Request, Response } from 'express';
 import prisma from '../../config/database';
 import { PAYMENT_METHOD, PAYMENT_STATUS, BOOKING_STATUS } from '../../../../shared/constants/roles';
 import env from '../../config/env';
+import { getIO } from '../../services/socket.service';
+
+const emitBookingConfirmed = async (bookingId: number) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { room: { include: { hotel: true } }, user: true },
+    });
+    if (booking && booking.room?.hotel?.vendorId) {
+      getIO().to(`vendor_${booking.room.hotel.vendorId}`).emit("new_booking", {
+        bookingId: booking.id,
+        hotelName: booking.room.hotel.name,
+        totalPrice: booking.finalPrice,
+        customerName: booking.user?.firstName || "Khách hàng",
+        createdAt: booking.createdAt,
+      });
+    }
+  } catch (err) {
+    console.error("Socket emit error:", err);
+  }
+};
 
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
@@ -156,6 +177,7 @@ export const createPayment = async (req: Request, res: Response) => {
         const earnedPoints = Math.max(1, Math.floor(finalPrice * 0.01));
         await tx.user.update({ where: { id: userId }, data: { rewardPoints: { increment: earnedPoints } } });
 
+        emitBookingConfirmed(Number(bookingId));
         return { success: true, method: 'WALLET', payment, remainingAmount: 0 };
       }
 
@@ -175,6 +197,7 @@ export const createPayment = async (req: Request, res: Response) => {
           },
           update: { method: 'CASH', status: 'PENDING', amount: remainingAmount },
         });
+        emitBookingConfirmed(Number(bookingId));
         return { success: true, method: 'CASH', payment, remainingAmount };
       }
 
@@ -441,6 +464,7 @@ export const sePayWebhook = async (req: Request, res: Response) => {
             });
           });
           console.log(`[SEPAY_WEBHOOK] Fallback match: booking #${bookingId}, content=${transferContent}`);
+          emitBookingConfirmed(Number(bookingId));
           return res.status(200).json({ success: true, message: 'Xác nhận thanh toán thành công (fallback)' });
         }
       }
@@ -472,6 +496,7 @@ export const sePayWebhook = async (req: Request, res: Response) => {
     });
 
     console.log(`[SEPAY_WEBHOOK] Xác nhận thanh toán thành công: ${transferContent}, booking #${payment.bookingId}`);
+    emitBookingConfirmed(Number(payment.bookingId));
     return res.status(200).json({ success: true, message: 'Xác nhận thanh toán thành công' });
   } catch (error: any) {
     console.error('[SEPAY_WEBHOOK] Error:', error);

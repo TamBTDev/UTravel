@@ -60,7 +60,7 @@ export const createBooking = async (req: Request, res: Response) => {
       });
 
       if (conflictingBookings.length > 0) {
-        throw new Error("Room is not available for the selected dates");
+        throw new Error("Phòng đã được đặt trong khoảng thời gian này. Vui lòng chọn ngày khác.");
       }
 
       const nights = Math.ceil(
@@ -104,29 +104,15 @@ export const createBooking = async (req: Request, res: Response) => {
         ).catch((err) => console.error("Error sending booking email:", err));
       }
 
-      // Emit Real-time Websocket Notification to Vendor
-      if (booking.room.hotel.vendorId) {
-        try {
-          const io = getIO();
-          io.to(`vendor_${booking.room.hotel.vendorId}`).emit("new_booking", {
-            bookingId: booking.id,
-            hotelName: booking.room.hotel.name,
-            totalPrice: booking.finalPrice,
-            customerName: req.user?.firstName || "Khách hàng",
-            createdAt: booking.createdAt,
-          });
-        } catch (err) {
-          console.error("Socket emit error:", err);
-        }
-      }
+
 
       res.status(201).json({ data: booking });
     });
   } catch (error: any) {
     console.error("Error creating booking:", error);
     res
-      .status(500)
-      .json({ message: "Failed to create booking", error: error.message });
+      .status(400)
+      .json({ message: error.message || "Failed to create booking", error: error.message });
   }
 };
 

@@ -45,9 +45,10 @@ export const VendorDashboardPage = () => {
           setProfile(res.data);
 
           // Connect to Socket.IO when profile is loaded
-          const socket = io(
-            import.meta.env.VITE_API_URL || "http://localhost:3000",
-          );
+          const baseUrl = (
+            import.meta.env.VITE_API_URL || "http://localhost:3000"
+          ).replace("/api", "");
+          const socket = io(baseUrl, { withCredentials: true });
 
           socket.on("connect", () => {
             console.log("Connected to Websocket Server");
@@ -56,19 +57,19 @@ export const VendorDashboardPage = () => {
 
           socket.on("new_booking", (data: any) => {
             notifications.show({
-              title: "🎉 Đơn Đặt Phòng Mới!",
+              title: "Đơn Đặt Phòng Mới!",
               message: `Khách hàng ${data.customerName} vừa đặt phòng tại ${data.hotelName}. Giá trị: ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(data.totalPrice)}`,
               color: "blue",
-              autoClose: 10000,
+              autoClose: false,
             });
           });
 
           socket.on("new_review", (data: any) => {
             notifications.show({
-              title: "⭐ Đánh Giá Mới!",
+              title: "Đánh Giá Mới!",
               message: `Khách hàng ${data.reviewerName} vừa đánh giá ${data.rating} sao cho ${data.hotelName}.`,
               color: "yellow",
-              autoClose: 10000,
+              autoClose: false,
             });
           });
 

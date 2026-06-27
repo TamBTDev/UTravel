@@ -60,7 +60,8 @@ export const Bookings = () => {
       setLoading(true);
       setError(null);
       const data = await getMyBookings();
-      setBookings(data || []);
+      const sortedData = (data || []).sort((a: any, b: any) => b.id - a.id);
+      setBookings(sortedData);
     } catch (err: any) {
       setError(err.message || 'Không thể tải danh sách đặt phòng');
     } finally {

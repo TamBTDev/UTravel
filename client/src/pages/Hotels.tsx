@@ -40,7 +40,7 @@ export const Hotels = () => {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [priceRange, setPriceRange] = useState<[number, number]>([
     Number(searchParams.get("minPrice")) || 0,
-    Number(searchParams.get("maxPrice")) || 500,
+    Number(searchParams.get("maxPrice")) || 20000000,
   ]);
   const [rating, setRating] = useState(Number(searchParams.get("rating")) || 0);
   const [amenities, setAmenities] = useState<string[]>(
@@ -86,7 +86,7 @@ export const Hotels = () => {
 
     if (search) params.append("search", search);
     if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
-    if (priceRange[1] < 500)
+    if (priceRange[1] < 20000000)
       params.append("maxPrice", priceRange[1].toString());
     if (rating > 0) params.append("rating", rating.toString());
     amenities.forEach((a) => params.append("amenities", a));
@@ -130,19 +130,19 @@ export const Hotels = () => {
                     </Text>
                     <RangeSlider
                       min={0}
-                      max={500}
-                      step={10}
+                      max={20000000}
+                      step={500000}
                       value={priceRange}
                       onChange={setPriceRange}
                       label={(value) =>
                         new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
-                        }).format(value * 25000)
+                        }).format(value)
                       }
                       marks={[
                         { value: 0, label: "0₫" },
-                        { value: 500, label: "12tr+" },
+                        { value: 20000000, label: "20tr+" },
                       ]}
                       mb="xl"
                       color="var(--color-primary)"
@@ -316,14 +316,19 @@ export const Hotels = () => {
                         {/* Cột ảnh */}
                         <Grid.Col span={{ base: 12, sm: 4 }}>
                           <Image
-                            src={
-                              hotel.images &&
-                              Array.isArray(hotel.images) &&
-                              hotel.images.length > 0
-                                ? hotel.images[0]
-                                : "https://pix8.agoda.net/hotelImages/461838/0/b8762fd588ac35fa9a96190e5c0a9711.jpeg?ce=0&s=1024x"
-                            }
-                            height={200}
+                            src={(() => {
+                              try {
+                                const parsedImages = typeof hotel.images === 'string'
+                                  ? JSON.parse(hotel.images)
+                                  : hotel.images;
+                                return parsedImages && Array.isArray(parsedImages) && parsedImages.length > 0
+                                  ? parsedImages[0]
+                                  : "https://pix8.agoda.net/hotelImages/461838/0/b8762fd588ac35fa9a96190e5c0a9711.jpeg?ce=0&s=1024x";
+                              } catch (e) {
+                                return "https://pix8.agoda.net/hotelImages/461838/0/b8762fd588ac35fa9a96190e5c0a9711.jpeg?ce=0&s=1024x";
+                              }
+                            })()}
+                            h={{ base: 200, sm: 240 }}
                             radius="md"
                             alt={hotel.name}
                             fit="cover"
@@ -422,7 +427,7 @@ export const Hotels = () => {
                                     ? new Intl.NumberFormat("vi-VN", {
                                         style: "currency",
                                         currency: "VND",
-                                      }).format(hotel.rooms[0].price * 25000)
+                                      }).format(hotel.rooms[0].price)
                                     : "--"}
                                 </Text>
                                 <Button
