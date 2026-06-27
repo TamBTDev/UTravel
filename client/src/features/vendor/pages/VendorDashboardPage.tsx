@@ -7,6 +7,8 @@ import {
   IconBookmark,
   IconStar,
 } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { io } from "socket.io-client";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { VendorSidebar } from "../components/VendorSidebar";
 import { KpiCard } from "../components/KpiCard";
@@ -15,14 +17,17 @@ import { RecentBookings } from "../components/RecentBookings";
 import { VendorBookingsView } from "../components/VendorBookingsView";
 import { VendorRevenueView } from "../components/VendorRevenueView";
 import { VendorReviewsView } from "../components/VendorReviewsView";
-import { vendorService, VendorDashboardStats } from "../../user/services/vendorService";
+import {
+  vendorService,
+  VendorDashboardStats,
+  VendorProfile,
+} from "../../user/services/vendorService";
 import { VendorListingsView } from "../components/VendorListingsView";
 import { VendorSettingsView } from "../components/VendorSettingsView";
 import { VendorPromotionsView } from "../components/VendorPromotionsView";
 
 export const VendorDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [selectedHotel, setSelectedHotel] = useState<VendorHotel | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = useAppSelector((s) => s.auth.user);
 
@@ -38,6 +43,38 @@ export const VendorDashboardPage = () => {
         const res = await vendorService.getVendorProfile();
         if (res.success) {
           setProfile(res.data);
+
+          // Connect to Socket.IO when profile is loaded
+          const socket = io(
+            import.meta.env.VITE_API_URL || "http://localhost:3000",
+          );
+
+          socket.on("connect", () => {
+            console.log("Connected to Websocket Server");
+            socket.emit("join_vendor_room", res.data.id);
+          });
+
+          socket.on("new_booking", (data: any) => {
+            notifications.show({
+              title: "🎉 Đơn Đặt Phòng Mới!",
+              message: `Khách hàng ${data.customerName} vừa đặt phòng tại ${data.hotelName}. Giá trị: ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(data.totalPrice)}`,
+              color: "blue",
+              autoClose: 10000,
+            });
+          });
+
+          socket.on("new_review", (data: any) => {
+            notifications.show({
+              title: "⭐ Đánh Giá Mới!",
+              message: `Khách hàng ${data.reviewerName} vừa đánh giá ${data.rating} sao cho ${data.hotelName}.`,
+              color: "yellow",
+              autoClose: 10000,
+            });
+          });
+
+          return () => {
+            socket.disconnect();
+          };
         }
       } catch (e) {}
     };
@@ -89,13 +126,12 @@ export const VendorDashboardPage = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
-      <VendorSidebar 
-        activeTab={activeTab} 
+      <VendorSidebar
+        activeTab={activeTab}
         onTabChange={(tab) => {
           setActiveTab(tab);
-          setSelectedHotel(null);
-        }} 
-        profile={profile} 
+        }}
+        profile={profile}
       />
 
       {/* Mobile Drawer Navigation */}
@@ -112,7 +148,7 @@ export const VendorDashboardPage = () => {
             activeTab={activeTab}
             onTabChange={(tab) => {
               setActiveTab(tab);
-              setSelectedHotel(null);
+              // setSelectedHotel(null);
               setMobileMenuOpen(false);
             }}
             profile={profile}
@@ -131,12 +167,18 @@ export const VendorDashboardPage = () => {
             >
               <IconMenu2 size={24} />
             </button>
-            <h1 className="text-title-sm font-semibold text-primary">{profile?.shopName || "Kênh Đối Tác"}</h1>
+            <h1 className="text-title-sm font-semibold text-primary">
+              {profile?.shopName || "Kênh Đối Tác"}
+            </h1>
           </div>
           <img
             alt="Vendor Profile"
             className="w-8 h-8 rounded-full object-cover border border-outline-variant"
-            src={profile?.logo || user?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=60"}
+            src={
+              profile?.logo ||
+              user?.avatar ||
+              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=60"
+            }
           />
         </div>
 
@@ -148,7 +190,8 @@ export const VendorDashboardPage = () => {
                 {getTabTitle(activeTab)}
               </h1>
               <p className="text-sm md:text-base text-on-surface-variant mt-1">
-                Chào mừng quay trở lại, {user?.firstName || "Đối tác"}. Dưới đây là tình hình hoạt động của các khách sạn hôm nay.
+                Chào mừng quay trở lại, {user?.firstName || "Đối tác"}. Dưới đây
+                là tình hình hoạt động của các khách sạn hôm nay.
               </p>
             </div>
             {activeTab === "dashboard" && (
@@ -217,17 +260,9 @@ export const VendorDashboardPage = () => {
             </>
           )}
 
-          {activeTab === "listings" && !selectedHotel && (
-            <VendorListingsView onSelectHotel={(hotel) => setSelectedHotel(hotel)} />
-          )}
-
-          {activeTab === "listings" && selectedHotel && (
-            <VendorRoomsView hotel={selectedHotel} onBack={() => setSelectedHotel(null)} />
-          )}
+          {activeTab === "listings" && <VendorListingsView />}
 
           {activeTab === "bookings" && <VendorBookingsView />}
-
-          {activeTab === "listings" && <VendorListingsView />}
 
           {activeTab === "earnings" && <VendorRevenueView />}
 
@@ -237,19 +272,25 @@ export const VendorDashboardPage = () => {
 
           {activeTab === "settings" && <VendorSettingsView />}
 
-          {activeTab !== "dashboard" && activeTab !== "bookings" && activeTab !== "earnings" && activeTab !== "reviews" && activeTab !== "listings" && activeTab !== "promotions" && activeTab !== "settings" && (
-            <div className="bg-white p-12 rounded-xl border border-hairline text-center flex flex-col items-center justify-center min-h-[300px]">
-              <h3 className="text-lg font-bold text-on-surface mb-2">
-                Tính năng "{getTabTitle(activeTab)}" đang được phát triển
-              </h3>
-              <p className="text-on-surface-variant max-w-sm">
-                Vui lòng quay lại sau khi tính năng này được hoàn thiện đầy đủ.
-              </p>
-            </div>
-          )}
+          {activeTab !== "dashboard" &&
+            activeTab !== "bookings" &&
+            activeTab !== "earnings" &&
+            activeTab !== "reviews" &&
+            activeTab !== "listings" &&
+            activeTab !== "promotions" &&
+            activeTab !== "settings" && (
+              <div className="bg-white p-12 rounded-xl border border-hairline text-center flex flex-col items-center justify-center min-h-[300px]">
+                <h3 className="text-lg font-bold text-on-surface mb-2">
+                  Tính năng "{getTabTitle(activeTab)}" đang được phát triển
+                </h3>
+                <p className="text-on-surface-variant max-w-sm">
+                  Vui lòng quay lại sau khi tính năng này được hoàn thiện đầy
+                  đủ.
+                </p>
+              </div>
+            )}
         </div>
       </main>
     </div>
   );
 };
-

@@ -191,6 +191,12 @@ export const adminService = {
   rejectWithdrawRequest: async (id: number, adminNote: string): Promise<{ success: boolean; message: string }> => {
     try {
       const res = await apiClient.patch(`/admin/withdraw-requests/${id}/reject`, { adminNote });
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
   getAdminFinanceReport: async (): Promise<{ success: boolean; data: AdminFinanceReport }> => {
     try {
       const res = await apiClient.get("/admin/finance-report");

@@ -5,6 +5,7 @@ import {
   PAYMENT_STATUS,
 } from "../../../../shared/constants/roles";
 import { sendBookingNotification } from "../../services/email.service";
+import { getIO } from "../../services/socket.service";
 
 const getIdParam = (val: any): number => {
   if (Array.isArray(val)) return Number(val[0]);
@@ -101,6 +102,22 @@ export const createBooking = async (req: Request, res: Response) => {
             bookingId: booking.id,
           },
         ).catch((err) => console.error("Error sending booking email:", err));
+      }
+
+      // Emit Real-time Websocket Notification to Vendor
+      if (booking.room.hotel.vendorId) {
+        try {
+          const io = getIO();
+          io.to(`vendor_${booking.room.hotel.vendorId}`).emit("new_booking", {
+            bookingId: booking.id,
+            hotelName: booking.room.hotel.name,
+            totalPrice: booking.finalPrice,
+            customerName: req.user?.firstName || "Khách hàng",
+            createdAt: booking.createdAt,
+          });
+        } catch (err) {
+          console.error("Socket emit error:", err);
+        }
       }
 
       res.status(201).json({ data: booking });

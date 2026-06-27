@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { reviewService } from './reviews.service';
 import { createReviewSchema } from '../../../../shared/schemas/review.schema';
 import { sendReviewNotification } from '../../services/email.service';
+import { getIO } from '../../services/socket.service';
 import prisma from '../../config/database';
 
 export const createReview = async (req: Request, res: Response, next: NextFunction) => {
@@ -25,6 +26,20 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
           validatedData.rating,
           validatedData.comment || ''
         ).catch(err => console.error("Error sending review email:", err));
+        
+        // Emit Socket Event
+        try {
+          const io = getIO();
+          io.to(`vendor_${hotel.vendor.id}`).emit("new_review", {
+            hotelName: hotel.name,
+            reviewerName: req.user!.firstName || 'Khách hàng',
+            rating: validatedData.rating,
+            comment: validatedData.comment,
+            createdAt: new Date()
+          });
+        } catch (err) {
+          console.error("Socket emit error:", err);
+        }
       }
     } catch (e) {
       console.error("Failed to notify vendor about review:", e);

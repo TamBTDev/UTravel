@@ -16,10 +16,10 @@ import {
   createVendorHotel,
   updateVendorHotel,
   deleteVendorHotel,
-  getVendorRooms,
-  createVendorRoom,
-  updateVendorRoom,
-  deleteVendorRoom,
+  getVendorHotelRooms,
+  createVendorHotelRoom,
+  updateVendorHotelRoom,
+  deleteVendorHotelRoom,
   createWithdrawRequest,
   getVendorWithdrawRequests,
   getVendorPromotions,
@@ -84,17 +84,7 @@ router.get('/revenue-report', requireRole(USER_ROLES.VENDOR), getVendorRevenueRe
 router.get('/reviews', requireRole(USER_ROLES.VENDOR), getVendorReviews);
 router.patch('/reviews/:id/reply', requireRole(USER_ROLES.VENDOR), replyToReview);
 
-// === QUẢN LÝ CHỖ NGHỈ ===
-router.get('/hotels', requireRole(USER_ROLES.VENDOR), getVendorHotels);
-router.post('/hotels', requireRole(USER_ROLES.VENDOR), createVendorHotel);
-router.put('/hotels/:id', requireRole(USER_ROLES.VENDOR), updateVendorHotel);
-router.delete('/hotels/:id', requireRole(USER_ROLES.VENDOR), deleteVendorHotel);
-
-// Quản lý phòng trong khách sạn
-router.get('/hotels/:hotelId/rooms', requireRole(USER_ROLES.VENDOR), getVendorRooms);
-router.post('/hotels/:hotelId/rooms', requireRole(USER_ROLES.VENDOR), createVendorRoom);
-router.put('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), updateVendorRoom);
-router.delete('/hotels/:hotelId/rooms/:roomId', requireRole(USER_ROLES.VENDOR), deleteVendorRoom);
+// Xóa block duplicate
 
 // === YÊU CẦU RÚT TIỀN ===
 router.post('/wallet/withdraw', requireRole(USER_ROLES.VENDOR), createWithdrawRequest);
