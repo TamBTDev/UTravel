@@ -2,6 +2,106 @@
 
 A full-stack online hotel booking web application built with a modern monorepo architecture. The system covers the complete booking lifecycle — from browsing hotels and selecting rooms to payment processing and booking management.
 
+## UI Showcase
+
+Here are the complete interface screenshots of the UTravel system:
+
+<details>
+<summary><b>1. Customer Interface</b></summary>
+<br>
+
+- **Homepage:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/homepage_1.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/homepage_2.png" width="800">
+
+- **Hotel Search:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/searchPage.png" width="800">
+
+- **Hotel & Room Details:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/detail_1.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/detail_2.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/detail_3.png" width="800">
+
+- **Checkout, Payment & Success:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/sumary.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/payment.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/trip_done.png" width="800">
+
+- **My Trips & Reviews:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/mytrip.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/trip_review.png" width="800">
+
+- **Profile & Wishlist:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/profile.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/wishlist.png" width="800">
+
+- **Authentication (Forgot Password):**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/forget.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/forgetOTP.png" width="800">
+
+</details>
+
+<details>
+<summary><b>2. Vendor Interface</b></summary>
+<br>
+
+- **Vendor Registration:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_reg.png" width="800">
+
+- **Dashboard:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_dashboard.png" width="800">
+
+- **Hotel & Room Management:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_hotels_room.png" width="800">
+
+- **Order Management:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_order.png" width="800">
+
+- **Revenue & Wallet:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_revenue.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/wallet.png" width="800">
+
+- **Vouchers & Promotions:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_voucher.png" width="800">
+
+- **Reviews Management:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor_cmt.png" width="800">
+
+- **Vendor Settings:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/vendor-setting.png" width="800">
+
+</details>
+
+<details>
+<summary><b>3. Admin Interface</b></summary>
+<br>
+
+- **Global System Dashboard:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_dashboard.png" width="800">
+
+- **User Management:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_user.png" width="800">
+
+- **Vendor Approval:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_vendor.png" width="800">
+
+- **Hotel Approval:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_hotels.png" width="800">
+
+- **Global Orders Management:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_orders.png" width="800">
+
+- **Global Revenue:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_revenue.png" width="800">
+
+- **Withdrawal Requests:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_withdraw.png" width="800">
+
+- **System Policies:**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/admin_policies.png" width="800">
+
+</details>
+
 ## Features
 
 **Customer**
@@ -36,24 +136,25 @@ UTravel/
 
 ## Getting Started
 
-**Prerequisites:** Node.js >= 20, MySQL instance (local or managed), a `.env` file in `server/` with the required variables.
+**Prerequisites:** Docker and Docker Compose installed on your machine.
 
-### Installation
+### Installation & Running (Docker)
 
+The entire application (Frontend, Backend, and MySQL Database) is containerized and can be started with a single command.
+
+1. **Start the application:**
 ```bash
-# Install root dependencies
-npm install
+docker compose up --build -d
+```
 
-# Server setup
-cd server
-npm install
-npx prisma migrate dev --name init    # Create database schema
-npm run dev                            # Starts on http://localhost:3000
+2. **Access the services:**
+- Frontend (React): [http://localhost:5173](http://localhost:5173)
+- Backend API (Express): [http://localhost:3000](http://localhost:3000)
+- Database (MySQL): Runs internally on port 3306
 
-# Client setup (in another terminal)
-cd client
-npm install
-npm run dev                            # Starts on http://localhost:5173
+3. **Stop the application:**
+```bash
+docker compose down
 ```
 
 ### Environment Variables
