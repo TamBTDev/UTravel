@@ -200,3 +200,16 @@ export const rejectWithdrawRequest = async (req: Request, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const getAllAdminBookings = async (req: Request, res: Response) => {
+  try {
+    const { page, limit, status } = req.query;
+    const p = page ? parseInt(page as string) : 1;
+    const l = limit ? parseInt(limit as string) : 10;
+    
+    const result = await adminService.getAllAdminBookings(p, l, status as string);
+    res.status(200).json({ success: true, ...result });
+  } catch (error: any) {
+    res.status(500).json({ message: "Lỗi lấy danh sách đơn đặt phòng", error: error.message });
+  }
+};

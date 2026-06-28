@@ -221,4 +221,31 @@ export const adminService = {
       data: { status: 'REJECTED', adminNote, processedAt: new Date() },
     });
   },
+
+  getAllAdminBookings: async (page = 1, limit = 10, status?: string) => {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (status) where.status = status;
+
+    const [total, data] = await Promise.all([
+      prisma.booking.count({ where }),
+      prisma.booking.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          room: {
+            include: {
+              hotel: { select: { id: true, name: true, city: true, vendor: { select: { shopName: true } } } },
+            },
+          },
+          payment: { select: { status: true, amount: true, method: true } },
+        },
+      }),
+    ]);
+
+    return { total, data, page, limit, totalPages: Math.ceil(total / limit) };
+  },
 };

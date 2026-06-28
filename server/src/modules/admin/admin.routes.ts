@@ -16,6 +16,7 @@ import {
   getWithdrawRequests,
   approveWithdrawRequest,
   rejectWithdrawRequest,
+  getAllAdminBookings,
 } from "./admin.controller";
 
 const router = Router();
@@ -62,6 +63,9 @@ router.patch("/hotels/:id/active", requirePermission("APPROVE_HOTEL"), toggleHot
 
 // --- Dashboard Tổng quan ---
 router.get("/dashboard", getAdminDashboardStats);
+
+// --- Quản lý Tất cả Đơn đặt phòng (Toàn sàn) ---
+router.get("/bookings", getAllAdminBookings);
 
 // --- Duyệt Yêu cầu Rút tiền ---
 router.get("/withdraw-requests", getWithdrawRequests);

@@ -10,6 +10,7 @@ import {
   IconArrowBackUp,
   IconCashBanknote,
   IconChartBar,
+  IconCalendarEvent,
 } from "@tabler/icons-react";
 
 interface AdminSidebarProps {
@@ -34,6 +35,7 @@ export const AdminSidebar = ({ activeTab = "dashboard", onTabChange }: AdminSide
     { id: "finance", label: "Tài chính sàn", icon: <IconChartBar size={20} /> },
     { id: "users", label: "Quản lý người dùng", icon: <IconUsers size={20} /> },
     { id: "withdraw-requests", label: "Yêu cầu rút tiền", icon: <IconCashBanknote size={20} /> },
+    { id: "bookings", label: "Quản lý đơn hàng", icon: <IconCalendarEvent size={20} /> },
   ];
 
   return (

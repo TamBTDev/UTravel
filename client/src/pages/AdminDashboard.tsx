@@ -10,6 +10,7 @@ import { AdminPendingHotels } from "../features/admin/components/AdminPendingHot
 import { AdminUsersView } from "../features/admin/components/AdminUsersView";
 import { AdminWithdrawRequests } from "../features/admin/components/AdminWithdrawRequests";
 import { AdminFinanceView } from "../features/admin/components/AdminFinanceView";
+import { AdminBookingsView } from "../features/admin/components/AdminBookingsView";
 
 export const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,6 +36,8 @@ export const AdminDashboard = () => {
         return "Quản lý người dùng";
       case "withdraw-requests":
         return "Yêu cầu rút tiền";
+      case "bookings":
+        return "Quản lý Đơn đặt phòng";
       default:
         return "Chi tiết";
     }
@@ -102,6 +105,7 @@ export const AdminDashboard = () => {
           {activeTab === "finance" && <AdminFinanceView />}
           {activeTab === "users" && <AdminUsersView />}
           {activeTab === "withdraw-requests" && <AdminWithdrawRequests />}
+          {activeTab === "bookings" && <AdminBookingsView />}
         </div>
       </main>
     </div>

@@ -215,4 +215,15 @@ export const adminService = {
       throw error.response?.data || error;
     }
   },
+
+  getAllAdminBookings: async (page = 1, limit = 10, status?: string): Promise<{ success: boolean; data: any[], total: number, page: number, totalPages: number }> => {
+    try {
+      const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+      if (status && status !== "ALL") params.append("status", status);
+      const res = await apiClient.get(`/admin/bookings?${params.toString()}`);
+      return res.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
 };
