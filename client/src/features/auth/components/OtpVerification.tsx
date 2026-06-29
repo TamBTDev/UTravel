@@ -8,11 +8,13 @@ import {
   Center,
   Alert,
   Container,
+  Image,
 } from "@mantine/core";
-import { AuthCard } from "./AuthCard";
+
 import { useVerifyOtp } from "../hooks/useVerifyOtp";
 import { Navigate } from "react-router-dom";
 import { IconAlertCircle, IconMail } from "@tabler/icons-react";
+import logo from "@/assets/logo.svg";
 
 export const OtpVerification = () => {
   const [otp, setOtp] = useState("");
@@ -33,13 +35,17 @@ export const OtpVerification = () => {
   const displayEmail = email ? email : "của bạn";
 
   return (
-    <AuthCard>
+    <div style={{ padding: 0 }}>
       <div style={{ marginBottom: 24, textAlign: "center" }}>
-        <h2 style={{ margin: "0 0 8px 0", fontSize: 24, fontWeight: 600 }}>
-          🔐 Xác Thực Tài Khoản
+        <Center mb="lg">
+          <Image src={logo} w={48} h={48} alt="UTravel" />
+        </Center>
+
+        <h2 style={{ margin: "0 0 8px 0", fontSize: 24, fontWeight: 700, color: "#0b63d6" }}>
+          Xác Thực Tài Khoản
         </h2>
-        <Group justify="center" mb="md">
-          <IconMail size={20} color="#667eea" />
+        <Group justify="center" mb="lg">
+          <IconMail size={18} color="#6b7280" />
           <Text c="dimmed" size="sm">
             Mã OTP đã được gửi đến:{" "}
             <Text span fw={600} c="dark">
@@ -47,14 +53,9 @@ export const OtpVerification = () => {
             </Text>
           </Text>
         </Group>
-        <Alert
-          mb="md"
-          color="blue"
-          title="💡 Hướng dẫn"
-          icon={<IconAlertCircle size={16} />}
-        >
-          Nhập 6 chữ số mã OTP từ email hoặc console server. Mã có hiệu lực trong 10 phút.
-        </Alert>
+        <Text c="dimmed" size="sm" mt="sm">
+          Nhập 6 chữ số mã OTP từ email của bạn. Mã có hiệu lực trong 10 phút.
+        </Text>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -65,9 +66,17 @@ export const OtpVerification = () => {
               value={otp}
               onChange={setOtp}
               disabled={isVerifying}
-              size="lg"
+              size="xl"
               autoFocus
               type="number"
+              styles={{
+                input: {
+                  backgroundColor: "#f8f9fa",
+                  border: "1px solid #e5e7eb",
+                  fontWeight: 600,
+                  fontSize: 24,
+                }
+              }}
             />
           </Center>
 
@@ -76,8 +85,10 @@ export const OtpVerification = () => {
             fullWidth
             loading={isVerifying}
             disabled={otp.length !== 6 || isVerifying}
+            size="md"
             style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              backgroundColor: "#0b63d6",
+              height: 46,
             }}
           >
             {isVerifying ? "Đang xác thực..." : "Xác Nhận OTP"}
@@ -94,12 +105,12 @@ export const OtpVerification = () => {
           size="sm"
           loading={isResending}
           onClick={() => resendOtp()}
-          style={{ padding: 0, height: "auto" }}
+          style={{ padding: 0, height: "auto", color: "#0b63d6" }}
           disabled={isResending}
         >
           {isResending ? "Đang gửi..." : "Gửi lại mã"}
         </Button>
       </Group>
-    </AuthCard>
+    </div>
   );
 };
