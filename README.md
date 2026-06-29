@@ -35,7 +35,10 @@ Here are the complete interface screenshots of the UTravel system:
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/profile.png" width="800">
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/wishlist.png" width="800">
 
-- **Authentication (Forgot Password):**
+- **Authentication (Login, Register & Forgot Password):**
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/login.jpg" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/reg.jpg" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/reg_otp.jpg" width="800">
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/forget.png" width="800">
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/forgetOTP.png" width="800">
 
