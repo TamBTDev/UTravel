@@ -2,6 +2,8 @@
 
 A full-stack online hotel booking web application built with a modern monorepo architecture. The system covers the complete booking lifecycle — from browsing hotels and selecting rooms to payment processing and booking management.
 
+🎨 **Figma UI/UX Design:** [View UTravel Prototype & Design System](https://www.figma.com/design/u5SQ0mJ8V4nBcBXD8BT5xo/UTravel-Design?node-id=0-1&t=SKzO7og1D8j02XSU-1)
+
 ## UI Showcase
 
 Here are the complete interface screenshots of the UTravel system:
