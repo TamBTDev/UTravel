@@ -6,16 +6,16 @@ A full-stack online hotel booking web application built with a modern monorepo a
 
 Here are the complete interface screenshots of the UTravel system:
 
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/homepage_1.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/searchPage.png" width="800">
+<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/login.jpg" width="800">
+
 <details>
 <summary><b>1. Customer Interface</b></summary>
 <br>
 
-- **Homepage:**
-<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/homepage_1.png" width="800">
+- **Homepage (Continued):**
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/homepage_2.png" width="800">
-
-- **Hotel Search:**
-<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/searchPage.png" width="800">
 
 - **Hotel & Room Details:**
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/detail_1.png" width="800">
@@ -35,8 +35,7 @@ Here are the complete interface screenshots of the UTravel system:
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/profile.png" width="800">
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/wishlist.png" width="800">
 
-- **Authentication (Login, Register & Forgot Password):**
-<img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/login.jpg" width="800">
+- **Authentication (Register & Forgot Password):**
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/reg.jpg" width="800">
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/reg_otp.jpg" width="800">
 <img src="https://raw.githubusercontent.com/buihaiduongdev/project-images/main/UTravel/forget.png" width="800">
