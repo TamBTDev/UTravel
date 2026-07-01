@@ -353,4 +353,25 @@ export const vendorService = {
     const response = await apiClient.delete(`/vendors/promotions/${id}`);
     return response.data;
   },
+
+  // === QUẢN LÝ PHÒNG ===
+  getVendorHotelRooms: async (hotelId: number) => {
+    const response = await apiClient.get(`/vendors/hotels/${hotelId}/rooms`);
+    return response.data;
+  },
+
+  createVendorHotelRoom: async (hotelId: number, data: any) => {
+    const response = await apiClient.post(`/vendors/hotels/${hotelId}/rooms`, data);
+    return response.data;
+  },
+
+  updateVendorHotelRoom: async (hotelId: number, roomId: number, data: any) => {
+    const response = await apiClient.put(`/vendors/hotels/${hotelId}/rooms/${roomId}`, data);
+    return response.data;
+  },
+
+  deleteVendorHotelRoom: async (hotelId: number, roomId: number) => {
+    const response = await apiClient.delete(`/vendors/hotels/${hotelId}/rooms/${roomId}`);
+    return response.data;
+  },
 };

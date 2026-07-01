@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Badge, Button, Group, Text, Stack, Image, Tooltip } from '@mantine/core';
-import { IconCheck, IconX, IconMinus } from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 
 interface RoomCardProps {
   room: {

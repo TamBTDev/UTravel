@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Badge, Loader } from "@mantine/core";
-import { IconPhoto, IconCalendar } from "@tabler/icons-react";
+import { IconCalendar } from "@tabler/icons-react";
 import { vendorService, VendorBooking } from "../../user/services/vendorService";
 
 interface RecentBookingsProps {

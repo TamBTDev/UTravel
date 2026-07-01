@@ -9,7 +9,6 @@ import {
   Card,
   Badge,
   Button,
-  Rating,
   Loader,
   Center,
   Alert,
@@ -23,13 +22,13 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconMapPin, IconHeart, IconHeartFilled, IconCheck, IconShare, IconBuilding, IconStar, IconEye, IconBriefcase } from '@tabler/icons-react';
 import { AppLayout } from '../components/layout';
-import { getHotelDetail, getRelatedHotels, checkRoomAvailability } from '../features/hotel/services/hotelService';
+import { getHotelDetail, getRelatedHotels } from '../features/hotel/services/hotelService';
 import dayjs from 'dayjs';
 import apiClient from '@/lib/api-client';
 import { useAppSelector } from '@/hooks/useAppStore';
 
 // Tiện ích mock icon mapping
-const getAmenityIcon = (amenity: string) => {
+const getAmenityIcon = (_amenity: string) => {
   return <IconCheck size={18} color="#0b63d6" />;
 };
 

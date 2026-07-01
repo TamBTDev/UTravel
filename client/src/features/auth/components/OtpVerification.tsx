@@ -6,14 +6,12 @@ import {
   Text,
   Group,
   Center,
-  Alert,
-  Container,
   Image,
 } from "@mantine/core";
 
 import { useVerifyOtp } from "../hooks/useVerifyOtp";
 import { Navigate } from "react-router-dom";
-import { IconAlertCircle, IconMail } from "@tabler/icons-react";
+import { IconMail } from "@tabler/icons-react";
 import logo from "@/assets/logo.svg";
 
 export const OtpVerification = () => {

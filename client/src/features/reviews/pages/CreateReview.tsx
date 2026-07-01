@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { notifications } from '@mantine/notifications';
 import { getBookingDetail } from "@/features/booking/services/bookingService";
 import { reviewService } from "../services/reviewService";
-import { IconStar, IconUpload, IconX, IconCalendarEvent, IconBed, IconCircleCheck, IconPhoto } from "@tabler/icons-react";
+import { IconStar, IconUpload, IconX, IconCalendarEvent, IconBed, IconCircleCheck } from "@tabler/icons-react";
 import { uploadImagesToCloudinary } from "@/lib/cloudinary";
 import { AppLayout } from "@/components/layout";
 import dayjs from "dayjs";

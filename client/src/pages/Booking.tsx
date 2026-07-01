@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { notifications } from '@mantine/notifications';
-import { createBookingThunk, clearError, clearSuccess } from '@/app/store/bookingSlice';
+import { createBookingThunk, clearError, clearCurrentBooking, clearSuccess } from '@/app/store/bookingSlice';
 import { getRoomDetail } from '@/features/hotel/services/hotelService';
 import dayjs from 'dayjs';
 import { AppLayout } from '@/components/layout';
 import { IconMoodSad, IconX, IconCircleCheck, IconStarFilled, IconMapPin, IconLock } from '@tabler/icons-react';
-import { validatePromotion } from '@/features/booking/services/bookingService';
+import apiClient from '@/lib/api-client';
 
 const parseJsonField = (val: any): string[] => {
   if (Array.isArray(val)) return val;
@@ -53,6 +53,7 @@ export const BookingPage: React.FC = () => {
   const [room, setRoom] = useState<Room | null>(null);
   const [roomLoading, setRoomLoading] = useState(true);
   const [roomError, setRoomError] = useState<string | null>(null);
+  const [bookedRanges, setBookedRanges] = useState<{ start: string; end: string }[]>([]);
 
   const [checkInDate, setCheckInDate] = useState<string>(initCheckIn);
   const [checkOutDate, setCheckOutDate] = useState<string>(initCheckOut);
@@ -62,6 +63,12 @@ export const BookingPage: React.FC = () => {
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [specialRequests, setSpecialRequests] = useState('');
+
+  // ── Fix: Clear stale booking state khi bắt đầu booking mới ──
+  useEffect(() => {
+    dispatch(clearCurrentBooking() as any);
+    dispatch(clearSuccess() as any);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -78,6 +85,13 @@ export const BookingPage: React.FC = () => {
         setRoomLoading(true);
         const roomData = await getRoomDetail(roomId);
         setRoom(roomData);
+        // Fetch booked date ranges for this room
+        try {
+          const res = await apiClient.get(`/rooms/${roomId}/booked-dates`);
+          setBookedRanges(res.data?.data || []);
+        } catch (error) {
+          console.error("Failed to fetch booked dates", error);
+        }
       } catch (err: any) {
         setRoomError(err.message || 'Failed to load room details');
       } finally {
@@ -107,10 +121,35 @@ export const BookingPage: React.FC = () => {
   const nights = dayjs(checkOutDate).diff(dayjs(checkInDate), 'day');
   const totalPrice = room ? room.price * Math.max(nights, 0) : 0;
 
+  // Kiểm tra xem khoảng ngày chọn có trùng với booking nào không
+  const isRangeConflicting = (checkIn: string, checkOut: string) => {
+    const inDate = dayjs(checkIn);
+    const outDate = dayjs(checkOut);
+    return bookedRanges.some(range => {
+      const rangeStart = dayjs(range.start);
+      const rangeEnd = dayjs(range.end);
+      return inDate.isBefore(rangeEnd) && outDate.isAfter(rangeStart);
+    });
+  };
+
+  // Kiểm tra xem một ngày đơn lẻ có nằm trong khoảng bị chặn không
+  const isDateBooked = (dateStr: string) => {
+    const d = dayjs(dateStr);
+    return bookedRanges.some(range => {
+      const rangeStart = dayjs(range.start);
+      const rangeEnd = dayjs(range.end);
+      return (d.isAfter(rangeStart) || d.isSame(rangeStart, 'day')) && d.isBefore(rangeEnd);
+    });
+  };
+
   const handleBooking = () => {
     if (!roomId || !room) return;
     if (nights <= 0) { notifications.show({ title: 'Lỗi', message: 'Ngày trả phòng phải sau ngày nhận phòng', color: 'red' }); return; }
     if (!firstName.trim() || !lastName.trim()) { notifications.show({ title: 'Lỗi', message: 'Vui lòng nhập họ và tên', color: 'red' }); return; }
+    if (isRangeConflicting(checkInDate, checkOutDate)) {
+      notifications.show({ title: 'Phòng đã có người đặt', message: 'Khoảng ngày bạn chọn đã có người đặt. Vui lòng chọn ngày khác.', color: 'red' });
+      return;
+    }
 
     const bookingData = {
       roomId,
@@ -235,22 +274,57 @@ export const BookingPage: React.FC = () => {
                     <input
                       type="date"
                       value={checkInDate}
-                      min={dayjs().format('YYYY-MM-DD')}
-                      onChange={e => setCheckInDate(e.target.value)}
-                      style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 14, color: '#111827', outline: 'none', boxSizing: 'border-box' }}
+                      min={dayjs().add(0, 'day').format('YYYY-MM-DD')}
+                      onChange={e => {
+                        setCheckInDate(e.target.value);
+                        // Reset checkout nếu check-in sau checkout
+                        if (dayjs(e.target.value).isAfter(dayjs(checkOutDate))) {
+                          setCheckOutDate(dayjs(e.target.value).add(1, 'day').format('YYYY-MM-DD'));
+                        }
+                      }}
+                      style={{ width: '100%', border: `1px solid ${isDateBooked(checkInDate) ? '#ef4444' : '#d1d5db'}`, borderRadius: 8, padding: '8px 12px', fontSize: 14, color: '#111827', outline: 'none', boxSizing: 'border-box' }}
                     />
+                    {isDateBooked(checkInDate) && (
+                      <p style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>⚠ Ngày này đã có người đặt</p>
+                    )}
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Ngày trả phòng</label>
                     <input
                       type="date"
                       value={checkOutDate}
-                      min={checkInDate}
+                      min={dayjs(checkInDate).add(1, 'day').format('YYYY-MM-DD')}
                       onChange={e => setCheckOutDate(e.target.value)}
-                      style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 14, color: '#111827', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', border: `1px solid ${isDateBooked(checkOutDate) ? '#ef4444' : '#d1d5db'}`, borderRadius: 8, padding: '8px 12px', fontSize: 14, color: '#111827', outline: 'none', boxSizing: 'border-box' }}
                     />
+                    {isDateBooked(checkOutDate) && (
+                      <p style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>⚠ Ngày này đã có người đặt</p>
+                    )}
                   </div>
                 </div>
+
+                {/* Booked ranges indicator */}
+                {bookedRanges.length > 0 && (
+                  <div style={{ marginTop: 12, padding: '10px 14px', background: '#fef3c7', borderRadius: 8, border: '1px solid #fde68a' }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>📅 Các ngày đã được đặt:</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {bookedRanges.map((range, i) => (
+                        <span key={i} style={{ fontSize: 11, background: '#fde68a', color: '#92400e', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
+                          {dayjs(range.start).format('DD/MM')} → {dayjs(range.end).format('DD/MM/YYYY')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Conflict warning */}
+                {isRangeConflicting(checkInDate, checkOutDate) && (
+                  <div style={{ marginTop: 8, padding: '10px 14px', background: '#fee2e2', borderRadius: 8, border: '1px solid #fca5a5' }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#991b1b' }}>
+                      ⚠ Khoảng ngày bạn chọn trùng với đặt phòng hiện có. Vui lòng chọn ngày khác.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

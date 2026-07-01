@@ -85,3 +85,48 @@ export const getRoomDetail = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to fetch room detail', error: error.message });
   }
 };
+
+/**
+ * GET /rooms/:roomId/booked-dates
+ * Trả về danh sách các khoảng ngày đã bị đặt cho phòng này.
+ * - Chỉ tính PENDING và CONFIRMED (không tính COMPLETED vì phòng đã được trả)
+ * - Khi khách hoàn thành sớm → booking chuyển COMPLETED → phòng tự giải phóng
+ * - Thêm 1 ngày buffer dọn phòng vào cuối mỗi booking
+ */
+export const getBookedDates = async (req: Request, res: Response) => {
+  try {
+    const roomId = getIdParam(req.params.roomId);
+
+    const activeBookings = await prisma.booking.findMany({
+      where: {
+        roomId,
+        status: {
+          in: [BOOKING_STATUS.PENDING, BOOKING_STATUS.CONFIRMED],
+        },
+      },
+      select: {
+        checkInDate: true,
+        checkOutDate: true,
+        status: true,
+      },
+    });
+
+    // Cộng 1 ngày buffer dọn phòng vào cuối mỗi booking (checkOutDate + 1 day)
+    const bookedRanges = activeBookings.map((booking) => {
+      const checkOut = new Date(booking.checkOutDate);
+      const checkOutWithBuffer = new Date(checkOut);
+      checkOutWithBuffer.setDate(checkOut.getDate() + 1);
+
+      return {
+        start: booking.checkInDate.toISOString().split('T')[0],
+        end: checkOutWithBuffer.toISOString().split('T')[0],
+        status: booking.status,
+      };
+    });
+
+    res.status(200).json({ data: bookedRanges });
+  } catch (error: any) {
+    console.error('Error fetching booked dates:', error);
+    res.status(500).json({ message: 'Failed to fetch booked dates', error: error.message });
+  }
+};

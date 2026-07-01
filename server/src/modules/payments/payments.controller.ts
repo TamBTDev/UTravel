@@ -173,10 +173,7 @@ export const createPayment = async (req: Request, res: Response) => {
           update: { method: 'WALLET', status: 'COMPLETED', paidAt: new Date() },
         });
 
-        // Tặng điểm thưởng 1%
-        const earnedPoints = Math.max(1, Math.floor(finalPrice * 0.01));
-        await tx.user.update({ where: { id: userId }, data: { rewardPoints: { increment: earnedPoints } } });
-
+        // Điểm thưởng 1% sẽ được tặng khi khách bấm "Hoàn thành kỳ nghỉ" (completeBooking)
         emitBookingConfirmed(Number(bookingId));
         return { success: true, method: 'WALLET', payment, remainingAmount: 0 };
       }
@@ -353,12 +350,7 @@ export const getPaymentByBooking = async (req: Request, res: Response) => {
                     },
                   });
 
-                  // Tặng điểm thưởng 1% giá trị hóa đơn (tối thiểu 1 điểm)
-                  const earnedPoints = Math.max(1, Math.floor(payment.booking.finalPrice * 0.01));
-                  await tx.user.update({
-                    where: { id: payment.booking.userId },
-                    data: { rewardPoints: { increment: earnedPoints } }
-                  });
+                  // Điểm thưởng 1% sẽ được tặng khi khách bấm "Hoàn thành kỳ nghỉ" (completeBooking)
                 });
                 
                 // Cập nhật lại bộ nhớ để trả về client luôn
