@@ -441,15 +441,8 @@ export const completeBooking = async (req: Request, res: Response) => {
           where: { id: bookingId },
           data: { paymentStatus: PAYMENT_STATUS.COMPLETED },
         });
-        // Tặng 1% điểm thưởng cho khách
-        const earnedPoints = Math.max(1, Math.floor(booking.finalPrice * 0.01));
-        await tx.user.update({
-          where: { id: booking.userId },
-          data: { rewardPoints: { increment: earnedPoints } },
-        });
       } else if (payment && payment.status === "COMPLETED") {
         // BANK_TRANSFER / WALLET đã thanh toán → cập nhật paymentStatus booking
-        // Điểm đã tặng khi payment hoàn thành trước đó (nếu BANK_TRANSFER)
         await tx.booking.update({
           where: { id: bookingId },
           data: { paymentStatus: PAYMENT_STATUS.COMPLETED },
@@ -460,6 +453,14 @@ export const completeBooking = async (req: Request, res: Response) => {
           `[completeBooking] Booking #${bookingId} không có payment record`,
         );
       }
+
+      // ── Tặng 1% điểm thưởng khi hoàn thành kỳ nghỉ (mọi phương thức thanh toán) ──
+      const earnedPoints = Math.max(1, Math.floor(booking.finalPrice * 0.01));
+      await tx.user.update({
+        where: { id: booking.userId },
+        data: { rewardPoints: { increment: earnedPoints } },
+      });
+      console.log(`[completeBooking] Tặng ${earnedPoints} điểm cho user #${booking.userId} từ booking #${bookingId}`);
 
       // 3. Tăng bookingCount cho hotel
       await tx.hotel.update({

@@ -2,10 +2,8 @@
 export { LoginForm } from "./components";
 export {
   LoginHeader,
-  SocialLoginButtons,
   AuthCard,
   AuthSignupLink,
-  AuthBenefits,
 } from "./components";
 
 // Hooks

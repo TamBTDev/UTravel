@@ -11,7 +11,6 @@ import {
 } from "@mantine/core";
 import { LoginInput, loginSchema } from "@shared/schemas/auth.schema";
 import { useLogin } from "../hooks";
-import { AuthSignupLink } from "./index";
 import logo from "@/assets/logo.svg";
 import { Image } from "@mantine/core";
 

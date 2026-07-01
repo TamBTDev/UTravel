@@ -9,7 +9,6 @@ import {
   IconSettings,
   IconHelp,
   IconLogout,
-  IconPlus,
   IconMessage2,
   IconTag,
 } from "@tabler/icons-react";

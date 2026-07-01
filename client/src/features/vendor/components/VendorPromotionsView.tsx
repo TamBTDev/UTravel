@@ -3,7 +3,7 @@ import { notifications } from "@mantine/notifications";
 import { modals } from '@mantine/modals';
 import dayjs from "dayjs";
 import { vendorService } from "../../user/services/vendorService";
-import { Plus, Tag, Calendar, Edit, Trash2 } from "lucide-react";
+import { Plus, Tag, Edit, Trash2 } from "lucide-react";
 
 export const VendorPromotionsView: React.FC = () => {
   const [promotions, setPromotions] = useState<any[]>([]);

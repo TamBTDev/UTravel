@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Loader, Alert, Modal, TextInput, Textarea } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
@@ -37,19 +37,7 @@ export const VendorRevenueView = () => {
     null,
     null,
   ]);
-  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
 
-  const uniqueHotels = useMemo(() => {
-    if (!report) return [];
-    const hotelMap = new Map<number, { id: number; name: string }>();
-    report.transactions.forEach((tx) => {
-      const hotel = tx.booking?.room?.hotel;
-      if (hotel) {
-        hotelMap.set(hotel.id, { id: hotel.id, name: hotel.name });
-      }
-    });
-    return Array.from(hotelMap.values());
-  }, [report]);
 
   const [withdrawModal, setWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number | string>("");
