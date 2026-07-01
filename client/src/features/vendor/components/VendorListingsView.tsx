@@ -8,7 +8,7 @@ import {
 } from "@tabler/icons-react";
 import { vendorService } from "../../user/services/vendorService";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
-import { DatePicker } from "@mantine/dates";
+import { DatePicker, DatePickerInput } from "@mantine/dates";
 import dayjs from "dayjs";
 import { IconCalendarEvent } from "@tabler/icons-react";
 
@@ -246,6 +246,7 @@ export const VendorListingsView = () => {
   const [roomModal, setRoomModal] = useState<{ opened: boolean; hotelId: number | null; room: any }>({ opened: false, hotelId: null, room: null });
   const [calendarModal, setCalendarModal] = useState<{ opened: boolean; room: any }>({ opened: false, room: null });
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [roomFilterDates, setRoomFilterDates] = useState<Record<number, [Date | null, Date | null]>>({});
 
   const loadHotels = async () => {
     setLoading(true);
@@ -362,7 +363,7 @@ export const VendorListingsView = () => {
                       {!hotel.isActive && <span style={{ background: "#fee2e2", color: "#991b1b", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>Đã ẩn</span>}
                     </div>
                     <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
-                      📍 {hotel.city} · {hotel._count?.rooms || 0} phòng · {hotel._count?.reviews || 0} đánh giá
+                      📍 {hotel.city} · {hotel._count?.rooms || 0} phòng · {hotel._count?.reviews || 0} đánh giá · 👥 {hotel.currentGuests || 0} khách đang lưu trú
                     </p>
                   </div>
 
@@ -385,9 +386,20 @@ export const VendorListingsView = () => {
                   <div style={{ borderTop: "1px solid #f3f4f6", background: "#f9fafb", padding: "16px 20px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                       <span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Danh sách phòng</span>
-                      <button onClick={() => setRoomModal({ opened: true, hotelId: hotel.id, room: null })} style={{ background: "#0b63d6", color: "#fff", border: "none", borderRadius: 7, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                        <IconPlus size={13} /> Thêm phòng
-                      </button>
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <DatePickerInput
+                          type="range"
+                          placeholder="Lọc phòng trống..."
+                          value={roomFilterDates[hotel.id] || [null, null]}
+                          onChange={(val) => setRoomFilterDates(p => ({ ...p, [hotel.id]: val }))}
+                          clearable
+                          size="xs"
+                          style={{ width: 220 }}
+                        />
+                        <button onClick={() => setRoomModal({ opened: true, hotelId: hotel.id, room: null })} style={{ background: "#0b63d6", color: "#fff", border: "none", borderRadius: 7, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                          <IconPlus size={13} /> Thêm phòng
+                        </button>
+                      </div>
                     </div>
 
                     {loadingRooms[hotel.id] ? (
@@ -399,7 +411,23 @@ export const VendorListingsView = () => {
                       </div>
                     ) : (
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 10 }}>
-                        {(rooms[hotel.id] || []).map(room => (
+                        {(rooms[hotel.id] || []).filter(room => {
+                          const dates = roomFilterDates[hotel.id];
+                          if (!dates || !dates[0] || !dates[1]) return true; // Show all if no filter
+                          
+                          const checkIn = new Date(dates[0]).getTime();
+                          const checkOut = new Date(dates[1]).getTime();
+                          
+                          // Check for overlap
+                          const isOccupied = room.bookings?.some((b: any) => {
+                            if (b.status !== 'CONFIRMED' && b.status !== 'COMPLETED' && b.status !== 'PENDING') return false;
+                            const bStart = new Date(b.checkInDate).getTime();
+                            const bEnd = new Date(b.checkOutDate).getTime();
+                            return checkIn < bEnd && checkOut > bStart;
+                          });
+                          
+                          return !isOccupied;
+                        }).map(room => (
                           <div key={room.id} style={{ background: "#fff", borderRadius: 10, border: "1px solid #e5e7eb", padding: "12px 14px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                               <div>

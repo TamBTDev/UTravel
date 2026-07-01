@@ -192,7 +192,49 @@ async function main() {
     },
   });
 
-  console.log("Created vendor, pending vendor, profile, wallet, and pending withdraw request");
+  // Create Foreign Vendor
+  const foreignVendorUserPasswordHash = await bcrypt.hash("123456", 10);
+  const foreignVendorUser = await prisma.user.upsert({
+    where: { email: "foreign@gmail.com" },
+    update: {
+      password: foreignVendorUserPasswordHash,
+      role: USER_ROLES.VENDOR,
+      firstName: "Quốc tế",
+      lastName: "UTravel",
+      phone: "0333333333",
+      status: USER_STATUS.VERIFIED,
+    },
+    create: {
+      email: "foreign@gmail.com",
+      password: foreignVendorUserPasswordHash,
+      firstName: "Quốc tế",
+      lastName: "UTravel",
+      phone: "0333333333",
+      role: USER_ROLES.VENDOR,
+      status: USER_STATUS.VERIFIED,
+    },
+  });
+  const foreignVendorProfile = await prisma.vendorProfile.create({
+    data: {
+      userId: foreignVendorUser.id,
+      shopName: "UTravel International Hotels",
+      description: "Chuỗi khách sạn và khu nghỉ dưỡng quốc tế hàng đầu.",
+      businessLicense: "INTERNATIONAL123",
+      bankName: "HSBC",
+      bankOwner: "UTRAVEL INTL",
+      bankAccount: "9999999999",
+      status: "APPROVED",
+      commissionRate: 15.0,
+    },
+  });
+  const foreignWallet = await prisma.wallet.create({
+    data: {
+      vendorId: foreignVendorProfile.id,
+      balance: 50000000.0,
+    },
+  });
+
+  console.log("Created vendor, pending vendor, foreign vendor, profiles, and wallets");
 
   console.log("Creating sample hotels and rooms...");
   const cities = [
@@ -255,19 +297,20 @@ async function main() {
       ? `Số ${buildingNo} ${streetName}, ${wardName}`
       : `${buildingNo} ${streetName}, ${wardName}`;
 
+    const isForeign = ["Miami", "New York"].includes(city);
+    const assignedVendorId = isForeign ? foreignVendorProfile.id : vendorProfile.id;
+
     const hotel = await prisma.hotel.create({
       data: {
         name: `Khách sạn Grand ${city} ${i}`,
         description: `Tận hưởng kỳ nghỉ tuyệt vời tại Khách sạn Grand ${city} ${i} với đầy đủ tiện nghi và dịch vụ đẳng cấp.`,
         location: detailLocation,
         city: city,
-        country: ["Hà Nội", "Đà Nẵng", "Hồ Chí Minh", "Đà Lạt"].includes(city)
-          ? "Vietnam"
-          : "USA",
+        country: isVn ? "Vietnam" : "USA",
         rating: 3 + (i % 3),
         images: JSON.stringify([images[i % images.length]]),
         amenities: JSON.stringify(amenitiesList[i % amenitiesList.length]),
-        vendorId: vendorProfile.id,
+        vendorId: assignedVendorId,
         approvalStatus: i === 1 ? "PENDING" : "APPROVED",
         isActive: true,
       },
@@ -400,14 +443,24 @@ async function main() {
       user: janeUser,
       room: rooms[11],
     },
+    {
+      month: 6, // Not used strictly because we override dates below
+      price: 15000000,
+      status: BOOKING_STATUS.CONFIRMED,
+      pStatus: PAYMENT_STATUS.COMPLETED,
+      user: testUser,
+      room: rooms[26], // Khách sạn Grand Hồ Chí Minh 14
+      checkIn: new Date(2026, 5, 30), // June 30th
+      checkOut: new Date(2026, 6, 5), // July 5th (Covers July 2nd)
+    },
   ];
 
   console.log("Creating bookings, payments and wallet transactions...");
 
   for (let idx = 0; idx < bookingTemplates.length; idx++) {
-    const tmpl = bookingTemplates[idx];
-    const checkIn = new Date(2026, tmpl.month, 10);
-    const checkOut = new Date(2026, tmpl.month, 14);
+    const tmpl = bookingTemplates[idx] as any;
+    const checkIn = tmpl.checkIn || new Date(2026, tmpl.month, 10);
+    const checkOut = tmpl.checkOut || new Date(2026, tmpl.month, 14);
     const createdAt = new Date(2026, tmpl.month, 1);
 
     const booking = await prisma.booking.create({

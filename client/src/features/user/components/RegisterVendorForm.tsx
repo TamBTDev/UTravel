@@ -253,7 +253,7 @@ export const RegisterVendorForm = () => {
     );
   }
 
-  const isFormDisabled = !!vendorProfile;
+  const isFormDisabled = !!vendorProfile || submitting;
 
   return (
     <div className="flex flex-col gap-8">
@@ -389,14 +389,20 @@ export const RegisterVendorForm = () => {
         </Alert>
       )}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-        className="flex flex-col gap-6"
-      >
+      <div className="relative">
+        {isFormDisabled && (
+          <div className="absolute inset-0 z-10 bg-surface/40 backdrop-blur-[1px] rounded-xl flex items-center justify-center">
+            {submitting && <Loader color="var(--color-primary)" />}
+          </div>
+        )}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          className={`flex flex-col gap-6 ${isFormDisabled ? 'pointer-events-none' : ''}`}
+        >
         {/* Section 1: Shop Profile */}
         <div className="bg-surface-container-lowest p-6 rounded-xl border border-hairline flex flex-col gap-5">
           <h3 className="text-body-bold font-bold text-primary border-b border-hairline pb-2 mb-1 flex items-center gap-2">
@@ -534,7 +540,8 @@ export const RegisterVendorForm = () => {
             </button>
           </div>
         )}
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

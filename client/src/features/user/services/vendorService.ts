@@ -55,6 +55,7 @@ export interface VendorHotel {
     rooms: number;
     reviews: number;
   };
+  currentGuests?: number;
 }
 
 export interface CreateHotelPayload {

@@ -164,14 +164,43 @@ export const vendorsService = {
     const vendor = await prisma.vendorProfile.findUnique({ where: { userId } });
     if (!vendor) throw new Error("Không tìm thấy hồ sơ đối tác");
 
-    return await prisma.hotel.findMany({
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const hotels = await prisma.hotel.findMany({
       where: { vendorId: vendor.id },
       include: {
         _count: {
           select: { rooms: true, reviews: true },
         },
+        rooms: {
+          include: {
+            bookings: {
+              where: {
+                status: { in: ["CONFIRMED", "COMPLETED"] },
+                checkInDate: { lte: today },
+                checkOutDate: { gte: today },
+              },
+              select: {
+                adults: true,
+                children: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
+    });
+
+    return hotels.map((hotel) => {
+      let currentGuests = 0;
+      hotel.rooms.forEach((room) => {
+        room.bookings.forEach((booking) => {
+          currentGuests += booking.adults + booking.children;
+        });
+      });
+      const { rooms, ...hotelData } = hotel;
+      return { ...hotelData, currentGuests };
     });
   },
 
