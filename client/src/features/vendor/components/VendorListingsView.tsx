@@ -391,7 +391,7 @@ export const VendorListingsView = () => {
                           type="range"
                           placeholder="Lọc phòng trống..."
                           value={roomFilterDates[hotel.id] || [null, null]}
-                          onChange={(val) => setRoomFilterDates(p => ({ ...p, [hotel.id]: val }))}
+                          onChange={(val) => setRoomFilterDates(p => ({ ...p, [hotel.id]: val as [Date | null, Date | null] }))}
                           clearable
                           size="xs"
                           style={{ width: 220 }}
