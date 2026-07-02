@@ -234,7 +234,9 @@ async function main() {
     },
   });
 
-  console.log("Created vendor, pending vendor, foreign vendor, profiles, and wallets");
+  console.log(
+    "Created vendor, pending vendor, foreign vendor, profiles, and wallets",
+  );
 
   console.log("Creating sample hotels and rooms...");
   const cities = [
@@ -298,7 +300,9 @@ async function main() {
       : `${buildingNo} ${streetName}, ${wardName}`;
 
     const isForeign = ["Miami", "New York"].includes(city);
-    const assignedVendorId = isForeign ? foreignVendorProfile.id : vendorProfile.id;
+    const assignedVendorId = isForeign
+      ? foreignVendorProfile.id
+      : vendorProfile.id;
 
     const hotel = await prisma.hotel.create({
       data: {
@@ -322,7 +326,10 @@ async function main() {
         hotelId: hotel.id,
         roomNumber: "101",
         type: "single",
-        price: 500000 + i * 100000,
+        price:
+          hotel.name === "Khách sạn Grand Hồ Chí Minh 14"
+            ? 10000
+            : 500000 + i * 100000,
         capacity: 1 + (i % 2),
         description: "Phòng tiêu chuẩn thoải mái.",
         amenities: JSON.stringify(["AC", "TV", "WiFi"]),
@@ -335,7 +342,10 @@ async function main() {
         hotelId: hotel.id,
         roomNumber: "102",
         type: "double",
-        price: 1000000 + i * 150000,
+        price:
+          hotel.name === "Khách sạn Grand Hồ Chí Minh 14"
+            ? 10000
+            : 1000000 + i * 150000,
         capacity: 2 + (i % 3),
         description: "Phòng cao cấp rộng rãi có view tuyệt đẹp.",
         amenities: JSON.stringify(["AC", "TV", "WiFi", "Mini Bar", "View đẹp"]),

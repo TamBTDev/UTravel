@@ -155,10 +155,10 @@ export const VendorRevenueView = () => {
     }) || [];
 
   const totalRevenue = filteredTransactions
-    .filter((t) => t.type === "BOOKING_INCOME")
+    .filter((t) => t.type === "BOOKING_INCOME" || t.type === "CASH_INCOME")
     .reduce((sum, t) => sum + t.amount, 0);
   const totalBookings =
-    filteredTransactions.filter((t) => t.type === "BOOKING_INCOME").length || 0;
+    filteredTransactions.filter((t) => t.type === "BOOKING_INCOME" || t.type === "CASH_INCOME").length || 0;
   const avgBookingValue = totalBookings > 0 ? totalRevenue / totalBookings : 0;
 
   const handleExportCSV = () => {
@@ -182,6 +182,7 @@ export const VendorRevenueView = () => {
       (
         ({
           BOOKING_INCOME: "Thu nhập đặt phòng",
+          CASH_INCOME: "Thu tiền mặt (COD)",
           COMMISSION_FEE: "Phí hoa hồng",
           WITHDRAWAL: "Rút tiền",
           REFUND: "Hoàn tiền cho khách",

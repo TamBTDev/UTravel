@@ -460,21 +460,48 @@ export const vendorsService = {
       where: { walletId: vendor.wallet.id },
       include: {
         booking: {
-          select: { id: true, checkInDate: true, checkOutDate: true, room: { include: { hotel: { select: { id: true, name: true } } } } }
+          select: { id: true, checkInDate: true, checkOutDate: true, payment: { select: { method: true } }, room: { include: { hotel: { select: { id: true, name: true } } } } }
         }
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { bookingId: "desc" },
+        { createdAt: "desc" }
+      ],
     });
 
-    // Tính tổng doanh thu từ BOOKING_INCOME
-    const totalRevenue = transactions
-      .filter((t) => t.type === "BOOKING_INCOME")
-      .reduce((sum, t) => sum + t.amount, 0);
+    // Lấy tất cả các booking đã hoàn thành của vendor để tính tổng doanh thu (bao gồm cả CASH và TRANSFER)
+    const completedBookings = await prisma.booking.findMany({
+      where: {
+        room: { hotel: { vendorId: vendor.id } },
+        status: "COMPLETED",
+      },
+      select: { finalPrice: true },
+    });
+
+    const totalRevenue = completedBookings.reduce((sum, b) => sum + b.finalPrice, 0);
+
+    // Xử lý tạo dòng giao dịch ảo cho đơn COD (Tiền mặt) để hiển thị đầy đủ trên lịch sử giao dịch
+    const enrichedTransactions: any[] = [];
+    let virtualId = -1;
+
+    for (const tx of transactions) {
+      // Nếu là phí hoa hồng của đơn Tiền mặt (CASH), ta thêm 1 dòng "Thu tiền mặt" trước khi hiển thị dòng trừ hoa hồng
+      if (tx.type === "COMMISSION_FEE" && (tx.booking as any)?.payment?.method === "CASH") {
+        enrichedTransactions.push({
+          ...tx,
+          id: virtualId--,
+          type: "CASH_INCOME", // Type ảo
+          amount: Math.abs(tx.amount) * 10, // Giả sử hoa hồng 10%, tiền phòng = hoa hồng * 10
+          description: "Thu tiền mặt trực tiếp từ khách",
+        });
+      }
+      enrichedTransactions.push(tx);
+    }
 
     return {
       walletBalance: vendor.wallet.balance,
       totalRevenue,
-      transactions,
+      transactions: enrichedTransactions,
     };
   },
 
@@ -628,16 +655,15 @@ export const vendorsService = {
     sixMonthsAgo.setDate(1);
     sixMonthsAgo.setHours(0, 0, 0, 0);
 
-    const revenueTransactions = vendor.wallet
-      ? await prisma.walletTransaction.findMany({
-          where: {
-            walletId: vendor.wallet.id,
-            type: "BOOKING_INCOME",
-            createdAt: { gte: sixMonthsAgo },
-          },
-          select: { amount: true, createdAt: true },
-        })
-      : [];
+    // Lấy tất cả các booking đã hoàn thành trong 6 tháng qua để tính doanh thu
+    const revenueBookings = await prisma.booking.findMany({
+      where: {
+        room: { hotel: { vendorId: vendor.id } },
+        status: "COMPLETED",
+        checkOutDate: { gte: sixMonthsAgo },
+      },
+      select: { finalPrice: true, checkOutDate: true },
+    });
 
     // Group revenue by month
     const months = Array.from({ length: 6 }).map((_, i) => {
@@ -651,14 +677,14 @@ export const vendorsService = {
       };
     });
 
-    revenueTransactions.forEach((tx) => {
-      const txDate = new Date(tx.createdAt);
+    revenueBookings.forEach((b) => {
+      const bDate = new Date(b.checkOutDate);
       const match = months.find(
         (m) =>
-          m.monthIndex === txDate.getMonth() && m.year === txDate.getFullYear()
+          m.monthIndex === bDate.getMonth() && m.year === bDate.getFullYear()
       );
       if (match) {
-        match.revenue += tx.amount;
+        match.revenue += b.finalPrice;
       }
     });
 

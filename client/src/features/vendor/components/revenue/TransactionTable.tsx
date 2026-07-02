@@ -21,6 +21,8 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     switch (type) {
       case "BOOKING_INCOME":
         return "Tiền phòng nhận";
+      case "CASH_INCOME":
+        return "Thu tiền mặt (COD)";
       case "COMMISSION_FEE":
         return "Phí hoa hồng";
       case "WITHDRAWAL":
@@ -38,6 +40,8 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     switch (type) {
       case "BOOKING_INCOME":
         return "green";
+      case "CASH_INCOME":
+        return "teal";
       case "COMMISSION_FEE":
         return "orange";
       case "WITHDRAWAL":
@@ -132,15 +136,15 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
                     <td className="p-4">
                       <span
                         className={`font-bold ${
-                          tx.type === "BOOKING_INCOME"
+                          tx.type === "BOOKING_INCOME" || tx.type === "CASH_INCOME"
                             ? "text-green-600"
                             : tx.type === "COMMISSION_FEE" || tx.type === "WITHDRAWAL" || tx.type === "REFUND"
                             ? "text-red-600"
                             : "text-on-surface"
                         }`}
                       >
-                        {tx.type === "BOOKING_INCOME" ? "+" : "-"}
-                        {formatCurrency(tx.amount)}
+                        {tx.type === "BOOKING_INCOME" || tx.type === "CASH_INCOME" ? "+" : "-"}
+                        {formatCurrency(Math.abs(tx.amount))}
                       </span>
                     </td>
                     <td className="p-4 text-right">

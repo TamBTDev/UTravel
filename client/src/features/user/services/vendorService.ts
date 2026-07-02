@@ -153,7 +153,7 @@ export interface WalletTransaction {
   id: number;
   walletId: number;
   bookingId: number | null;
-  type: "BOOKING_INCOME" | "COMMISSION_FEE" | "WITHDRAWAL" | "REFUND" | "ADJUSTMENT";
+  type: "BOOKING_INCOME" | "COMMISSION_FEE" | "WITHDRAWAL" | "REFUND" | "ADJUSTMENT" | "CASH_INCOME";
   amount: number;
   description: string | null;
   createdAt: string;
